@@ -18,5 +18,10 @@ namespace AIWorld
         {
             return (float) Math.Atan2(point.X, point.Z);
         }
+
+        public static Vector3 Truncate(this Vector3 point, float limit)
+        {
+                return point.Length() > limit ? Vector3.Normalize(point)*limit : point;
+        }
     }
 }

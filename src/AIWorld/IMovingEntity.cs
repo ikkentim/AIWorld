@@ -22,6 +22,7 @@ namespace AIWorld
         Vector3 Velocity { get; }
         float Mass { get; }
         Vector3 Heading { get; }
+        Vector3 Side { get; }
         float MaxSpeed { get; }
         float MaxForce { get; }
         float MaxTurnRate { get; }

@@ -26,52 +26,73 @@ namespace AIWorld
         #region Implementation of IEntity
 
         private int targetnode;
+
+        Vector3 Seek(Vector3 target)
+        {
+            var desiredVelocity = Vector3.Normalize(target - Position) * MaxSpeed;
+            return desiredVelocity - Velocity; 
+        }
+        Vector3 Arrive(Vector3 target, int decel)
+        {
+            var toTarget = target - Position;
+            var distance = toTarget.Length();
+
+            if (distance > 0.00001)
+            {
+                const float decelerationTweaker = 0.3f;
+
+                float speed = distance/(decel*decelerationTweaker);
+                speed = Math.Min(speed, MaxSpeed);
+                var desiredVelocity = toTarget*speed/distance;
+
+                return desiredVelocity - Velocity;
+            }
+
+            return Vector3.Zero;
+        }
         Vector3 CalculateSteeringForce()
         {
-            if(_r == null) throw new NullReferenceException("_r");
-
             var target = _r.Nodes[targetnode];
 
-            var tmp = (target - Position);
-            tmp.Normalize();
-            return tmp * 5;
+            var sk = Arrive(target, 3);
+
+            return sk.Truncate(MaxForce);
         }
 
         public void Update(GameWorld world, GameTime gameTime)
         {
-            if ((Position - _r.Nodes[targetnode]).Length() < 0.2)
+            if ((Position - _r.Nodes[targetnode]).Length() < 0.25)
             {
                 targetnode++;
                 targetnode %= _r.Nodes.Length;
             }
-
             // update pos
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
             var steeringForce = CalculateSteeringForce();
 
             Vector3 acceleration = steeringForce/Mass;
-            Vector3 velocity = acceleration*deltaTime;
-            float velocityLength = velocity.Length();
-            if (velocityLength > MaxSpeed)
-            {
-                velocity.Normalize();
-                velocity *= MaxSpeed;
-            }
-            Position += velocity*deltaTime;
+            Velocity += acceleration*deltaTime;
+     
+            Velocity = Velocity.Truncate(MaxSpeed);
+      
+            Position += Velocity * deltaTime;
 
-            if (velocityLength > 0.00000001)
+            if (Velocity.LengthSquared() > 0.00001)
             {
-                Heading = velocity;
-                Heading.Normalize();
-                //Side = Heading.Perp();
+                Heading = Vector3.Normalize(Velocity);
+                Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
             }
         }
 
         public void Render(GraphicsDevice graphicsDevice, GameTime gameTime)
         {
             var vertices = new[]
-            {new VertexPositionColor(Position, Color.Red), new VertexPositionColor(Position + Vector3.Up / 2+ Heading, Color.Red)};
-            graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
+            {
+                new VertexPositionColor(Position - Heading/4 - Side/10, Color.Blue),
+                new VertexPositionColor(Position + Vector3.Up / 10, Color.Red),
+                new VertexPositionColor(Position - Heading/4 + Side/10, Color.Blue)
+            };
+            graphicsDevice.DrawUserPrimitives(PrimitiveType.LineStrip, vertices, 0, 2);
         }
 
         public Vector3 Position { get; private set; }
@@ -82,10 +103,10 @@ namespace AIWorld
         {
             _r = r;
             Position = position;
-            MaxTurnRate = 45;
-            MaxForce = 20;
-            MaxSpeed = 200;
-            Mass = 0.5f;
+            MaxTurnRate = 2;
+            MaxForce = 4.0f;
+            MaxSpeed = 150;
+            Mass = 1;
         }
 
         #region Implementation of IMovingEntity
@@ -93,6 +114,7 @@ namespace AIWorld
         public Vector3 Velocity { get; private set; }
         public float Mass { get; private set; }
         public Vector3 Heading { get; private set; }
+        public Vector3 Side { get; private set; }
         public float MaxSpeed { get; private set; }
         public float MaxForce { get; private set; }
         public float MaxTurnRate { get; private set; }

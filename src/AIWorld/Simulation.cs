@@ -84,6 +84,21 @@ namespace AIWorld
                 new Vector3(3, 0, 1),
                 new Vector3(3, 0, 2),
                 new Vector3(3, 0, 3),
+                new Vector3(3, 0, 4),
+                new Vector3(3, 0, 5),
+                new Vector3(3, 0, 6),
+                new Vector3(3, 0, 7),
+                new Vector3(3, 0, 8),
+                new Vector3(2, 0, 9),
+                new Vector3(1, 0, 9),
+                new Vector3(0, 0, 9),
+                new Vector3(-1, 0, 9),
+                new Vector3(-2, 0, 8),
+                new Vector3(-2, 0, 7),
+                new Vector3(-2, 0, 6),
+                new Vector3(-2, 0, 5),
+                new Vector3(-2, 0, 4),
+                new Vector3(-2, 0, 3),
             });
 
             //Create vehicle
