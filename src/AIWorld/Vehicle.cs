@@ -15,6 +15,7 @@
 
 using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld
@@ -25,6 +26,7 @@ namespace AIWorld
 
         #region Implementation of IEntity
 
+        private Model model;
         private int targetnode;
 
         Vector3 Seek(Vector3 target)
@@ -84,24 +86,44 @@ namespace AIWorld
             }
         }
 
-        public void Render(GraphicsDevice graphicsDevice, GameTime gameTime)
+        public void Render(GraphicsDevice graphicsDevice, Matrix view, Matrix projection, GameTime gameTime)
         {
-            var vertices = new[]
+//            var vertices = new[]
+//            {
+//                new VertexPositionColor(Position - Heading/4 - Side/10, Color.Blue),
+//                new VertexPositionColor(Position + Vector3.Up / 10, Color.Red),
+//                new VertexPositionColor(Position - Heading/4 + Side/10, Color.Blue)
+//            };
+//            graphicsDevice.DrawUserPrimitives(PrimitiveType.LineStrip, vertices, 0, 2);
+
+            var transforms = new Matrix[model.Bones.Count];
+            model.CopyAbsoluteBoneTransformsTo(transforms);
+
+            foreach (ModelMesh mesh in model.Meshes)
             {
-                new VertexPositionColor(Position - Heading/4 - Side/10, Color.Blue),
-                new VertexPositionColor(Position + Vector3.Up / 10, Color.Red),
-                new VertexPositionColor(Position - Heading/4 + Side/10, Color.Blue)
-            };
-            graphicsDevice.DrawUserPrimitives(PrimitiveType.LineStrip, vertices, 0, 2);
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+
+
+                    effect.World = transforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(Heading.GetYAngle()) *
+                                   Matrix.CreateTranslation(Position);
+                    effect.View = view;
+                    effect.Projection = projection;
+                    effect.EnableDefaultLighting();
+                }
+                mesh.Draw();
+            }
         }
 
         public Vector3 Position { get; private set; }
 
         #endregion
 
-        public Vehicle(Vector3 position, Road r)
+        public Vehicle(Vector3 position, ContentManager content, Road r)
         {
             _r = r;
+            model = content.Load<Model>("models/car");
+
             Position = position;
             MaxTurnRate = 2;
             MaxForce = 4.0f;

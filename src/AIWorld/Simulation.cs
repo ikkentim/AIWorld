@@ -29,23 +29,20 @@ namespace AIWorld
     public class Simulation : Game
     {
         private readonly GraphicsDeviceManager _graphics;
-        private readonly GameWorld world = new GameWorld();
+        private readonly GameWorld _world = new GameWorld();
 
         private float _aspectRatio;
         private float _cameraDistance = 3;
         private float _cameraRotation;
         private Vector3 _cameraTarget = new Vector3(0.0f, 0.0f, 0.0f);
         private Model _placeHolderModel;
-        private IEnumerable<Plane> _roadTiles;
-        private Plane[] _terrainTiles;
-        private BasicEffect basicEffect;
-        private Texture2D grass;
-        private float modelRotation;
-        private Texture2D roadTexture;
-
-        private Road mainRoad;
-
-        private Vehicle tracingVehicle;
+        private List<Plane> _terrainTiles;
+        private BasicEffect _basicEffect;
+        private Texture2D _grass;
+        private float _modelRotation;
+        private Texture2D _roadTexture;
+        private Road _mainRoad;
+        private Vehicle _tracingVehicle;
 
         public Simulation()
         {
@@ -56,27 +53,27 @@ namespace AIWorld
         protected override void Initialize()
         {
             _aspectRatio = _graphics.GraphicsDevice.Viewport.AspectRatio;
-    
+
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
-            grass = Content.Load<Texture2D>(@"textures/grass");
-            roadTexture = Content.Load<Texture2D>(@"textures/road");
-            _placeHolderModel = Content.Load<Model>("pawnred");
-
-            basicEffect = new BasicEffect(GraphicsDevice);
+            _grass = Content.Load<Texture2D>(@"textures/grass");
+            _roadTexture = Content.Load<Texture2D>(@"textures/road");
+//            _placeHolderModel = Content.Load<Model>("pawnred");
+            _placeHolderModel = Content.Load<Model>("models/car");
+            _basicEffect = new BasicEffect(GraphicsDevice);
 
             //Create terrain
-            _terrainTiles = new Plane[4*4];
-            for (int x = 0; x < 4; x++)
-                for (int y = 0; y < 4; y++)
-                    _terrainTiles[y*4 + x] = new Plane(GraphicsDevice, new Vector3(x*4, -1, y*4), 4, PlaneRotation.None,
-                        grass);
+            _terrainTiles = new List<Plane>();
+            for (int x = -5; x <= 5; x++)
+                for (int y = -5; y <= 5; y++)
+                    _terrainTiles.Add(new Plane(GraphicsDevice, new Vector3(x*4, -0.01f, y*4), 4, PlaneRotation.None,
+                        _grass));
 
             // Create road
-            mainRoad = new Road(GraphicsDevice, roadTexture, new[]
+            _mainRoad = new Road(GraphicsDevice, _roadTexture, new[]
             {
                 new Vector3(0, 0, 0),
                 new Vector3(1, 0, 0),
@@ -103,10 +100,10 @@ namespace AIWorld
 
             //Create vehicle
 
-            var vehicle = new Vehicle(new Vector3(0, 0, 1), mainRoad);
+            var vehicle = new Vehicle(new Vector3(0, 0, 1), Content, _mainRoad);
 
-            tracingVehicle = vehicle;
-            world.Entities.Insert(vehicle);
+            _tracingVehicle = vehicle;
+            _world.Entities.Insert(vehicle);
         }
 
         protected override void UnloadContent()
@@ -132,13 +129,13 @@ namespace AIWorld
                 _cameraRotation += (float) gameTime.ElapsedGameTime.TotalSeconds;
 
 
-            modelRotation += (float) gameTime.ElapsedGameTime.TotalMilliseconds*
-                             MathHelper.ToRadians(0.1f);
+            _modelRotation += (float) gameTime.ElapsedGameTime.TotalMilliseconds*
+                              MathHelper.ToRadians(0.1f);
 
-            world.Update(gameTime);
+            _world.Update(gameTime);
 
-            if (tracingVehicle != null)
-                _cameraTarget = tracingVehicle.Position;
+            if (_tracingVehicle != null)
+                _cameraTarget = _tracingVehicle.Position;
 
             base.Update(gameTime);
         }
@@ -146,7 +143,7 @@ namespace AIWorld
 
         private void Line(Vector3 a, Vector3 b, Color c)
         {
-            var vertices = new[] { new VertexPositionColor(a, c), new VertexPositionColor(b, c) };
+            var vertices = new[] {new VertexPositionColor(a, c), new VertexPositionColor(b, c)};
             GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
 
@@ -163,36 +160,16 @@ namespace AIWorld
 
             _graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // temp model
-            var transforms = new Matrix[_placeHolderModel.Bones.Count];
-            _placeHolderModel.CopyAbsoluteBoneTransformsTo(transforms);
-
-            foreach (ModelMesh mesh in _placeHolderModel.Meshes)
-            {
-                Vector3 pos = Vector3.Zero;
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.EnableDefaultLighting();
-                    effect.World = transforms[mesh.ParentBone.Index]*Matrix.CreateRotationY(modelRotation)*
-                                   Matrix.CreateTranslation(pos);
-                    effect.View = view;
-                    effect.Projection = projection;
-                }
-                mesh.Draw();
-            }
-            // /
-
-
             // basicEffect for line drawing...
-            basicEffect.VertexColorEnabled = true;
-            basicEffect.World = Matrix.Identity;
-            basicEffect.View = view;
-            basicEffect.Projection = projection;
-
-            basicEffect.CurrentTechnique.Passes[0].Apply();
+//            _basicEffect.VertexColorEnabled = true;
+//            _basicEffect.World = Matrix.Identity;
+//            _basicEffect.View = view;
+//            _basicEffect.Projection = projection;
+//
+//            _basicEffect.CurrentTechnique.Passes[0].Apply();
 
             // Draw vehicles
-            world.Render(GraphicsDevice, gameTime);
+            _world.Render(GraphicsDevice, view, projection, gameTime);
             // /
 
             // Draw tiles
@@ -202,7 +179,7 @@ namespace AIWorld
                 t.Render(GraphicsDevice, Matrix.Identity, view, projection);
             }
 
-            foreach (Plane t in mainRoad.Planes)
+            foreach (Plane t in _mainRoad.Planes)
             {
                 t.Render(GraphicsDevice, Matrix.Identity, view, projection);
             }

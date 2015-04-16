@@ -22,6 +22,6 @@ namespace AIWorld
     {
         Vector3 Position { get; }
         void Update(GameWorld world, GameTime gameTime);
-        void Render(GraphicsDevice graphicsDevice, GameTime gameTime);
+        void Render(GraphicsDevice graphicsDevice, Matrix view, Matrix projection, GameTime gameTime);
     }
 }
