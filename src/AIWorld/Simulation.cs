@@ -14,6 +14,9 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -26,7 +29,6 @@ namespace AIWorld
     public class Simulation : Game
     {
         private readonly GraphicsDeviceManager _graphics;
-        private readonly Vehicle vehicle = new Vehicle(new Vector3(0, 0, 1));
         private readonly GameWorld world = new GameWorld();
 
         private float _aspectRatio;
@@ -34,12 +36,14 @@ namespace AIWorld
         private float _cameraRotation;
         private Vector3 _cameraTarget = new Vector3(0.0f, 0.0f, 0.0f);
         private Model _placeHolderModel;
-        private TerrainTile[] _terrainTiles;
+        private IEnumerable<Plane> _roadTiles;
+        private Plane[] _terrainTiles;
         private BasicEffect basicEffect;
         private Texture2D grass;
         private float modelRotation;
-        private BasicEffect quadEffect;
+        private Texture2D roadTexture;
 
+        private Road mainRoad;
 
         private Vehicle tracingVehicle;
 
@@ -47,41 +51,47 @@ namespace AIWorld
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-
-            var ab = new AABB(new Vector3(5, -5, -5), new Vector3(5, 5, 5));
-            var vec = new Vector3(1.00000048f, 0, -0.00000041713255f);
-            bool res = ab.ContainsPoint(vec);
         }
 
         protected override void Initialize()
         {
             _aspectRatio = _graphics.GraphicsDevice.Viewport.AspectRatio;
-
-            basicEffect = new BasicEffect(GraphicsDevice);
-
-            _terrainTiles = new TerrainTile[4*4];
-            for (int x = 0; x < 4; x++)
-                for (int y = 0; y < 4; y++)
-                    _terrainTiles[y*4 + x] = new TerrainTile(new Vector3(x*TerrainTile.Size, 0, y*TerrainTile.Size));
-
-            tracingVehicle = vehicle;
-            world.Entities.Insert(vehicle);
-
-            for (int x = -4; x <= 4; x++)
-                for (int y = -4; y <= 4; y++)
-                    if (!(x == 0 && y == 1))
-                        world.Entities.Insert(new Vehicle(new Vector3(x, 0, y)));
-
+    
             base.Initialize();
         }
 
         protected override void LoadContent()
         {
             grass = Content.Load<Texture2D>(@"textures/grass");
+            roadTexture = Content.Load<Texture2D>(@"textures/road");
             _placeHolderModel = Content.Load<Model>("pawnred");
 
-            quadEffect = new BasicEffect(GraphicsDevice);
-            quadEffect.EnableDefaultLighting();
+            basicEffect = new BasicEffect(GraphicsDevice);
+
+            //Create terrain
+            _terrainTiles = new Plane[4*4];
+            for (int x = 0; x < 4; x++)
+                for (int y = 0; y < 4; y++)
+                    _terrainTiles[y*4 + x] = new Plane(GraphicsDevice, new Vector3(x*4, -1, y*4), 4, PlaneRotation.None,
+                        grass);
+
+            // Create road
+            mainRoad = new Road(GraphicsDevice, roadTexture, new[]
+            {
+                new Vector3(0, 0, 0),
+                new Vector3(1, 0, 0),
+                new Vector3(2, 0, 0),
+                new Vector3(3, 0, 1),
+                new Vector3(3, 0, 2),
+                new Vector3(3, 0, 3),
+            });
+
+            //Create vehicle
+
+            var vehicle = new Vehicle(new Vector3(0, 0, 1), mainRoad);
+
+            tracingVehicle = vehicle;
+            world.Entities.Insert(vehicle);
         }
 
         protected override void UnloadContent()
@@ -113,23 +123,21 @@ namespace AIWorld
             world.Update(gameTime);
 
             if (tracingVehicle != null)
-            {
                 _cameraTarget = tracingVehicle.Position;
-            }
 
             base.Update(gameTime);
         }
 
-        private void Line(Vector3 a, Vector3 b)
+
+        private void Line(Vector3 a, Vector3 b, Color c)
         {
-            var vertices = new[] {new VertexPositionColor(a, Color.Black), new VertexPositionColor(b, Color.Black)};
+            var vertices = new[] { new VertexPositionColor(a, c), new VertexPositionColor(b, c) };
             GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
 
         protected override void Draw(GameTime gameTime)
         {
             Vector3 realCameraTarget = _cameraTarget + new Vector3(0, 0.5f, 0);
-
             Vector3 cameraPosition = realCameraTarget +
                                      new Vector3((float) Math.Cos(_cameraRotation), 1, (float) Math.Sin(_cameraRotation))*
                                      _cameraDistance;
@@ -140,10 +148,9 @@ namespace AIWorld
 
             _graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
-
+            // temp model
             var transforms = new Matrix[_placeHolderModel.Bones.Count];
             _placeHolderModel.CopyAbsoluteBoneTransformsTo(transforms);
-
 
             foreach (ModelMesh mesh in _placeHolderModel.Meshes)
             {
@@ -158,8 +165,10 @@ namespace AIWorld
                 }
                 mesh.Draw();
             }
+            // /
 
 
+            // basicEffect for line drawing...
             basicEffect.VertexColorEnabled = true;
             basicEffect.World = Matrix.Identity;
             basicEffect.View = view;
@@ -167,40 +176,37 @@ namespace AIWorld
 
             basicEffect.CurrentTechnique.Passes[0].Apply();
 
-            // Draw tile lines
-            foreach (TerrainTile t in _terrainTiles)
-            {
-                Line(t.Position, t.Position + new Vector3(0, 10, 0));
-            }
-            // /
-
             // Draw vehicles
             world.Render(GraphicsDevice, gameTime);
-
             // /
 
             // Draw tiles
-            quadEffect.World = Matrix.Identity;
-            quadEffect.View = view;
-            quadEffect.Projection = projection;
-            quadEffect.TextureEnabled = true;
-            quadEffect.Texture = grass;
 
-            foreach (EffectPass pass in quadEffect.CurrentTechnique.Passes)
+            foreach (Plane t in _terrainTiles)
             {
-                pass.Apply();
+                t.Render(GraphicsDevice, Matrix.Identity, view, projection);
+            }
 
-                foreach (TerrainTile t in _terrainTiles)
-                {
-                    GraphicsDevice.DrawUserIndexedPrimitives(
-                        PrimitiveType.TriangleList,
-                        t.Vertices, 0, 4,
-                        TerrainTile.Indexes, 0, 2);
-                }
+            foreach (Plane t in mainRoad.Planes)
+            {
+                t.Render(GraphicsDevice, Matrix.Identity, view, projection);
             }
             // /
 
             base.Draw(gameTime);
+        }
+    }
+
+    class Road
+    {
+        public Vector3[] Nodes { get; private set; }
+
+        public Plane[] Planes { get; private set; }
+
+        public Road(GraphicsDevice graphicsDevice, Texture2D texture, Vector3[] nodes)
+        {
+            Nodes = nodes;
+            Planes = RoadPlanesGenerator.Generate(graphicsDevice, texture, nodes).ToArray();
         }
     }
 }

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -20,12 +21,33 @@ namespace AIWorld
 {
     internal class Vehicle : IMovingEntity
     {
+        private readonly Road _r;
+
         #region Implementation of IEntity
+
+        private int targetnode;
+        Vector3 CalculateSteeringForce()
+        {
+            if(_r == null) throw new NullReferenceException("_r");
+
+            var target = _r.Nodes[targetnode];
+
+            var tmp = (target - Position);
+            tmp.Normalize();
+            return tmp * 5;
+        }
 
         public void Update(GameWorld world, GameTime gameTime)
         {
+            if ((Position - _r.Nodes[targetnode]).Length() < 0.2)
+            {
+                targetnode++;
+                targetnode %= _r.Nodes.Length;
+            }
+
+            // update pos
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
-            var steeringForce = new Vector3(1000, 0, 100);
+            var steeringForce = CalculateSteeringForce();
 
             Vector3 acceleration = steeringForce/Mass;
             Vector3 velocity = acceleration*deltaTime;
@@ -48,7 +70,7 @@ namespace AIWorld
         public void Render(GraphicsDevice graphicsDevice, GameTime gameTime)
         {
             var vertices = new[]
-            {new VertexPositionColor(Position, Color.Red), new VertexPositionColor(Position + Vector3.Up, Color.Red)};
+            {new VertexPositionColor(Position, Color.Red), new VertexPositionColor(Position + Vector3.Up / 2+ Heading, Color.Red)};
             graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
 
@@ -56,13 +78,14 @@ namespace AIWorld
 
         #endregion
 
-        public Vehicle(Vector3 position)
+        public Vehicle(Vector3 position, Road r)
         {
+            _r = r;
             Position = position;
             MaxTurnRate = 45;
-            MaxForce = 2;
-            MaxSpeed = 100;
-            Mass = 4;
+            MaxForce = 20;
+            MaxSpeed = 200;
+            Mass = 0.5f;
         }
 
         #region Implementation of IMovingEntity

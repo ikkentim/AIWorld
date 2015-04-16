@@ -64,8 +64,6 @@ namespace AIWorld
             vec.Y = GetValueForAxis(vec.Y, Size);
             vec.Z = GetValueForAxis(vec.Z, Size);
 
-            Debug.WriteLine("Had to create new master box for entity at {0} to pos {1} during INSERT", entity.Position,
-                vec);
             part = new QuadTree(new AABB(vec, new Vector3(Size)/2));
             _parts.Add(part);
             part.Insert(entity);
