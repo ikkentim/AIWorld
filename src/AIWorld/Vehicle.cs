@@ -88,14 +88,6 @@ namespace AIWorld
 
         public void Render(GraphicsDevice graphicsDevice, Matrix view, Matrix projection, GameTime gameTime)
         {
-//            var vertices = new[]
-//            {
-//                new VertexPositionColor(Position - Heading/4 - Side/10, Color.Blue),
-//                new VertexPositionColor(Position + Vector3.Up / 10, Color.Red),
-//                new VertexPositionColor(Position - Heading/4 + Side/10, Color.Blue)
-//            };
-//            graphicsDevice.DrawUserPrimitives(PrimitiveType.LineStrip, vertices, 0, 2);
-
             var transforms = new Matrix[model.Bones.Count];
             model.CopyAbsoluteBoneTransformsTo(transforms);
 
@@ -103,8 +95,6 @@ namespace AIWorld
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-
-
                     effect.World = transforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(Heading.GetYAngle()) *
                                    Matrix.CreateTranslation(Position);
                     effect.View = view;
