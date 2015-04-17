@@ -96,11 +96,11 @@ namespace AIWorld
             //Create vehicle
             var vehicle = new Vehicle(new Vector3(1, 0, 1), engine, Content, _mainRoad);
 
-            _tracingVehicle = vehicle;
+            //_tracingVehicle = vehicle;
             _world.Entities.Insert(vehicle);
-            _world.Entities.Insert(new Vehicle(new Vector3(5, 0, 5), engine, Content, _mainRoad));
-            _world.Entities.Insert(new Vehicle(new Vector3(10, 0, 10), engine, Content, _mainRoad));
-            _world.Entities.Insert(new Vehicle(new Vector3(15, 0, 15), engine, Content, _mainRoad));
+//            _world.Entities.Insert(new Vehicle(new Vector3(5, 0, 5), engine, Content, _mainRoad));
+//            _world.Entities.Insert(new Vehicle(new Vector3(10, 0, 10), engine, Content, _mainRoad));
+//            _world.Entities.Insert(new Vehicle(new Vector3(15, 0, 15), engine, Content, _mainRoad));
         }
 
         protected override void UnloadContent()
@@ -125,8 +125,8 @@ namespace AIWorld
             {
                 var inst = ambientEffect.CreateInstance();
                 inst.IsLooped = true;
-                inst.Volume = 0.045f;
-                inst.Play();
+                inst.Volume = 0.015f;
+//                inst.Play();
                 snd = true;
             }
             var ms = Mouse.GetState();

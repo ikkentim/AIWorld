@@ -42,7 +42,8 @@ namespace AIWorld
             _audioEmitter.Forward = Heading;
             _audioEmitter.Position = Position;
             _audioEmitter.Velocity = Velocity;
-            _audioEmitter.DopplerScale = Math.Max(1.0f, (cpos - Position).LengthSquared() * 1000); // Just testing it out
+            _audioEmitter.DopplerScale = Math.Max(1.0f, ((Vector3.Normalize(Position - cpos) - Velocity).Length())); // Just testing it out
+            Debug.WriteLine(_audioEmitter.DopplerScale);
             _soundEffectInstance.Apply3D(_audioListener, _audioEmitter);
 
             if ((Position - _r.RightNodes[_targetnode]).Length() < 0.4f)
@@ -132,8 +133,8 @@ namespace AIWorld
 
             Position = position;
             MaxTurnRate = 2;
-            MaxForce = 20.0f;
-            MaxSpeed = 2;
+            MaxForce = 20000.0f;
+            MaxSpeed = 10;
             Mass = 0.4f;
 
             _audioListener = new AudioListener
