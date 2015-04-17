@@ -16,9 +16,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -40,7 +40,7 @@ namespace AIWorld
         private Texture2D _grass;
         private Road _mainRoad;
         private Vehicle _tracingVehicle;
-
+        private SoundEffect ambientEffect;
         public Simulation()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -57,6 +57,8 @@ namespace AIWorld
         protected override void LoadContent()
         {
             _grass = Content.Load<Texture2D>(@"textures/grass");
+            ambientEffect = Content.Load<SoundEffect>(@"sounds/ambient");
+            SoundEffect engine = Content.Load<SoundEffect>(@"sounds/engine");
 
             //Create terrain
             _terrainTiles = new List<Plane>();
@@ -92,10 +94,13 @@ namespace AIWorld
             });
 
             //Create vehicle
-            var vehicle = new Vehicle(new Vector3(0, 0, 1), Content, _mainRoad);
+            var vehicle = new Vehicle(new Vector3(1, 0, 1), engine, Content, _mainRoad);
 
             _tracingVehicle = vehicle;
             _world.Entities.Insert(vehicle);
+            _world.Entities.Insert(new Vehicle(new Vector3(5, 0, 5), engine, Content, _mainRoad));
+            _world.Entities.Insert(new Vehicle(new Vector3(10, 0, 10), engine, Content, _mainRoad));
+            _world.Entities.Insert(new Vehicle(new Vector3(15, 0, 15), engine, Content, _mainRoad));
         }
 
         protected override void UnloadContent()
@@ -109,11 +114,21 @@ namespace AIWorld
         private bool isMiddleButtonDown;
         private const float minZoom = 1;
         private const float maxZoom = 20;
+
+        private bool snd;
         protected override void Update(GameTime gameTime)
         {
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
             KeyboardState kb = Keyboard.GetState();
 
+            if (!snd)
+            {
+                var inst = ambientEffect.CreateInstance();
+                inst.IsLooped = true;
+                inst.Volume = 0.045f;
+                inst.Play();
+                snd = true;
+            }
             var ms = Mouse.GetState();
 
             var scroll = ms.ScrollWheelValue;
@@ -184,7 +199,7 @@ namespace AIWorld
                 unprocessedScrollDelta = 0;
             }
 
-            _world.Update(gameTime);
+            _world.Update(view, projection, gameTime);
 
             if (_tracingVehicle != null)
                 _cameraTarget = _tracingVehicle.Position;
@@ -198,6 +213,9 @@ namespace AIWorld
             var vertices = new[] {new VertexPositionColor(a, c), new VertexPositionColor(b, c)};
             GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
+
+        private Matrix view;
+        private Matrix projection;
 
         protected override void Draw(GameTime gameTime)
         {
@@ -216,8 +234,8 @@ namespace AIWorld
 //                                         1,
 //                                         (float) Math.Sin(_cameraRotation))*
 //                                     _cameraDistance;
-            Matrix view = Matrix.CreateLookAt(cameraPosition, realCameraTarget, Vector3.Up);
-            Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), _aspectRatio, 0.1f,
+            view = Matrix.CreateLookAt(cameraPosition, realCameraTarget, Vector3.Up);
+            projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), _aspectRatio, 0.1f,
                 10000.0f);
 
             _graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
@@ -245,19 +263,6 @@ namespace AIWorld
             // /
 
             base.Draw(gameTime);
-        }
-    }
-
-    class Road
-    {
-        public Vector3[] Nodes { get; private set; }
-
-        public Plane[] Planes { get; private set; }
-
-        public Road(GraphicsDevice graphicsDevice, Texture2D texture, Vector3[] nodes)
-        {
-            Nodes = nodes;
-            Planes = RoadPlanesGenerator.Generate(graphicsDevice, texture, nodes).ToArray();
         }
     }
 }

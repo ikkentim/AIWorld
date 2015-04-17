@@ -51,6 +51,7 @@
     <Compile Include="Plane.cs" />
     <Compile Include="PlaneRotation.cs" />
     <Compile Include="QuadTree.cs" />
+    <Compile Include="Road.cs" />
     <Compile Include="RoadPlanesGenerator.cs" />
     <Compile Include="Simulation.cs" />
     <Compile Include="Program.cs" />

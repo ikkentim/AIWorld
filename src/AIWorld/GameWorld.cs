@@ -28,12 +28,12 @@ namespace AIWorld
             get { return _entities; }
         }
 
-        public void Update(GameTime gameTime)
+        public void Update(Matrix view, Matrix projection, GameTime gameTime)
         {
             foreach (IEntity entity in _entities)
             {
                 QuadTree tree = _entities.GetQuadTreeContainingEntity(entity);
-                entity.Update(this, gameTime);
+                entity.Update(this, view, projection, gameTime);
                 if (tree == null) continue;
 
                 if (tree == _entities.FindQuadTreeForEntity(entity)) continue;
@@ -49,6 +49,7 @@ namespace AIWorld
             {
                 entity.Render(graphicsDevice, view, projection, gameTime);
             }
+
 
 //            foreach (AABB b in _entities.GetDebugBoxes())
 //            {

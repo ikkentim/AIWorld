@@ -14,7 +14,9 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -26,58 +28,38 @@ namespace AIWorld
 
         #region Implementation of IEntity
 
-        private Model model;
-        private int targetnode;
+        private readonly AudioEmitter _audioEmitter;
+        private readonly AudioListener _audioListener;
+        private readonly SoundEffectInstance _soundEffectInstance;
+        private readonly Model _model;
+        private int _targetnode;
 
-        Vector3 Seek(Vector3 target)
+        public void Update(GameWorld world, Matrix view, Matrix projection, GameTime gameTime)
         {
-            var desiredVelocity = Vector3.Normalize(target - Position) * MaxSpeed;
-            return desiredVelocity - Velocity; 
-        }
-        Vector3 Arrive(Vector3 target, int decel)
-        {
-            var toTarget = target - Position;
-            var distance = toTarget.Length();
+            var cpos = Matrix.Invert(view).Translation;
+            _audioListener.Position = cpos;
+            _audioListener.Forward = new Vector3(view.M31, view.M32, view.M33); // Think this is the right col?
+            _audioEmitter.Forward = Heading;
+            _audioEmitter.Position = Position;
+            _audioEmitter.Velocity = Velocity;
+            _audioEmitter.DopplerScale = Math.Max(1.0f, (cpos - Position).LengthSquared() * 1000); // Just testing it out
+            _soundEffectInstance.Apply3D(_audioListener, _audioEmitter);
 
-            if (distance > 0.00001)
+            if ((Position - _r.RightNodes[_targetnode]).Length() < 0.4f)
             {
-                const float decelerationTweaker = 0.3f;
-
-                float speed = distance/(decel*decelerationTweaker);
-                speed = Math.Min(speed, MaxSpeed);
-                var desiredVelocity = toTarget*speed/distance;
-
-                return desiredVelocity - Velocity;
-            }
-
-            return Vector3.Zero;
-        }
-        Vector3 CalculateSteeringForce()
-        {
-            var target = _r.Nodes[targetnode];
-
-            var sk = Arrive(target, 3);
-
-            return sk.Truncate(MaxForce);
-        }
-
-        public void Update(GameWorld world, GameTime gameTime)
-        {
-            if ((Position - _r.Nodes[targetnode]).Length() < 0.25)
-            {
-                targetnode++;
-                targetnode %= _r.Nodes.Length;
+                _targetnode++;
+                _targetnode %= _r.Nodes.Length;
             }
             // update pos
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
-            var steeringForce = CalculateSteeringForce();
+            Vector3 steeringForce = CalculateSteeringForce();
 
             Vector3 acceleration = steeringForce/Mass;
             Velocity += acceleration*deltaTime;
-     
+
             Velocity = Velocity.Truncate(MaxSpeed);
-      
-            Position += Velocity * deltaTime;
+
+            Position += Velocity*deltaTime;
 
             if (Velocity.LengthSquared() > 0.00001)
             {
@@ -88,14 +70,14 @@ namespace AIWorld
 
         public void Render(GraphicsDevice graphicsDevice, Matrix view, Matrix projection, GameTime gameTime)
         {
-            var transforms = new Matrix[model.Bones.Count];
-            model.CopyAbsoluteBoneTransformsTo(transforms);
+            var transforms = new Matrix[_model.Bones.Count];
+            _model.CopyAbsoluteBoneTransformsTo(transforms);
 
-            foreach (ModelMesh mesh in model.Meshes)
+            foreach (ModelMesh mesh in _model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
-                    effect.World = transforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(Heading.GetYAngle()) *
+                    effect.World = transforms[mesh.ParentBone.Index]*Matrix.CreateRotationY(Heading.GetYAngle())*
                                    Matrix.CreateTranslation(Position);
                     effect.View = view;
                     effect.Projection = projection;
@@ -107,18 +89,75 @@ namespace AIWorld
 
         public Vector3 Position { get; private set; }
 
+        private Vector3 Seek(Vector3 target)
+        {
+            Vector3 desiredVelocity = Vector3.Normalize(target - Position)*MaxSpeed;
+            return desiredVelocity - Velocity;
+        }
+
+        private Vector3 Arrive(Vector3 target, int decel)
+        {
+            Vector3 toTarget = target - Position;
+            float distance = toTarget.Length();
+
+            if (distance > 0.00001)
+            {
+                const float decelerationTweaker = 0.5f;
+
+                float speed = distance/(decel*decelerationTweaker);
+                speed = Math.Min(speed, MaxSpeed);
+                Vector3 desiredVelocity = toTarget*speed/distance;
+
+                return desiredVelocity - Velocity;
+            }
+
+            return Vector3.Zero;
+        }
+
+        private Vector3 CalculateSteeringForce()
+        {
+            Vector3 target = _r.RightNodes[_targetnode];
+
+            Vector3 sk = Seek(target);
+
+            return sk.Truncate(MaxForce);
+        }
+
         #endregion
 
-        public Vehicle(Vector3 position, ContentManager content, Road r)
+        public Vehicle(Vector3 position, SoundEffect engine, ContentManager content, Road r)
         {
             _r = r;
-            model = content.Load<Model>("models/car");
+            _model = content.Load<Model>("models/car");
 
             Position = position;
             MaxTurnRate = 2;
-            MaxForce = 4.0f;
-            MaxSpeed = 150;
-            Mass = 1;
+            MaxForce = 20.0f;
+            MaxSpeed = 2;
+            Mass = 0.4f;
+
+            _audioListener = new AudioListener
+            {
+                Position = Vector3.Zero,
+                Up = Vector3.Up,
+                Velocity = Vector3.Zero,
+                Forward = Vector3.Forward,
+            };
+
+            _audioEmitter = new AudioEmitter
+            {
+                DopplerScale = 1,
+                Forward = Heading,
+                Position = Position,
+                Up = Vector3.Up,
+                Velocity = Velocity,
+            };
+
+            _soundEffectInstance = engine.CreateInstance();
+            _soundEffectInstance.IsLooped = true;
+            _soundEffectInstance.Volume = 0.2f;
+            _soundEffectInstance.Apply3D(_audioListener, _audioEmitter);
+            _soundEffectInstance.Play();
         }
 
         #region Implementation of IMovingEntity

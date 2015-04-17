@@ -65,3 +65,15 @@
 /processorParam:TextureFormat=Color
 /build:textures/test.jpg
 
+#begin sounds/ambient.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/ambient.wav
+
+#begin sounds/engine.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/engine.wav
+
