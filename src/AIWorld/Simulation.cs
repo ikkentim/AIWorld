@@ -41,12 +41,19 @@ namespace AIWorld
         private Road _mainRoad;
         private Vehicle _tracingVehicle;
         private SoundEffect ambientEffect;
+        private BasicEffect _basicEffect;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Simulation"/> class.
+        /// </summary>
         public Simulation()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
         }
 
+        /// <summary>
+        /// Initializes this instance.
+        /// </summary>
         protected override void Initialize()
         {
             _aspectRatio = _graphics.GraphicsDevice.Viewport.AspectRatio;
@@ -54,11 +61,22 @@ namespace AIWorld
             base.Initialize();
         }
 
+        /// <summary>
+        /// Loads the content.
+        /// </summary>
         protected override void LoadContent()
         {
             _grass = Content.Load<Texture2D>(@"textures/grass");
             ambientEffect = Content.Load<SoundEffect>(@"sounds/ambient");
             SoundEffect engine = Content.Load<SoundEffect>(@"sounds/engine");
+            _basicEffect = new BasicEffect(GraphicsDevice);
+
+            var house01 = Content.Load<Model>(@"models/house01");
+
+            var inst = ambientEffect.CreateInstance();
+            inst.IsLooped = true;
+            inst.Volume = 0.015f;
+            inst.Play();
 
             //Create terrain
             _terrainTiles = new List<Plane>();
@@ -94,15 +112,21 @@ namespace AIWorld
             });
 
             //Create vehicle
-            var vehicle = new Vehicle(new Vector3(1, 0, 1), engine, Content, _mainRoad);
+            var vehicle = new Vehicle(new Vector3(1, 0, 1), GraphicsDevice, engine, Content, _mainRoad);
 
-            //_tracingVehicle = vehicle;
+            _tracingVehicle = vehicle;
             _world.Entities.Insert(vehicle);
-//            _world.Entities.Insert(new Vehicle(new Vector3(5, 0, 5), engine, Content, _mainRoad));
-//            _world.Entities.Insert(new Vehicle(new Vector3(10, 0, 10), engine, Content, _mainRoad));
-//            _world.Entities.Insert(new Vehicle(new Vector3(15, 0, 15), engine, Content, _mainRoad));
+//            _world.Entities.Insert(new Vehicle(new Vector3(5, 0, 5), GraphicsDevice, engine, Content, _mainRoad));
+//            _world.Entities.Insert(new Vehicle(new Vector3(10, 0, 10), GraphicsDevice, engine, Content, _mainRoad));
+//            _world.Entities.Insert(new Vehicle(new Vector3(15, 0, 15), GraphicsDevice, engine, Content, _mainRoad));
+
+            Vector3 a;
+            _world.Entities.Insert(new House(new Vector3(3.4f, 0, 5.55f), house01, 0));
         }
 
+        /// <summary>
+        /// Unloads the content.
+        /// </summary>
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
@@ -115,20 +139,11 @@ namespace AIWorld
         private const float minZoom = 1;
         private const float maxZoom = 20;
 
-        private bool snd;
         protected override void Update(GameTime gameTime)
         {
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
             KeyboardState kb = Keyboard.GetState();
 
-            if (!snd)
-            {
-                var inst = ambientEffect.CreateInstance();
-                inst.IsLooped = true;
-                inst.Volume = 0.015f;
-//                inst.Play();
-                snd = true;
-            }
             var ms = Mouse.GetState();
 
             var scroll = ms.ScrollWheelValue;
@@ -229,11 +244,7 @@ namespace AIWorld
                                          use45DegreeCamera ? 1 : _cameraDistance / 3 - minZoom + cameraTargetOffset + cameraHeightOffset,
                                          (float) Math.Sin(_cameraRotation))*
                                      _cameraDistance;
-//            Vector3 cameraPosition = realCameraTarget +
-//                                     new Vector3((float) Math.Cos(_cameraRotation),
-//                                         1,
-//                                         (float) Math.Sin(_cameraRotation))*
-//                                     _cameraDistance;
+
             view = Matrix.CreateLookAt(cameraPosition, realCameraTarget, Vector3.Up);
             projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), _aspectRatio, 0.1f,
                 10000.0f);
@@ -241,12 +252,30 @@ namespace AIWorld
             _graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // basicEffect for line drawing...
-//            _basicEffect.VertexColorEnabled = true;
-//            _basicEffect.World = Matrix.Identity;
-//            _basicEffect.View = view;
-//            _basicEffect.Projection = projection;
-//
-//            _basicEffect.CurrentTechnique.Passes[0].Apply();
+            _basicEffect.VertexColorEnabled = true;
+            _basicEffect.World = Matrix.Identity;
+            _basicEffect.View = view;
+            _basicEffect.Projection = projection;
+
+            _basicEffect.CurrentTechnique.Passes[0].Apply();
+
+            foreach (var entity in _world.Entities)
+            {
+                var pos = entity.Position;
+                var sizeh = new Vector3(entity.Size, 0, 0);
+                var sizev = new Vector3(0, 0, entity.Size);
+
+                var posses = new[]
+                {
+                    pos + sizeh,
+                    pos + sizev,
+                    pos - sizeh,
+                    pos - sizev
+                };
+
+                foreach (var p in posses)
+                    Line(p, p + Vector3.Up, Color.Red);
+            }
 
             // Draw vehicles
             _world.Render(GraphicsDevice, view, projection, gameTime);

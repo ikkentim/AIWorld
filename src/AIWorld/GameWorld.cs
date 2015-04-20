@@ -22,7 +22,7 @@ namespace AIWorld
     internal class GameWorld
     {
         private readonly QuadTree _entities = new BoundlessQuadTree();
-
+        
         public QuadTree Entities
         {
             get { return _entities; }
@@ -32,9 +32,10 @@ namespace AIWorld
         {
             foreach (IEntity entity in _entities)
             {
+                var position = entity.Position;
                 QuadTree tree = _entities.GetQuadTreeContainingEntity(entity);
                 entity.Update(this, view, projection, gameTime);
-                if (tree == null) continue;
+                if (tree == null || position == entity.Position) continue;
 
                 if (tree == _entities.FindQuadTreeForEntity(entity)) continue;
 
@@ -50,39 +51,6 @@ namespace AIWorld
                 entity.Render(graphicsDevice, view, projection, gameTime);
             }
 
-
-//            foreach (AABB b in _entities.GetDebugBoxes())
-//            {
-//                VertexPositionColor[] vertices = new[]
-//                {
-//                    b.Center + new Vector3(b.HalfDimension.X, b.HalfDimension.Y, b.HalfDimension.Z),
-//                    b.Center + new Vector3(b.HalfDimension.X, b.HalfDimension.Y, -b.HalfDimension.Z),
-//                    b.Center + new Vector3(b.HalfDimension.X, -b.HalfDimension.Y, b.HalfDimension.Z),
-//                    b.Center + new Vector3(b.HalfDimension.X, -b.HalfDimension.Y, -b.HalfDimension.Z),
-//                    b.Center + new Vector3(-b.HalfDimension.X, b.HalfDimension.Y, b.HalfDimension.Z),
-//                    b.Center + new Vector3(-b.HalfDimension.X, b.HalfDimension.Y, -b.HalfDimension.Z),
-//                    b.Center + new Vector3(-b.HalfDimension.X, -b.HalfDimension.Y, b.HalfDimension.Z),
-//                    b.Center + new Vector3(-b.HalfDimension.X, -b.HalfDimension.Y, -b.HalfDimension.Z)
-//                }.Select(v => new VertexPositionColor(v, Color.Blue)).ToArray();
-//
-//                short[] indexes =
-//                {
-//                    0, 1,
-//                    2, 3,
-//                    4, 5,
-//                    6, 7,
-//                    7, 3,
-//                    6, 2,
-//                    4, 0,
-//                    5, 1,
-//                    6, 4,
-//                    2, 0,
-//                    3, 1,
-//                    7, 5
-//                };
-//                graphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.LineList, vertices, 0, vertices.Length, indexes,
-//                    0, 12);
-//            }
         }
     }
 }

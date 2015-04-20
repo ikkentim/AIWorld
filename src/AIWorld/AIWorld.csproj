@@ -45,6 +45,7 @@
     <Compile Include="AABB.cs" />
     <Compile Include="BoundlessQuadTree.cs" />
     <Compile Include="GameWorld.cs" />
+    <Compile Include="House.cs" />
     <Compile Include="IEntity.cs" />
     <Compile Include="IMovingEntity.cs" />
     <Compile Include="MathExtension.cs" />

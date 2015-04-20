@@ -21,6 +21,7 @@ namespace AIWorld
     internal interface IEntity
     {
         Vector3 Position { get; }
+        float Size { get; set; }
         void Update(GameWorld world, Matrix view, Matrix projection, GameTime gameTime);
         void Render(GraphicsDevice graphicsDevice, Matrix view, Matrix projection, GameTime gameTime);
     }
