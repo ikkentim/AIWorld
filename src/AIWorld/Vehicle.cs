@@ -39,9 +39,9 @@ namespace AIWorld
             _basicEffect = new BasicEffect(graphicsDevice);
             Position = position;
             MaxTurnRate = 2;
-            MaxForce = 20.0f;
-            MaxSpeed = 1.3f;
-            Mass = 0.4f;
+            MaxForce = 15.0f;
+            MaxSpeed = 1.2f;
+            Mass = 0.35f;
             Size = 0.2f;
             _audioListener = new AudioListener
             {
@@ -102,7 +102,7 @@ namespace AIWorld
 
         private void UpdateTarget()
         {
-            if ((Position - _road.RightNodes[_targetnode]).Length() < 0.4f)
+            if ((Position - _road.RightNodes[_targetnode]).Length() < 0.6f)
             {
                 _targetnode++;
                 _targetnode %= _road.Nodes.Length;
@@ -231,16 +231,16 @@ namespace AIWorld
 
             foreach (var e in entities)
             {
-                Console.WriteLine("Hit found");
+                //Console.WriteLine("Hit found");
                 var localPoint = ToLocalSpace(e.Position);
-                Console.WriteLine("Local point: {0}", localPoint);
+                //Console.WriteLine("Local point: {0}", localPoint);
                 if (localPoint.X > 0)
                 {
                     float expRadius = e.Size + Size;
 
                     if (Math.Abs(localPoint.Y) < expRadius)
                     {
-                        Console.WriteLine("is within range of path");
+                        //Console.WriteLine("is within range of path");
                         float cx = localPoint.X;
                         float cy = localPoint.Y;
 
@@ -255,7 +255,7 @@ namespace AIWorld
 
                         if (ip < closestDistance)
                         {
-                            Console.WriteLine("is closer!!!");
+                            //Console.WriteLine("is closer!!!");
                             closestDistance = ip;
                             closest = e;
                             localPositionOfClosestPoint = localPoint;
@@ -273,14 +273,14 @@ namespace AIWorld
 
             force.Z = closest.Size - localPositionOfClosestPoint.Z*mp;
 
-            const float brakingWeight = 0.2f;
+            const float brakingWeight = 0.02f;
 
             force.X = (closest.Size - localPositionOfClosestPoint.X)*brakingWeight;
 
-            Debug.WriteLine("from {0}", force);
+            //Debug.WriteLine("from {0}", force);
             var wf = VectorToWorldSpace(force);
 
-            Debug.WriteLine(wf);
+            //Debug.WriteLine(wf);
             return wf;
         }
 
@@ -288,8 +288,8 @@ namespace AIWorld
         {
             Vector3 target = _road.RightNodes[_targetnode];
 
-            Vector3 force = Seek(target)*1;
-            force += AvoidObstacles(world)*1.1f;
+            Vector3 force = Seek(target)*0.3f;
+            force += AvoidObstacles(world)*0.3f;
 
             return force.Truncate(MaxForce);
         }
