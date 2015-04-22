@@ -42,6 +42,7 @@ namespace AIWorld
         private Vehicle _tracingVehicle;
         private SoundEffect ambientEffect;
         private BasicEffect _basicEffect;
+        private ICameraService cameraService;
         /// <summary>
         /// Initializes a new instance of the <see cref="Simulation"/> class.
         /// </summary>
@@ -57,6 +58,8 @@ namespace AIWorld
         protected override void Initialize()
         {
             _aspectRatio = _graphics.GraphicsDevice.Viewport.AspectRatio;
+
+            Services.AddService(typeof (ICameraService), cameraService = new CameraService());
 
             base.Initialize();
         }
@@ -116,12 +119,14 @@ namespace AIWorld
 
             _tracingVehicle = vehicle;
             _world.Entities.Insert(vehicle);
-//            _world.Entities.Insert(new Vehicle(new Vector3(5, 0, 5), GraphicsDevice, engine, Content, _mainRoad));
-//            _world.Entities.Insert(new Vehicle(new Vector3(10, 0, 10), GraphicsDevice, engine, Content, _mainRoad));
-//            _world.Entities.Insert(new Vehicle(new Vector3(15, 0, 15), GraphicsDevice, engine, Content, _mainRoad));
+            _world.Entities.Insert(new Vehicle(new Vector3(5, 0, 5), GraphicsDevice, engine, Content, _mainRoad));
+            _world.Entities.Insert(new Vehicle(new Vector3(10, 0, 10), GraphicsDevice, engine, Content, _mainRoad));
+            _world.Entities.Insert(new Vehicle(new Vector3(15, 0, 15), GraphicsDevice, engine, Content, _mainRoad));
 
-            Vector3 a;
-            _world.Entities.Insert(new House(new Vector3(3.4f, 0, 5.55f), house01, 0));
+            _world.Entities.Insert(new House(new Vector3(2.8f, 0, 2.0f), house01, 0));
+            _world.Entities.Insert(new House(new Vector3(3.2f, 0, 4.0f), house01, 0));
+            _world.Entities.Insert(new House(new Vector3(2.8f, 0, 6.0f), house01, 0));
+            _world.Entities.Insert(new House(new Vector3(3.2f, 0, 8.0f), house01, 0));
         }
 
         /// <summary>
@@ -141,6 +146,8 @@ namespace AIWorld
 
         protected override void Update(GameTime gameTime)
         {
+            base.Update(gameTime);
+
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
             KeyboardState kb = Keyboard.GetState();
 
@@ -214,12 +221,23 @@ namespace AIWorld
                 unprocessedScrollDelta = 0;
             }
 
-            _world.Update(view, projection, gameTime);
+            const float cameraTargetOffset = 0.2f;
+            const float cameraHeightOffset = 0.75f;
+            const bool use45DegreeCamera = false;
+
+            Vector3 realCameraTarget = _cameraTarget + new Vector3(0, cameraTargetOffset, 0);
+            Vector3 cameraPosition = realCameraTarget +
+                                     new Vector3((float)Math.Cos(_cameraRotation),
+                                         use45DegreeCamera ? 1 : _cameraDistance / 3 - minZoom + cameraTargetOffset + cameraHeightOffset,
+                                         (float)Math.Sin(_cameraRotation)) *
+                                     _cameraDistance;
+
+            cameraService.Update(cameraPosition, realCameraTarget, _aspectRatio);
+
+            _world.Update(cameraService.View, cameraService.Projection, gameTime);
 
             if (_tracingVehicle != null)
                 _cameraTarget = _tracingVehicle.Position;
-
-            base.Update(gameTime);
         }
 
 
@@ -229,33 +247,15 @@ namespace AIWorld
             GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
 
-        private Matrix view;
-        private Matrix projection;
-
         protected override void Draw(GameTime gameTime)
         {
-            const float cameraTargetOffset = 0.2f;
-            const float cameraHeightOffset = 0.75f;
-            const bool use45DegreeCamera = false;
-
-            Vector3 realCameraTarget = _cameraTarget + new Vector3(0, cameraTargetOffset, 0);
-            Vector3 cameraPosition = realCameraTarget +
-                                     new Vector3((float) Math.Cos(_cameraRotation),
-                                         use45DegreeCamera ? 1 : _cameraDistance / 3 - minZoom + cameraTargetOffset + cameraHeightOffset,
-                                         (float) Math.Sin(_cameraRotation))*
-                                     _cameraDistance;
-
-            view = Matrix.CreateLookAt(cameraPosition, realCameraTarget, Vector3.Up);
-            projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), _aspectRatio, 0.1f,
-                10000.0f);
-
             _graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // basicEffect for line drawing...
             _basicEffect.VertexColorEnabled = true;
-            _basicEffect.World = Matrix.Identity;
-            _basicEffect.View = view;
-            _basicEffect.Projection = projection;
+            _basicEffect.World = cameraService.World;
+            _basicEffect.View = cameraService.View;
+            _basicEffect.Projection = cameraService.Projection;
 
             _basicEffect.CurrentTechnique.Passes[0].Apply();
 
@@ -278,20 +278,54 @@ namespace AIWorld
             }
 
             // Draw vehicles
-            _world.Render(GraphicsDevice, view, projection, gameTime);
+            _world.Render(GraphicsDevice, cameraService.View, cameraService.Projection, gameTime);
             // /
 
             // Draw tiles
 
             foreach (Plane t in _terrainTiles)
-                t.Render(GraphicsDevice, Matrix.Identity, view, projection);
+                t.Render(GraphicsDevice, Matrix.Identity, cameraService.View, cameraService.Projection);
             
             foreach (Plane t in _mainRoad.Planes)
-                t.Render(GraphicsDevice, Matrix.Identity, view, projection);
+                t.Render(GraphicsDevice, Matrix.Identity, cameraService.View, cameraService.Projection);
             
             // /
 
             base.Draw(gameTime);
         }
+    }
+
+    interface ICameraService
+    {
+        Matrix World { get; }
+        Matrix View { get; }
+        Matrix Projection { get; }
+
+        void Update(Vector3 cameraPosition, Vector3 cameraTargetPosition, float aspectRatio);
+    }
+
+    class CameraService : ICameraService
+    {
+        public CameraService()
+        {
+            World = Matrix.Identity;
+            View = Matrix.Identity;
+            Projection = Matrix.Identity;
+        }
+
+        #region Implementation of ICameraService
+
+        public Matrix World { get; private set; }
+        public Matrix View { get; private set; }
+        public Matrix Projection { get; private set; }
+
+        public void Update(Vector3 cameraPosition, Vector3 cameraTargetPosition, float aspectRatio)
+        {
+            View = Matrix.CreateLookAt(cameraPosition, cameraTargetPosition, Vector3.Up);
+            Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), aspectRatio, 0.1f,
+                10000.0f);
+        }
+
+        #endregion
     }
 }

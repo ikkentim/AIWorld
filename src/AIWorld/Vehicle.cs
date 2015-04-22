@@ -14,7 +14,7 @@
 // limitations under the License.
 
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -27,11 +27,11 @@ namespace AIWorld
     {
         private readonly AudioEmitter _audioEmitter;
         private readonly AudioListener _audioListener;
+        private readonly BasicEffect _basicEffect;
         private readonly Model _model;
         private readonly Road _road;
         private readonly SoundEffectInstance _soundEffectInstance;
         private int _targetnode;
-        private BasicEffect _basicEffect;
 
         public Vehicle(Vector3 position, GraphicsDevice graphicsDevice, SoundEffect engine, ContentManager content,
             Road road)
@@ -69,6 +69,15 @@ namespace AIWorld
             _soundEffectInstance.Play();
         }
 
+        private float DetectionBoxLength
+        {
+            get
+            {
+                const float minimumLength = 0.75f;
+                return minimumLength + (Velocity.Length()/MaxSpeed)*minimumLength;
+            }
+        }
+
         private void UpdateAudioPosition(Matrix view)
         {
             Vector3 cpos = Matrix.Invert(view).Translation;
@@ -104,7 +113,7 @@ namespace AIWorld
 
         private void UpdateTarget()
         {
-            if ((Position - _road.RightNodes[_targetnode]).Length() < 0.6f)
+            if ((Position - _road.RightNodes[_targetnode]).Length() < 0.8f)
             {
                 _targetnode++;
                 _targetnode %= _road.Nodes.Length;
@@ -113,8 +122,7 @@ namespace AIWorld
 
         private Vector3 Seek(Vector3 target)
         {
-            Vector3 desiredVelocity = Vector3.Normalize(target - Position)*MaxSpeed;
-            return desiredVelocity - Velocity;
+            return (target - Position).Truncate(MaxSpeed) - Velocity;
         }
 
         private Vector3 Arrive(Vector3 target, int decel)
@@ -138,123 +146,92 @@ namespace AIWorld
 
         private Vector3 ToLocalSpace(Vector3 point)
         {
-            var tx = -Vector2.Dot(new Vector2(Position.X, Position.Z), new Vector2(Heading.X, Heading.Z));
-            var ty = -Vector2.Dot(new Vector2(Position.X, Position.Z), new Vector2(Side.X, Side.Z));
+            var tx = -Vector3.Dot(Position, Heading);
+            var ty = -Vector3.Dot(Position, Vector3.Up);
+            var tz = -Vector3.Dot(Position, Side);
 
-            Matrix transformation = new Matrix(Heading.X, Side.X, 0, 0, Heading.Z, Side.Z, 0, 0, 0, 0, 0, 0, tx, ty, 0,
-                0);
-
-            var tmp = Vector2.Transform(new Vector2(point.X, point.Z), transformation);
-            return new Vector3(tmp.X, 0, tmp.Y);
+            return Vector3.Transform(point,
+                new Matrix(Heading.X, 0, Side.X, 0, Heading.Y, 1, Side.Y, 0, Heading.Z, 0, Side.Z, 0, tx, ty, tz, 0));
         }
 
         private Vector3 VectorToWorldSpace(Vector3 vec)
         {
-            Matrix transformation = Matrix.Identity;
-
-            Matrix mat = Matrix.Identity;
-            mat.M11 = Heading.X;
-            mat.M12 = Side.X;
-            mat.M21 = Heading.Z;
-            mat.M22 = Side.Z;
-
-            transformation *= mat;
-
-            var tmp = Vector2.Transform(new Vector2(vec.X, vec.Z), transformation);
-            return new Vector3(tmp.X, 0, tmp.Y);
+            return Vector3.Transform(vec,
+                Matrix.Identity*
+                new Matrix(Heading.X, 0, Side.X, 0, Heading.Y, 1, Side.Y, 0, Heading.Z, 0, Side.Z, 0, 0, 0, 0, 0));
         }
+
+        private Vector3 touch;
+        private bool istouch;
 
         private Vector3 AvoidObstacles(GameWorld world)
         {
-            var bLength = DetectionBoxLength;
+            float bLength = DetectionBoxLength;
             const float aproxMaxObjectSize = 1.0f;
 
-            var entities =
+            IEnumerable<IEntity> entities =
                 world.Entities.Query(new AABB(Position, new Vector3(bLength + aproxMaxObjectSize)))
-                    .Where(e => e != this &&  (e.Position - Position).Length() < e.Size + bLength);
+                    .Where(e => e != this && (e.Position - Position).Length() < e.Size + bLength);
 
             IEntity closest = null;
             float closestDistance = float.MaxValue;
             Vector3 localPositionOfClosestPoint = Vector3.Zero;
 
-            foreach (var e in entities)
+            foreach (IEntity e in entities)
             {
-                //Console.WriteLine("Hit found");
-                var localPoint = ToLocalSpace(e.Position);
-                //Console.WriteLine("Local point: {0}", localPoint);
+                Vector3 localPoint = ToLocalSpace(e.Position);
                 if (localPoint.X > 0)
                 {
-                    float expRadius = e.Size + Size;
+                    float combinedSize = e.Size + Size;
 
-                    if (Math.Abs(localPoint.Y) < expRadius)
+                    if (Math.Abs(localPoint.Z) < combinedSize)
                     {
-                        //Console.WriteLine("is within range of path");
-                        float cx = localPoint.X;
-                        float cy = localPoint.Y;
+                        var sqrtpart = (float)Math.Sqrt(combinedSize * combinedSize - localPoint.Z * localPoint.Z);
 
-                        var sqrtpart = (float) Math.Sqrt(expRadius*expRadius - cy*cy);
-
-                        var ip = cx - sqrtpart;
-
-                        if (ip <= 0.0)
-                        {
-                            ip = cx + sqrtpart;
-                        }
-
+                        float ip = sqrtpart <= localPoint.X ? localPoint.X - sqrtpart : localPoint.X + sqrtpart;
+                        
                         if (ip < closestDistance)
                         {
-                            //Console.WriteLine("is closer!!!");
                             closestDistance = ip;
                             closest = e;
                             localPositionOfClosestPoint = localPoint;
                         }
-                    } 
+                    }
                 }
             }
+
+            // debug value
+            istouch = closest != null;
+            touch = VectorToWorldSpace(localPositionOfClosestPoint);
 
             if (closest == null)
                 return Vector3.Zero;
 
-            var force = Vector3.Zero;
+            float multiplier = 1 + (bLength - localPositionOfClosestPoint.X)/bLength;
 
-            var mp = 1 + (bLength - localPositionOfClosestPoint.X)/bLength;
+            const float brakingWeight = 0.2f;
 
-            force.Z = closest.Size - localPositionOfClosestPoint.Z*mp;
-
-            const float brakingWeight = 0.02f;
-
-            force.X = (closest.Size - localPositionOfClosestPoint.X)*brakingWeight;
-
-            //Debug.WriteLine("from {0}", force);
-            var wf = VectorToWorldSpace(force);
-
-            //Debug.WriteLine(wf);
-            return wf;
+            return
+                VectorToWorldSpace(new Vector3((closest.Size - localPositionOfClosestPoint.X)*brakingWeight, 0,
+                    closest.Size - localPositionOfClosestPoint.Z*multiplier));
         }
 
         private Vector3 CalculateSteeringForce(GameWorld world)
         {
             Vector3 target = _road.RightNodes[_targetnode];
 
-            Vector3 force = Seek(target)*0.3f;
-            force += AvoidObstacles(world)*0.3f;
+            Vector3 force = Seek(target)*1.0f;
+            force += AvoidObstacles(world)*0.75f;
 
             return force.Truncate(MaxForce);
         }
 
-        private float DetectionBoxLength
-        {
-            get
-            {
-                const float minimumLength = 0.75f;
-                return minimumLength + (Velocity.Length()/MaxSpeed)*minimumLength;
-            }
-        }
         private void Line(GraphicsDevice graphicsDevice, Vector3 a, Vector3 b, Color c)
         {
-            var vertices = new[] { new VertexPositionColor(a, c), new VertexPositionColor(b, c) };
+            var vertices = new[] {new VertexPositionColor(a, c), new VertexPositionColor(b, c)};
             graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
+
         #region Implementation of IEntity
 
         public Vector3 Position { get; private set; }
@@ -296,6 +273,11 @@ namespace AIWorld
 
             Line(graphicsDevice, Heading*DetectionBoxLength + Position,
                 Heading*DetectionBoxLength + Position + Vector3.Up, Color.Blue);
+
+            if(istouch)
+            Line(graphicsDevice, Position + touch, Position + touch + Vector3.Up * 3, Color.Green);
+
+
         }
 
         #endregion

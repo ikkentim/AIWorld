@@ -19,6 +19,12 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld
 {
+    interface IGameWorld
+    {
+        QuadTree Entities { get; }
+
+    }
+
     internal class GameWorld
     {
         private readonly QuadTree _entities = new BoundlessQuadTree();

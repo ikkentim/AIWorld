@@ -21,7 +21,7 @@ namespace AIWorld
 
         public static Vector3 Truncate(this Vector3 point, float limit)
         {
-                return point.Length() > limit ? Vector3.Normalize(point)*limit : point;
+                return point.LengthSquared() > limit*limit ? Vector3.Normalize(point)*limit : point;
         }
     }
 }
