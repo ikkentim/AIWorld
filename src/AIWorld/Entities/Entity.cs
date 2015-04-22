@@ -1,4 +1,4 @@
-﻿// AIWorld
+// AIWorld
 // Copyright 2015 Tim Potze
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +15,19 @@
 
 using Microsoft.Xna.Framework;
 
-namespace AIWorld
+namespace AIWorld.Entities
 {
-    internal interface IMovingEntity : IEntity
+    public abstract class Entity : DrawableGameComponent, IEntity
     {
-        Vector3 Velocity { get; }
-        float Mass { get; }
-        Vector3 Heading { get; }
-        Vector3 Side { get; }
-        float MaxSpeed { get; }
-        float MaxForce { get; }
-        float MaxTurnRate { get; }
+        protected Entity(Game game) : base(game)
+        {
+        }
+
+        #region Implementation of IEntity
+
+        public virtual Vector3 Position { get; protected set; }
+        public virtual float Size { get; protected set; }
+
+        #endregion
     }
 }

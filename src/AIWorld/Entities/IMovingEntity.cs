@@ -14,15 +14,17 @@
 // limitations under the License.
 
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
-namespace AIWorld
+namespace AIWorld.Entities
 {
-    internal interface IEntity
+    public interface IMovingEntity : IEntity
     {
-        Vector3 Position { get; }
-        float Size { get; set; }
-        void Update(GameWorld world, Matrix view, Matrix projection, GameTime gameTime);
-        void Render(GraphicsDevice graphicsDevice, Matrix view, Matrix projection, GameTime gameTime);
+        Vector3 Velocity { get; }
+        float Mass { get; }
+        Vector3 Heading { get; }
+        Vector3 Side { get; }
+        float MaxSpeed { get; }
+        float MaxForce { get; }
+        float MaxTurnRate { get; }
     }
 }

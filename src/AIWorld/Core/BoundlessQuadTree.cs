@@ -17,22 +17,22 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using AIWorld.Entities;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld
 {
-    internal class BoundlessQuadTree : QuadTree
+    public class BoundlessQuadTree : QuadTree
     {
         private const float Size = 20;
+        private readonly List<QuadTree> _parts = new List<QuadTree>();
 
-        #region Overrides of QuadTree
-
-        protected override IEnumerable<QuadTree> Parts
+        public BoundlessQuadTree()
+            : base(new AABB())
         {
-            get { return _parts; }
         }
 
-        private static float GetValueForAxis(float value, float size)
+        private static float GetQuadTreePositionForPosition(float value, float size)
         {
             if (value < 0)
             {
@@ -48,25 +48,45 @@ namespace AIWorld
             }
         }
 
-        protected override void DoInsert(IEntity entity)
+        public void FixPositions()
+        {
+            foreach (var entity in Parts.SelectMany(part => part.RemoveEntitiesOutsideBoundaries(this)))
+            {
+                Add(entity);
+            }
+        }
+
+        #region Overrides of QuadTree
+
+        public override IEnumerable<IEntity> RemoveEntitiesOutsideBoundaries(QuadTree partentTree)
+        {
+            return null;
+        }
+
+        protected override IEnumerable<QuadTree> Parts
+        {
+            get { return _parts; }
+        }
+
+        public override void Add(IEntity entity)
         {
             QuadTree part = Parts.FirstOrDefault(p => p.ContainsPoint(entity.Position));
 
             if (part != null)
             {
-                part.Insert(entity);
+                part.Add(entity);
                 return;
             }
 
             Vector3 vec = entity.Position;
 
-            vec.X = GetValueForAxis(vec.X, Size);
-            vec.Y = GetValueForAxis(vec.Y, Size);
-            vec.Z = GetValueForAxis(vec.Z, Size);
+            vec.X = GetQuadTreePositionForPosition(vec.X, Size);
+            vec.Y = GetQuadTreePositionForPosition(vec.Y, Size);
+            vec.Z = GetQuadTreePositionForPosition(vec.Z, Size);
 
             part = new QuadTree(new AABB(vec, new Vector3(Size)/2));
             _parts.Add(part);
-            part.Insert(entity);
+            part.Add(entity);
         }
 
         public override bool ContainsPoint(Vector3 point)
@@ -79,13 +99,11 @@ namespace AIWorld
             throw new NotImplementedException("BoundlessQuadTree does not implement Subdivide");
         }
 
-        #region Overrides of QuadTree
-
-        protected override int DoRemove(IEntity entity)
+        public override int Remove(IEntity entity)
         {
             QuadTree part = Parts.FirstOrDefault(p => p.ContainsEntity(entity));
 
-            base.DoRemove(entity);
+            base.Remove(entity);
 
             Debug.Assert(part != null);
 
@@ -96,11 +114,7 @@ namespace AIWorld
             return 0;
         }
 
-        #endregion
-
-        #region Overrides of QuadTree
-
-        protected override QuadTree DoFindQuadTreeForEntity(IEntity entity)
+        public override QuadTree FindQuadTreeForEntity(IEntity entity)
         {
             QuadTree part = Parts.FirstOrDefault(p => p.ContainsPoint(entity.Position));
 
@@ -108,14 +122,5 @@ namespace AIWorld
         }
 
         #endregion
-
-        #endregion
-
-        private readonly List<QuadTree> _parts = new List<QuadTree>();
-
-        public BoundlessQuadTree()
-            : base(new AABB())
-        {
-        }
     }
 }

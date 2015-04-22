@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AIWorld.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld
 {
-    class Road
+    public class Road
     {
         public Vector3[] Nodes { get; private set; }
 

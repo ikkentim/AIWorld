@@ -13,34 +13,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using AIWorld.Services;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace AIWorld
+namespace AIWorld.Entities
 {
-    internal class House : IEntity
+    public class House : Entity
     {
         private readonly float _angle;
         private readonly Model _model;
+        private readonly ICameraService _cameraService;
 
-        public House(Vector3 position, Model model, float angle)
+        public House(Vector3 position, Game game, float angle) : base(game)
         {
             Position = position;
-            _model = model;
+            _model = game.Content.Load<Model>(@"models/house01");
             _angle = angle;
             Size = 0.35f;
+
+            _cameraService = game.Services.GetService<ICameraService>();
         }
 
         #region Implementation of IEntity
 
-        public Vector3 Position { get; private set; }
-        public float Size { get; set; }
+        public override Vector3 Position { get; protected set; }
+        public override float Size { get; protected set; }
 
-        public void Update(GameWorld world, Matrix view, Matrix projection, GameTime gameTime)
-        {
-        }
+        #endregion
 
-        public void Render(GraphicsDevice graphicsDevice, Matrix view, Matrix projection, GameTime gameTime)
+        #region Overrides of DrawableGameComponent
+
+        public override void Draw(GameTime gameTime)
         {
             var transforms = new Matrix[_model.Bones.Count];
             _model.CopyAbsoluteBoneTransformsTo(transforms);
@@ -51,12 +55,13 @@ namespace AIWorld
                 {
                     effect.World = transforms[mesh.ParentBone.Index]*Matrix.CreateRotationY(_angle)*
                                    Matrix.CreateTranslation(Position);
-                    effect.View = view;
-                    effect.Projection = projection;
+                    effect.View = _cameraService.View;
+                    effect.Projection = _cameraService.Projection;
                     effect.EnableDefaultLighting();
                 }
                 mesh.Draw();
             }
+            base.Draw(gameTime);
         }
 
         #endregion

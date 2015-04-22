@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld
 {
-    internal class Plane
+    public class Plane
     {
         private static readonly short[] Indexes = {0, 1, 2, 2, 1, 3};
 

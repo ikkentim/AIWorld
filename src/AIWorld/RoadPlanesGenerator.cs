@@ -14,12 +14,13 @@
 // limitations under the License.
 
 using System.Collections.Generic;
+using AIWorld.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld
 {
-    internal class RoadPlanesGenerator
+    public class RoadPlanesGenerator
     {
         public static IEnumerable<Plane> Generate(GraphicsDevice graphicsDevice, Texture2D texture, Vector3[] roadNodes)
         {

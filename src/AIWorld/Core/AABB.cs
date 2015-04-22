@@ -17,7 +17,7 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld
 {
-    internal struct AABB
+    public struct AABB
     {
         public AABB(Vector3 center, Vector3 halfDimension) : this()
         {
@@ -26,6 +26,7 @@ namespace AIWorld
         }
 
         public Vector3 Center { get; private set; }
+
         public Vector3 HalfDimension { get; private set; }
 
         public bool ContainsPoint(Vector3 point)

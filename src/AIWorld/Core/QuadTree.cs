@@ -17,18 +17,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using AIWorld.Entities;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld
 {
-    internal class QuadTree : IEnumerable<IEntity>
+    public class QuadTree : IEnumerable<IEntity>
     {
         private const int Capacity = 5;
-
         private readonly IEntity[] _entities = new IEntity[Capacity];
-
         private int _count;
-
         private QuadTree[] _parts;
 
         public QuadTree(AABB boundaries)
@@ -86,7 +84,7 @@ namespace AIWorld
 
         protected virtual void Subdivide()
         {
-            Vector3 half = Boundaries.HalfDimension/2;
+            var half = Boundaries.HalfDimension/2;
 
             _parts = new[]
             {
@@ -113,8 +111,11 @@ namespace AIWorld
                 yield return e;
         }
 
-        protected virtual void DoInsert(IEntity entity)
+        public virtual void Add(IEntity entity)
         {
+            if (entity == null) throw new ArgumentNullException("entity");
+            if (!ContainsPoint(entity.Position)) throw new ArgumentException("entity outside of boundaries");
+
             if (_count < Capacity)
             {
                 _entities[_count++] = entity;
@@ -124,19 +125,14 @@ namespace AIWorld
             if (Parts == null)
                 Subdivide();
 
-            Parts.First(p => p.ContainsPoint(entity.Position)).DoInsert(entity);
+            Parts.First(p => p.ContainsPoint(entity.Position)).Add(entity);
         }
 
-        public void Insert(IEntity entity)
+        public virtual QuadTree FindQuadTreeForEntity(IEntity entity)
         {
             if (entity == null) throw new ArgumentNullException("entity");
             if (!ContainsPoint(entity.Position)) throw new ArgumentException("entity outside of boundaries");
 
-            DoInsert(entity);
-        }
-
-        protected virtual QuadTree DoFindQuadTreeForEntity(IEntity entity)
-        {
             if (_count != Capacity) return this;
 
             if (Parts == null) return this;
@@ -144,19 +140,13 @@ namespace AIWorld
             if (_count == Capacity && _entities.Contains(entity))
                 return this;
 
-            return Parts.First(p => p.ContainsPoint(entity.Position)).DoFindQuadTreeForEntity(entity);
+            return Parts.First(p => p.ContainsPoint(entity.Position)).FindQuadTreeForEntity(entity);
         }
 
-        public QuadTree FindQuadTreeForEntity(IEntity entity)
+        public virtual int Remove(IEntity entity)
         {
             if (entity == null) throw new ArgumentNullException("entity");
-            if (!ContainsPoint(entity.Position)) throw new ArgumentException("entity outside of boundaries");
 
-            return DoFindQuadTreeForEntity(entity);
-        }
-
-        protected virtual int DoRemove(IEntity entity)
-        {
             for (int i = 0; i < _count; i++)
             {
                 if (_entities[i] != entity) continue;
@@ -169,7 +159,7 @@ namespace AIWorld
             }
 
             if (Parts != null &&
-                Parts.Where(p => p.ContainsEntity(entity)).Any(p => p.DoRemove(entity) == 0) &&
+                Parts.Where(p => p.ContainsEntity(entity)).Any(p => p.Remove(entity) == 0) &&
                 _parts != null &&
                 _parts.All(q => q.IsEmpty))
             {
@@ -178,12 +168,41 @@ namespace AIWorld
             return 0;
         }
 
-        public void Remove(IEntity entity)
+        public virtual IEnumerable<IEntity> RemoveEntitiesOutsideBoundaries(QuadTree partentTree)
         {
-            if (entity == null) throw new ArgumentNullException("entity");
+            if (partentTree == null) throw new ArgumentNullException("partentTree");
 
-            DoRemove(entity);
+            foreach (var entity in _entities.Where(entity => !ContainsPoint(entity.Position)).ToArray())
+            {
+                Remove(entity);
+                yield return entity;
+            }
+
+            if (Parts == null) yield break;
+
+            foreach (var element in Parts.SelectMany(p => p.RemoveEntitiesOutsideBoundaries(this)))
+            {
+                if (ContainsPoint(element.Position))
+                    Add(element);
+                else
+                    yield return element;
+            }
         }
+
+        #region Overrides of Object
+
+        /// <summary>
+        ///     Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>
+        ///     A string that represents the current object.
+        /// </returns>
+        public override string ToString()
+        {
+            return Boundaries + " ZZ" + (Boundaries.Center.Z + Boundaries.HalfDimension.Z);
+        }
+
+        #endregion
 
         #region Implementation of IEnumerable
 
@@ -213,21 +232,6 @@ namespace AIWorld
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
-        }
-
-        #endregion
-
-        #region Overrides of Object
-
-        /// <summary>
-        ///     Returns a string that represents the current object.
-        /// </summary>
-        /// <returns>
-        ///     A string that represents the current object.
-        /// </returns>
-        public override string ToString()
-        {
-            return Boundaries + " ZZ" + (Boundaries.Center.Z + Boundaries.HalfDimension.Z);
         }
 
         #endregion

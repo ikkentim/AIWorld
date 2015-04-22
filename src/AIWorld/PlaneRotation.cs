@@ -1,6 +1,6 @@
 ﻿namespace AIWorld
 {
-    internal enum PlaneRotation
+    public enum PlaneRotation
     {
         None = 0,
         Clockwise90Degrees = 3,

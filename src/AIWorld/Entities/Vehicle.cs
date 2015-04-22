@@ -16,41 +16,56 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AIWorld.Helpers;
+using AIWorld.Services;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace AIWorld
+namespace AIWorld.Entities
 {
-    internal class Vehicle : IMovingEntity
+    public class Vehicle : Entity, IMovingEntity
     {
+        private const float MinimumDetectionBoxLength = 0.75f;
+        private const float ArriveDecelerationTweaker = 0.5f;
+        private const float AproxMaxObjectSize = 1.0f;
+        private const float BreakingWeight = 0.005f;
         private readonly AudioEmitter _audioEmitter;
         private readonly AudioListener _audioListener;
         private readonly BasicEffect _basicEffect;
+        private readonly ICameraService _cameraService;
+        private readonly IGameWorldService _gameWorldService;
         private readonly Model _model;
         private readonly Road _road;
         private readonly SoundEffectInstance _soundEffectInstance;
+        private bool _istouch;
         private int _targetnode;
+        private bool _targetnodeisright = true;
+        private Vector3 _touch;
 
-        public Vehicle(Vector3 position, GraphicsDevice graphicsDevice, SoundEffect engine, ContentManager content,
-            Road road)
+        public Vehicle(Vector3 position, Game game, Road road) : base(game)
         {
             _road = road;
-            _model = content.Load<Model>("models/car");
-            _basicEffect = new BasicEffect(graphicsDevice);
             Position = position;
+
             MaxTurnRate = 2;
             MaxForce = 15.0f;
             MaxSpeed = 1.2f;
             Mass = 0.35f;
             Size = 0.2f;
+
+            // Store parameters
+            _model = game.Content.Load<Model>("models/car");
+            _basicEffect = new BasicEffect(game.GraphicsDevice);
+            _cameraService = game.Services.GetService<ICameraService>();
+            _gameWorldService = game.Services.GetService<IGameWorldService>();
+            // Setup engine sound
             _audioListener = new AudioListener
             {
                 Position = Vector3.Zero,
                 Up = Vector3.Up,
                 Velocity = Vector3.Zero,
-                Forward = Vector3.Forward,
+                Forward = Vector3.Forward
             };
 
             _audioEmitter = new AudioEmitter
@@ -59,10 +74,10 @@ namespace AIWorld
                 Forward = Heading,
                 Position = Position,
                 Up = Vector3.Up,
-                Velocity = Velocity,
+                Velocity = Velocity
             };
 
-            _soundEffectInstance = engine.CreateInstance();
+            _soundEffectInstance = game.Content.Load<SoundEffect>(@"sounds/engine").CreateInstance();
             _soundEffectInstance.IsLooped = true;
             _soundEffectInstance.Volume = 0.2f;
             _soundEffectInstance.Apply3D(_audioListener, _audioEmitter);
@@ -71,18 +86,15 @@ namespace AIWorld
 
         private float DetectionBoxLength
         {
-            get
-            {
-                const float minimumLength = 0.75f;
-                return minimumLength + (Velocity.Length()/MaxSpeed)*minimumLength;
-            }
+            get { return MinimumDetectionBoxLength + (Velocity.Length()/MaxSpeed)*MinimumDetectionBoxLength; }
         }
 
-        private void UpdateAudioPosition(Matrix view)
+        private void UpdateAudioPosition()
         {
-            Vector3 cpos = Matrix.Invert(view).Translation;
+            Vector3 cpos = Matrix.Invert(_cameraService.View).Translation;
             _audioListener.Position = cpos;
-            _audioListener.Forward = new Vector3(view.M31, view.M32, view.M33); // Think this is the right col?
+            _audioListener.Forward = new Vector3(_cameraService.View.M31, _cameraService.View.M32,
+                _cameraService.View.M33); // Think this is the right col?
             _audioEmitter.Forward = Heading;
             _audioEmitter.Position = Position;
             _audioEmitter.Velocity = Velocity;
@@ -92,10 +104,10 @@ namespace AIWorld
             _soundEffectInstance.Apply3D(_audioListener, _audioEmitter);
         }
 
-        private void UpdatePosition(GameWorld world, GameTime gameTime)
+        private void UpdatePosition(GameTime gameTime)
         {
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
-            Vector3 steeringForce = CalculateSteeringForce(world);
+            Vector3 steeringForce = CalculateSteeringForce();
 
             Vector3 acceleration = steeringForce/Mass;
             Velocity += acceleration*deltaTime;
@@ -113,10 +125,16 @@ namespace AIWorld
 
         private void UpdateTarget()
         {
-            if ((Position - _road.RightNodes[_targetnode]).Length() < 0.8f)
+            if (
+                (Position - (_targetnodeisright ? _road.RightNodes[_targetnode] : _road.LeftNodes[_targetnode])).Length() <
+                0.8f)
             {
                 _targetnode++;
-                _targetnode %= _road.Nodes.Length;
+                if (_targetnode >= _road.Nodes.Length)
+                {
+                    _targetnodeisright = !_targetnodeisright;
+                    _targetnode = 0;
+                }
             }
         }
 
@@ -132,9 +150,7 @@ namespace AIWorld
 
             if (distance > 0.00001)
             {
-                const float decelerationTweaker = 0.5f;
-
-                float speed = distance/(decel*decelerationTweaker);
+                float speed = distance/(decel*ArriveDecelerationTweaker);
                 speed = Math.Min(speed, MaxSpeed);
                 Vector3 desiredVelocity = toTarget*speed/distance;
 
@@ -146,9 +162,9 @@ namespace AIWorld
 
         private Vector3 ToLocalSpace(Vector3 point)
         {
-            var tx = -Vector3.Dot(Position, Heading);
-            var ty = -Vector3.Dot(Position, Vector3.Up);
-            var tz = -Vector3.Dot(Position, Side);
+            float tx = -Vector3.Dot(Position, Heading);
+            float ty = -Vector3.Dot(Position, Vector3.Up);
+            float tz = -Vector3.Dot(Position, Side);
 
             return Vector3.Transform(point,
                 new Matrix(Heading.X, 0, Side.X, 0, Heading.Y, 1, Side.Y, 0, Heading.Z, 0, Side.Z, 0, tx, ty, tz, 0));
@@ -161,16 +177,12 @@ namespace AIWorld
                 new Matrix(Heading.X, 0, Side.X, 0, Heading.Y, 1, Side.Y, 0, Heading.Z, 0, Side.Z, 0, 0, 0, 0, 0));
         }
 
-        private Vector3 touch;
-        private bool istouch;
-
-        private Vector3 AvoidObstacles(GameWorld world)
+        private Vector3 AvoidObstacles()
         {
             float bLength = DetectionBoxLength;
-            const float aproxMaxObjectSize = 1.0f;
 
             IEnumerable<IEntity> entities =
-                world.Entities.Query(new AABB(Position, new Vector3(bLength + aproxMaxObjectSize)))
+                _gameWorldService.Entities.Query(new AABB(Position, new Vector3(bLength + AproxMaxObjectSize)))
                     .Where(e => e != this && (e.Position - Position).Length() < e.Size + bLength);
 
             IEntity closest = null;
@@ -186,10 +198,10 @@ namespace AIWorld
 
                     if (Math.Abs(localPoint.Z) < combinedSize)
                     {
-                        var sqrtpart = (float)Math.Sqrt(combinedSize * combinedSize - localPoint.Z * localPoint.Z);
+                        var sqrtpart = (float) Math.Sqrt(combinedSize*combinedSize - localPoint.Z*localPoint.Z);
 
                         float ip = sqrtpart <= localPoint.X ? localPoint.X - sqrtpart : localPoint.X + sqrtpart;
-                        
+
                         if (ip < closestDistance)
                         {
                             closestDistance = ip;
@@ -201,52 +213,50 @@ namespace AIWorld
             }
 
             // debug value
-            istouch = closest != null;
-            touch = VectorToWorldSpace(localPositionOfClosestPoint);
+            _istouch = closest != null;
+            _touch = VectorToWorldSpace(localPositionOfClosestPoint);
 
             if (closest == null)
                 return Vector3.Zero;
 
             float multiplier = 1 + (bLength - localPositionOfClosestPoint.X)/bLength;
 
-            const float brakingWeight = 0.2f;
 
             return
-                VectorToWorldSpace(new Vector3((closest.Size - localPositionOfClosestPoint.X)*brakingWeight, 0,
+                VectorToWorldSpace(new Vector3((closest.Size - localPositionOfClosestPoint.X)*BreakingWeight, 0,
                     closest.Size - localPositionOfClosestPoint.Z*multiplier));
         }
 
-        private Vector3 CalculateSteeringForce(GameWorld world)
+        private Vector3 CalculateSteeringForce()
         {
-            Vector3 target = _road.RightNodes[_targetnode];
+            Vector3 target = _targetnodeisright ? _road.RightNodes[_targetnode] : _road.LeftNodes[_targetnode];
 
             Vector3 force = Seek(target)*1.0f;
-            force += AvoidObstacles(world)*0.75f;
+            force += AvoidObstacles()*0.75f;
 
             return force.Truncate(MaxForce);
         }
 
-        private void Line(GraphicsDevice graphicsDevice, Vector3 a, Vector3 b, Color c)
+        private void Line(Vector3 a, Vector3 b, Color c)
         {
             var vertices = new[] {new VertexPositionColor(a, c), new VertexPositionColor(b, c)};
-            graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
+            Game.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
 
-        #region Implementation of IEntity
+        #region Overrides of GameComponent
 
-        public Vector3 Position { get; private set; }
-
-        public float Size { get; set; }
-
-        public void Update(GameWorld world, Matrix view, Matrix projection, GameTime gameTime)
+        public override void Update(GameTime gameTime)
         {
-            UpdatePosition(world, gameTime);
-            UpdateAudioPosition(view);
+            UpdatePosition(gameTime);
+            UpdateAudioPosition();
             UpdateTarget();
         }
 
+        #endregion
 
-        public void Render(GraphicsDevice graphicsDevice, Matrix view, Matrix projection, GameTime gameTime)
+        #region Overrides of DrawableGameComponent
+
+        public override void Draw(GameTime gameTime)
         {
             var transforms = new Matrix[_model.Bones.Count];
             _model.CopyAbsoluteBoneTransformsTo(transforms);
@@ -257,8 +267,8 @@ namespace AIWorld
                 {
                     effect.World = transforms[mesh.ParentBone.Index]*Matrix.CreateRotationY(Heading.GetYAngle())*
                                    Matrix.CreateTranslation(Position);
-                    effect.View = view;
-                    effect.Projection = projection;
+                    effect.View = _cameraService.View;
+                    effect.Projection = _cameraService.Projection;
                     effect.EnableDefaultLighting();
                 }
                 mesh.Draw();
@@ -266,19 +276,27 @@ namespace AIWorld
 
             _basicEffect.VertexColorEnabled = true;
             _basicEffect.World = Matrix.Identity;
-            _basicEffect.View = view;
-            _basicEffect.Projection = projection;
+            _basicEffect.View = _cameraService.View;
+            _basicEffect.Projection = _cameraService.Projection;
 
             _basicEffect.CurrentTechnique.Passes[0].Apply();
 
-            Line(graphicsDevice, Heading*DetectionBoxLength + Position,
+            Line(Heading*DetectionBoxLength + Position,
                 Heading*DetectionBoxLength + Position + Vector3.Up, Color.Blue);
 
-            if(istouch)
-            Line(graphicsDevice, Position + touch, Position + touch + Vector3.Up * 3, Color.Green);
+            if (_istouch)
+                Line(Position + _touch, Position + _touch + Vector3.Up*3, Color.Green);
 
-
+            base.Draw(gameTime);
         }
+
+        #endregion
+
+        #region Implementation of IEntity
+
+        public override Vector3 Position { get; protected set; }
+
+        public override float Size { get; protected set; }
 
         #endregion
 
