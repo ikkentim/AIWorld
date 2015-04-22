@@ -32,7 +32,9 @@ namespace AIWorld
         private readonly SoundEffectInstance _soundEffectInstance;
         private int _targetnode;
         private BasicEffect _basicEffect;
-        public Vehicle(Vector3 position, GraphicsDevice graphicsDevice, SoundEffect engine, ContentManager content, Road road)
+
+        public Vehicle(Vector3 position, GraphicsDevice graphicsDevice, SoundEffect engine, ContentManager content,
+            Road road)
         {
             _road = road;
             _model = content.Load<Model>("models/car");
@@ -136,84 +138,30 @@ namespace AIWorld
 
         private Vector3 ToLocalSpace(Vector3 point)
         {
-            //create a transformation matrix
-            float[,] matTransform = new float[3,3];
-            matTransform[0, 0] = 1;
-            matTransform[1, 1] = 1;
-            matTransform[2, 2] = 1;
+            var tx = -Vector2.Dot(new Vector2(Position.X, Position.Z), new Vector2(Heading.X, Heading.Z));
+            var ty = -Vector2.Dot(new Vector2(Position.X, Position.Z), new Vector2(Side.X, Side.Z));
 
-            float Tx = -Vector2.Dot(new Vector2(Position.X, Position.Z), new Vector2(Heading.X, Heading.Z));
-            float Ty = -Vector2.Dot(new Vector2(Position.X, Position.Z), new Vector2(Side.X, Side.Z));
+            Matrix transformation = new Matrix(Heading.X, Side.X, 0, 0, Heading.Z, Side.Z, 0, 0, 0, 0, 0, 0, tx, ty, 0,
+                0);
 
-            //create the transformation matrix
-            matTransform[0, 0] = (Heading.X);
-            matTransform[0, 1] = (Side.X);
-            matTransform[1, 0] = (Heading.Z);
-            matTransform[1, 1] = (Side.Z);
-            matTransform[2, 0] = (Tx);
-            matTransform[2, 1] = (Ty);
-
-            //now transform the vertices
-            float tempX = (matTransform[0, 0] * point.X) + (matTransform[1, 0] * point.Z) + (matTransform[2, 0]);
-            float tempY = (matTransform[0, 1] * point.X) + (matTransform[1, 1] * point.Z) + (matTransform[2, 1]);
-
-            point.X = tempX;
-            point.Z = tempY;
-
-            return point;
+            var tmp = Vector2.Transform(new Vector2(point.X, point.Z), transformation);
+            return new Vector3(tmp.X, 0, tmp.Y);
         }
 
         private Vector3 VectorToWorldSpace(Vector3 vec)
         {
+            Matrix transformation = Matrix.Identity;
 
-            //create a transformation matrix
-            float[,] matTransform = new float[3, 3];
-            matTransform[0, 0] = 1;
-            matTransform[1, 1] = 1;
-            matTransform[2, 2] = 1;
+            Matrix mat = Matrix.Identity;
+            mat.M11 = Heading.X;
+            mat.M12 = Side.X;
+            mat.M21 = Heading.Z;
+            mat.M22 = Side.Z;
 
-            //rotate
-            //matTransform.Rotate(Heading, Side);
-            float[,] mat = new float[3, 3];
+            transformation *= mat;
 
-            mat[0,0] = Heading.X; mat[0,1] = Heading.Z; mat[0,2] = 0;
-
-            mat[1,0] = Side.X; mat[1,1] = Side.Z; mat[1,2] = 0;
-
-            mat[2,0] = 0; mat[2,1] = 0; mat[2,2] = 1;
-
-            //and multiply
-            //MatrixMultiply(mat);
-            float[,] mat_temp = new float[3, 3];
-
-            //first row
-            mat_temp[0, 0] = (matTransform[0, 0] * mat[0, 0]) + (matTransform[0, 1] * mat[1, 0]) + (matTransform[0, 2] * mat[2, 0]);
-            mat_temp[0, 1] = (matTransform[0, 0] * mat[0, 1]) + (matTransform[0, 1] * mat[1, 1]) + (matTransform[0, 2] * mat[2, 1]);
-            mat_temp[0, 2] = (matTransform[0, 0] * mat[0, 2]) + (matTransform[0, 1] * mat[1, 2]) + (matTransform[0, 2] * mat[2, 2]);
-
-            //second
-            mat_temp[1, 0] = (matTransform[1, 0] * mat[0, 0]) + (matTransform[1, 1] * mat[1, 0]) + (matTransform[1, 2] * mat[2, 0]);
-            mat_temp[1, 1] = (matTransform[1, 0] * mat[0, 1]) + (matTransform[1, 1] * mat[1, 1]) + (matTransform[1, 2] * mat[2, 1]);
-            mat_temp[1, 2] = (matTransform[1, 0] * mat[0, 2]) + (matTransform[1, 1] * mat[1, 2]) + (matTransform[1, 2] * mat[2, 2]);
-
-            //third
-            mat_temp[2, 0] = (matTransform[2, 0] * mat[0, 0]) + (matTransform[2, 1] * mat[1, 0]) + (matTransform[2, 2] * mat[2, 0]);
-            mat_temp[2, 1] = (matTransform[2, 0] * mat[0, 1]) + (matTransform[2, 1] * mat[1, 1]) + (matTransform[2, 2] * mat[2, 1]);
-            mat_temp[2, 2] = (matTransform[2, 0] * mat[0, 2]) + (matTransform[2, 1] * mat[1, 2]) + (matTransform[2, 2] * mat[2, 2]);
-
-            matTransform = mat_temp;
-
-            //now transform the vertices
-            //matTransform.TransformVector2Ds(vec);
-            float tempX = (matTransform[0,0] * vec.X) + (matTransform[1,0] * vec.Z) + (matTransform[2,0]);
-
-            float tempY = (matTransform[0,1] * vec.X) + (matTransform[1,1] * vec.Z) + (matTransform[2,1]);
-
-            vec.X = tempX;
-
-            vec.Z = tempY;
-
-            return vec;
+            var tmp = Vector2.Transform(new Vector2(vec.X, vec.Z), transformation);
+            return new Vector3(tmp.X, 0, tmp.Y);
         }
 
         private Vector3 AvoidObstacles(GameWorld world)
