@@ -221,7 +221,6 @@ namespace AIWorld.Entities
 
             float multiplier = 1 + (bLength - localPositionOfClosestPoint.X)/bLength;
 
-
             return
                 VectorToWorldSpace(new Vector3((closest.Size - localPositionOfClosestPoint.X)*BreakingWeight, 0,
                     closest.Size - localPositionOfClosestPoint.Z*multiplier));
@@ -231,8 +230,8 @@ namespace AIWorld.Entities
         {
             Vector3 target = _targetnodeisright ? _road.RightNodes[_targetnode] : _road.LeftNodes[_targetnode];
 
-            Vector3 force = Seek(target)*1.0f;
-            force += AvoidObstacles()*0.75f;
+            Vector3 force = Seek(target)*0.9f;
+            force += AvoidObstacles()*1.6f;
 
             return force.Truncate(MaxForce);
         }
@@ -286,6 +285,10 @@ namespace AIWorld.Entities
 
             if (_istouch)
                 Line(Position + _touch, Position + _touch + Vector3.Up*3, Color.Green);
+
+            Line(Position, Position + Side/3, Color.Red);
+            Line(Position, Position + Vector3.Up/3, Color.Green);
+            Line(Position, Position + Heading/3, Color.Blue);
 
             base.Draw(gameTime);
         }

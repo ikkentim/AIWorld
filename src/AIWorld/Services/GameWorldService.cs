@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
+using System.Collections.Generic;
 using AIWorld.Entities;
 using Microsoft.Xna.Framework;
 
@@ -21,10 +23,12 @@ namespace AIWorld.Services
     public class GameWorldService : GameComponent, IGameWorldService
     {
         private readonly BoundlessQuadTree _entities;
+        private readonly List<Road> _roads;
 
         public GameWorldService(Game game) : base(game)
         {
             _entities = new BoundlessQuadTree();
+            _roads = new List<Road>();
         }
 
         public QuadTree Entities
@@ -32,10 +36,23 @@ namespace AIWorld.Services
             get { return _entities; }
         }
 
+        public IEnumerable<Road> Roads
+        {
+            get { return _roads; }
+        }
+
         public void Add(Entity entity)
         {
+            if (entity == null) throw new ArgumentNullException("entity");
             Game.Components.Add(entity);
             Entities.Add(entity);
+        }
+
+        public void Add(Road road)
+        {
+            if (road == null) throw new ArgumentNullException("road");
+            Game.Components.Add(road);
+            _roads.Add(road);
         }
 
         #region Overrides of GameComponent

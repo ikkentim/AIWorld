@@ -2,26 +2,30 @@
 using System.Collections.Generic;
 using System.Linq;
 using AIWorld.Helpers;
+using AIWorld.Services;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld
 {
-    public class Road
+    public class Road : DrawableGameComponent
     {
+        private ICameraService _cameraService;
         public Vector3[] Nodes { get; private set; }
 
         public Vector3[] RightNodes { get; private set; }
         public Vector3[] LeftNodes { get; private set; }
 
-        public Plane[] Planes { get; private set; }
+        public QuadPlane[] QuadPlanes { get; private set; }
 
-        public Road(GraphicsDevice graphicsDevice, Texture2D texture, Vector3[] nodes)
+        public Road(Game game, Vector3[] nodes)
+            : base(game)
         {
-            if (graphicsDevice == null) throw new ArgumentNullException("graphicsDevice");
-            if (texture == null) throw new ArgumentNullException("texture");
+            if (game == null) throw new ArgumentNullException("game");
             if (nodes == null) throw new ArgumentNullException("nodes");
             if(nodes.Length < 2) throw new ArgumentException("nodes must contain 2 or more items");
+
+            _cameraService = game.Services.GetService<ICameraService>();
 
             Nodes = nodes;
             LeftNodes = new Vector3[nodes.Length];
@@ -86,7 +90,21 @@ namespace AIWorld
             }
 
 
-            Planes = RoadPlanesGenerator.Generate(graphicsDevice, texture, nodes).ToArray();
+            QuadPlanes =
+                RoadPlanesGenerator.Generate(game.GraphicsDevice, game.Content.Load<Texture2D>(@"textures/road"), nodes)
+                    .ToArray();
         }
+
+        #region Overrides of DrawableGameComponent
+
+        public override void Draw(GameTime gameTime)
+        {
+            foreach (QuadPlane t in QuadPlanes)
+                t.Render(GraphicsDevice, Matrix.Identity, _cameraService.View, _cameraService.Projection);
+
+            base.Draw(gameTime);
+        }
+
+        #endregion
     }
 }

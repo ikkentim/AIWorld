@@ -3,14 +3,14 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld
 {
-    public class Plane
+    public class QuadPlane
     {
         private static readonly short[] Indexes = {0, 1, 2, 2, 1, 3};
 
         private readonly BasicEffect _effect;
         private readonly VertexPositionNormalTexture[] _vertices;
 
-        public Plane(GraphicsDevice graphicsDevice, Vector3 position, float size, PlaneRotation textureRotation,
+        public QuadPlane(GraphicsDevice graphicsDevice, Vector3 position, float size, PlaneRotation textureRotation,
             Texture2D texture)
         {
             _effect = new BasicEffect(graphicsDevice) {TextureEnabled = true, Texture = texture};
@@ -42,7 +42,7 @@ namespace AIWorld
             _vertices[3].TextureCoordinate = corners[(1 + offset)%4];
         }
 
-        public Plane(GraphicsDevice graphicsDevice, Vector3 position, float width, float height, PlaneRotation textureRotation,
+        public QuadPlane(GraphicsDevice graphicsDevice, Vector3 position, float width, float height, PlaneRotation textureRotation,
             Texture2D texture)
         {
             _effect = new BasicEffect(graphicsDevice) { TextureEnabled = true, Texture = texture };
@@ -74,7 +74,7 @@ namespace AIWorld
             _vertices[3].TextureCoordinate = corners[(1 + offset) % 4];
         }
 
-        public Plane(GraphicsDevice graphicsDevice, Vector3 upperLeft, Vector3 upperRight, Vector3 lowerLeft,
+        public QuadPlane(GraphicsDevice graphicsDevice, Vector3 upperLeft, Vector3 upperRight, Vector3 lowerLeft,
             Vector3 lowerRight, PlaneRotation textureRotation,
             Texture2D texture)
         {

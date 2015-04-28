@@ -24,15 +24,24 @@ namespace AIWorld.Entities
         private readonly float _angle;
         private readonly Model _model;
         private readonly ICameraService _cameraService;
+        private readonly BasicEffect _basicEffect;
 
         public House(Vector3 position, Game game, float angle) : base(game)
         {
             Position = position;
-            _model = game.Content.Load<Model>(@"models/house01");
+            _model = game.Content.Load<Model>(@"models/house02");
             _angle = angle;
             Size = 0.35f;
 
+            _basicEffect = new BasicEffect(game.GraphicsDevice);
+
             _cameraService = game.Services.GetService<ICameraService>();
+        }
+
+        private void Line(Vector3 a, Vector3 b, Color c)
+        {
+            var vertices = new[] { new VertexPositionColor(a, c), new VertexPositionColor(b, c) };
+            Game.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
 
         #region Implementation of IEntity
@@ -61,6 +70,23 @@ namespace AIWorld.Entities
                 }
                 mesh.Draw();
             }
+
+
+            _basicEffect.VertexColorEnabled = true;
+            _basicEffect.World = Matrix.Identity;
+            _basicEffect.View = _cameraService.View;
+            _basicEffect.Projection = _cameraService.Projection;
+
+            _basicEffect.CurrentTechnique.Passes[0].Apply();
+
+            var szx = new Vector3(Size, 0, 0);
+            var szz = new Vector3(0, 0, Size);
+            Line(Position + szx, Position + szx + Vector3.Up, Color.Blue);
+            Line(Position - szx, Position - szx + Vector3.Up, Color.Blue);
+            Line(Position + szz, Position + szz + Vector3.Up, Color.Blue);
+            Line(Position - szz, Position - szz + Vector3.Up, Color.Blue);
+
+
             base.Draw(gameTime);
         }
 

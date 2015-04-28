@@ -1,3 +1,4 @@
+using AIWorld.Helpers;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
@@ -19,6 +20,7 @@ namespace AIWorld.Services
 
         public void Update(Vector3 cameraPosition, Vector3 cameraTargetPosition, float aspectRatio)
         {
+
             View = Matrix.CreateLookAt(cameraPosition, cameraTargetPosition, Vector3.Up);
             Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), aspectRatio, 0.1f,
                 10000.0f);

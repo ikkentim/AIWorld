@@ -22,7 +22,7 @@ namespace AIWorld
 {
     public class RoadPlanesGenerator
     {
-        public static IEnumerable<Plane> Generate(GraphicsDevice graphicsDevice, Texture2D texture, Vector3[] roadNodes)
+        public static IEnumerable<QuadPlane> Generate(GraphicsDevice graphicsDevice, Texture2D texture, Vector3[] roadNodes)
         {
             Vector3 previousLeft = Vector3.Zero;
             Vector3 previousRight = Vector3.Zero;
@@ -68,7 +68,7 @@ namespace AIWorld
                     avgRight.Normalize();
                     avgLeft /= 2;
                     avgRight /= 2;
-                    yield return new Plane(graphicsDevice, previousAbsoluteLeft, previousAbsoluteRight,
+                    yield return new QuadPlane(graphicsDevice, previousAbsoluteLeft, previousAbsoluteRight,
                         previousAbsoluteLeft = current + avgLeft,
                         previousAbsoluteRight = current + avgRight,
                         PlaneRotation.None, texture);
@@ -79,7 +79,7 @@ namespace AIWorld
                 else
                 {
                     yield return
-                        new Plane(graphicsDevice, previousAbsoluteLeft, previousAbsoluteRight, current + previousLeft,
+                        new QuadPlane(graphicsDevice, previousAbsoluteLeft, previousAbsoluteRight, current + previousLeft,
                             current + previousRight,
                             PlaneRotation.None, texture);
                 }

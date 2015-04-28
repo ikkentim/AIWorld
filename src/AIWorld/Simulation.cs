@@ -15,8 +15,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
 using AIWorld.Entities;
+using AIWorld.Helpers;
 using AIWorld.Services;
+using AMXWrapper;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
@@ -47,14 +52,16 @@ namespace AIWorld
         private GameWorldService _gameWorldService;
         private Texture2D _grass;
         private Road _mainRoad;
-        private List<Plane> _terrainTiles;
-        private Vehicle _tracingVehicle;
+        private List<QuadPlane> _terrainTiles;
+        private Entity _tracingEntity;
         private SoundEffect _ambientEffect;
         private bool _isMiddleButtonDown;
         private int _lastScroll;
         private float _scrollVelocity;
         private float _unprocessedScrollDelta;
+        private BasicEffect _basicEffect;
 
+        private ScriptBox _mainLogic;
         /// <summary>
         ///     Initializes a new instance of the <see cref="Simulation" /> class.
         /// </summary>
@@ -62,6 +69,12 @@ namespace AIWorld
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            IsMouseVisible = true;
+
+            _mainLogic = new ScriptBox("main", "main");
+            _mainLogic.Register<string,float,float,float,float>(AddGameObject);
+            _mainLogic.Register<IntPtr,int>(AddRoad);
+            _mainLogic.Register<string,float,float>(AddAgent);
         }
 
         /// <summary>
@@ -84,21 +97,23 @@ namespace AIWorld
         {
             _grass = Content.Load<Texture2D>(@"textures/grass");
             _ambientEffect = Content.Load<SoundEffect>(@"sounds/ambient");
-
+            _basicEffect = new BasicEffect(GraphicsDevice);
             var ambient = _ambientEffect.CreateInstance();
             ambient.IsLooped = true;
             ambient.Volume = 0.015f;
             ambient.Play();
 
             //Create terrain
-            _terrainTiles = new List<Plane>();
+            _terrainTiles = new List<QuadPlane>();
             for (int x = -5; x <= 5; x++)
                 for (int y = -5; y <= 5; y++)
-                    _terrainTiles.Add(new Plane(GraphicsDevice, new Vector3(x*4, -0.01f, y*4), 4, PlaneRotation.None,
+                    _terrainTiles.Add(new QuadPlane(GraphicsDevice, new Vector3(x*4, -0.01f, y*4), 4, PlaneRotation.None,
                         _grass));
 
+            _mainLogic.ExecuteMain();
+
             // Create road
-            _mainRoad = new Road(GraphicsDevice, Content.Load<Texture2D>(@"textures/road"), new[]
+            _gameWorldService.Add(_mainRoad = new Road(this, new[]
             {
                 new Vector3(0, 0, 0),
                 new Vector3(1, 0, 0),
@@ -113,35 +128,47 @@ namespace AIWorld
                 new Vector3(3, 0, 8),
                 new Vector3(2, 0, 9),
                 new Vector3(1, 0, 9),
-                new Vector3(0, 0, 9),
-                new Vector3(-1, 0, 9),
-                new Vector3(-2, 0, 8),
-                new Vector3(-2, 0, 7),
-                new Vector3(-2, 0, 6),
-                new Vector3(-2, 0, 5),
-                new Vector3(-2, 0, 4),
-                new Vector3(-2, 0, 3),
-                new Vector3(-3, 0, 2),
-                new Vector3(-4, 0, 2),
-                new Vector3(-5, 0, 2),
-                new Vector3(-6, 0, 2),
-                new Vector3(-7, 0, 2),
-            });
+                new Vector3(0, 0, 9)
+            }));
 
-            //Create vehicle
-            var vehicle = new Vehicle(new Vector3(1, 0, 1), this, _mainRoad);
-
-            _tracingVehicle = vehicle;
-            _gameWorldService.Add(vehicle);
-            _gameWorldService.Add(new Vehicle(new Vector3(5, 0, 5), this, _mainRoad));
+            //Create vehicles
+            _gameWorldService.Add(_tracingEntity = new Vehicle(new Vector3(1, 0, 1), this, _mainRoad));
+            _gameWorldService.Add(new Vehicle(new Vector3(8, 0, 5), this, _mainRoad));
             _gameWorldService.Add(new Vehicle(new Vector3(10, 0, 10), this, _mainRoad));
             _gameWorldService.Add(new Vehicle(new Vector3(15, 0, 15), this, _mainRoad));
 
-            _gameWorldService.Add(new House(new Vector3(2.8f, 0, 2.0f), this, 0));
-            _gameWorldService.Add(new House(new Vector3(3.2f, 0, 4.0f), this, 0));
-            _gameWorldService.Add(new House(new Vector3(2.8f, 0, 6.0f), this, 0));
-            _gameWorldService.Add(new House(new Vector3(3.2f, 0, 8.0f), this, 0));
         }
+
+        #region scripting natives
+
+        private int AddAgent(string scriptname, float x, float y)
+        {
+            _gameWorldService.Add(new Agent(this, scriptname, new Vector3(x, 0, y)));
+            return 1;
+        }
+
+        private int AddRoad(IntPtr arrayPointer, int count)
+        {
+            var nodes = new List<Vector3>();
+            for (var i = 0; i < count; i++)
+            {
+                var x = Cell.FromIntPtr(IntPtr.Add(arrayPointer, (i*2 + 0)*Marshal.SizeOf(typeof (Cell))));
+                var y = Cell.FromIntPtr(IntPtr.Add(arrayPointer, (i*2 + 1)*Marshal.SizeOf(typeof (Cell))));
+
+                nodes.Add(new Vector3(x.AsFloat(), 0, y.AsFloat()));
+            }
+
+            _gameWorldService.Add(new Road(this, nodes.ToArray()));
+            return 1;
+        }
+
+        private int AddGameObject(string name, float size, float x, float y, float angle)
+        {
+            _gameWorldService.Add(new WorldObject(this, name, size, new Vector3(x, 0, y), angle, false));
+            return 1;
+        }
+
+        #endregion
 
         /// <summary>
         ///     Unloads the content.
@@ -151,8 +178,11 @@ namespace AIWorld
             // TODO: Unload any non ContentManager content here
         }
 
+        private bool _leftclick;
         protected override void Update(GameTime gameTime)
         {
+            if (!IsActive) return;
+
             base.Update(gameTime);
 
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
@@ -224,20 +254,65 @@ namespace AIWorld
                 _unprocessedScrollDelta = 0;
             }
 
-            Vector3 realCameraTarget = _cameraTarget + new Vector3(0, CameraTargetOffset, 0);
-            Vector3 cameraPosition = realCameraTarget +
-                                     new Vector3((float) Math.Cos(_cameraRotation),
+            var realCameraTarget = _cameraTarget + new Vector3(0, CameraTargetOffset, 0);
+            var cameraPosition = realCameraTarget +
+                                     new Vector3((float)Math.Cos(_cameraRotation),
                                          Use45DegreeCamera
                                              ? 1
-                                             : _cameraDistance/3 - MinZoom + CameraTargetOffset + CameraHeightOffset,
-                                         (float) Math.Sin(_cameraRotation))*
+                                             : _cameraDistance / 3 - MinZoom + CameraTargetOffset + CameraHeightOffset,
+                                         (float)Math.Sin(_cameraRotation)) *
                                      _cameraDistance;
 
             _cameraService.Update(cameraPosition, realCameraTarget, _aspectRatio);
+            if (mouseState.LeftButton == ButtonState.Released)
+            {
+                _leftclick = false;
+            }
+            if (mouseState.LeftButton == ButtonState.Pressed && !_leftclick)
+            {
+                _leftclick = true;
 
-            if (_tracingVehicle != null)
-                _cameraTarget = _tracingVehicle.Position;
+                var nearsource = new Vector3(mouseState.Position.ToVector2(), 0f);
+                var farsource = new Vector3(mouseState.Position.ToVector2(), 1f);
+
+                var nearPoint = GraphicsDevice.Viewport.Unproject(nearsource,
+                    _cameraService.Projection, _cameraService.View, Matrix.Identity);
+
+                var farPoint = GraphicsDevice.Viewport.Unproject(farsource,
+                    _cameraService.Projection, _cameraService.View, Matrix.Identity);
+
+                var ray = new Ray(nearPoint, Vector3.Normalize(farPoint - nearPoint));
+
+                var ground = new Plane(Vector3.Up, 0);
+
+                var groundDistance = ray.Intersects(ground);
+
+                if (groundDistance != null)
+                {
+                    var groundPos = nearPoint + ray.Direction*groundDistance.Value;
+
+                    var rect = new AABB(groundPos, Vector3.One * 10);
+                    var clicker =
+                        _gameWorldService.Entities.Query(rect)
+                            .OfType<Entity>()
+                            .FirstOrDefault(e => ray.Intersects(new BoundingSphere(e.Position, e.Size)) != null);
+
+                    if (clicker != null)
+                    {
+                        _tracingEntity = clicker;
+                    }
+                }
+            }
+
+            if (_tracingEntity != null)
+                _cameraTarget = _tracingEntity.Position;
         }
+
+//        private void Line(Vector3 a, Vector3 b, Color c)
+//        {
+//            var vertices = new[] { new VertexPositionColor(a, c), new VertexPositionColor(b, c) };
+//            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
+//        }
 
         protected override void Draw(GameTime gameTime)
         {
@@ -245,13 +320,18 @@ namespace AIWorld
 
             // Draw tiles
 
-            foreach (Plane t in _terrainTiles)
-                t.Render(GraphicsDevice, Matrix.Identity, _cameraService.View, _cameraService.Projection);
-
-            foreach (Plane t in _mainRoad.Planes)
+            foreach (QuadPlane t in _terrainTiles)
                 t.Render(GraphicsDevice, Matrix.Identity, _cameraService.View, _cameraService.Projection);
 
             // /
+
+
+//            _basicEffect.VertexColorEnabled = true;
+//            _basicEffect.World = Matrix.Identity;
+//            _basicEffect.View = _cameraService.View;
+//            _basicEffect.Projection = _cameraService.Projection;
+//
+//            _basicEffect.CurrentTechnique.Passes[0].Apply();
 
             base.Draw(gameTime);
         }
