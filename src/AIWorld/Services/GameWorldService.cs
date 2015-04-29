@@ -65,17 +65,18 @@ namespace AIWorld.Services
 
         #endregion
 
-        public void Register(ScriptBox scriptBox)
-        {
-            scriptBox.Register<float, float, CellPtr, CellPtr>(GetClosestNode);
-        }
+//        public void Register(ScriptBox scriptBox)
+//        {
+//            scriptBox.Register<float, float, CellPtr, CellPtr>(GetClosestNode);
+//        }
 
-        private int GetClosestNode(float x, float y, CellPtr tx, CellPtr ty)
+        [ScriptingFunction]
+        public int GetClosestNode(float x, float y, out float nx, out float ny)
         {
             var closest = Graph.NearestNode(new Vector3(x, 0, y));
 
-            tx.Set(Cell.FromFloat(closest.X));
-            ty.Set(Cell.FromFloat(closest.Z));
+            nx = closest.X;
+            ny = closest.Z;
             return 1;
         }
     }

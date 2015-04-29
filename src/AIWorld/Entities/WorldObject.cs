@@ -92,12 +92,5 @@ namespace AIWorld.Entities
         }
 
         #endregion
-
-        #region Implementation of IEntity
-
-        public override Vector3 Position { get; protected set; }
-        public override float Size { get; protected set; }
-
-        #endregion
     }
 }

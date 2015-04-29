@@ -7,3 +7,10 @@
 
 #define RAD2DEG(%0)     (%0 * (180 / PI))
 #define DEG2RAD(%0)     (%0 * (PI / 180))
+
+native Float:frand();
+
+stock Float:frandom(Float:min, Float:max)
+{
+  return frand() * (max-min) + min;
+}

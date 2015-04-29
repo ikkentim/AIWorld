@@ -15,7 +15,7 @@
 
 namespace AIWorld.Scripting
 {
-    public interface IScripted
+    public interface IScripted : IScriptingNatives
     {
         ScriptBox Script { get; }
     }

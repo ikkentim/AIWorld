@@ -2,7 +2,7 @@
 #include <a_agent>
 #include <a_world>
 #include <common>
-
+#include <math>
 main()
 {
 	SetModel("models/car");
@@ -10,11 +10,25 @@ main()
 	SetMaxForce(15);
 	SetMaxSpeed(1.2);
 	SetMass(0.35);
-	
-	new Float:x,Float:y;
-	GetClosestNode(10,10,x,y);
-	log("Car spawned");
-	logf("Debug: (%f, %f)", x, y);
+
+	new
+	  Float:targetx,
+		Float:targety,
+	  Float:targetnodex,
+		Float:targetnodey,
+		Float:startx,
+		Float:starty;
+
+	targetx = frandom(-5,5);
+	targety = frandom(-5,5);
+
+	GetPosition(startx,starty);
+	GetClosestNode(startx,starty,startx,starty);
+
+	GetClosestNode(targetx,targety,targetnodex,targetnodey);
+
+	PushPathNode(targetx,targety);
+	PushPath(startx,starty,targetnodex,targetnodey);
 
 }
 

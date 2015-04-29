@@ -25,8 +25,8 @@ namespace AIWorld.Entities
 
         #region Implementation of IEntity
 
-        public virtual Vector3 Position { get; protected set; }
-        public virtual float Size { get; protected set; }
+        public virtual Vector3 Position { get; set; }
+        public virtual float Size { get; set; }
 
         #endregion
     }

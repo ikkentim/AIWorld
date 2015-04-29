@@ -3,22 +3,20 @@
 #endif
 #define _agent_included
 
-/**************************************************/
-/* Sets the model of the agent */
-native SetModel(model[]);
+native GetPosition(&Float:x, &Float:y);
+native ClearPathStack();
+native PopPathNode(&Float:x, &Float:y);
+native PushPathNode(Float:x, Float:y);
+native PeekPathNode(&Float:x, &Float:y);
+native PushPath(Float:xstart, Float:ystart, Float:xend, Float:yend);
 
-/**************************************************/
-/* Sets the size of the agent */
-native SetSize(Float:size);
+native SetModel(const model[]);
 
-/**************************************************/
-/* Sets the maximum force of the agent */
-native SetMaxForce(Float:force);
-
-/**************************************************/
-/* Sets the maximum speed of the agent */
-native SetMaxSpeed(Float:speed);
-
-/**************************************************/
-/* Sets the mass of the agent */
 native SetMass(Float:mass);
+native Float:GetMass();
+native SetMaxSpeed(Float:speed);
+native Float:GetMaxSpeed();
+native SetMaxForce(Float:force);
+native Float:GetMaxForce();
+native SetSize(Float:size);
+native Float:GetSize();

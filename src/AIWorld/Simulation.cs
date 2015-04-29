@@ -69,9 +69,7 @@ namespace AIWorld
             IsMouseVisible = true;
 
             Script = new ScriptBox("main", "main");
-            Script.Register<string, float, float, float, float>(AddGameObject);
-            Script.Register<IntPtr, int>(AddRoad);
-            Script.Register<string, float, float>(AddAgent);
+            Script.Register(this);
         }
 
         /// <summary>
@@ -269,18 +267,19 @@ namespace AIWorld
 
         #region scripting natives
 
-        private int AddAgent(string scriptname, float x, float y)
+        [ScriptingFunction]
+        public void AddAgent(string scriptname, float x, float y)
         {
             _gameWorldService.Add(new Agent(this, scriptname, new Vector3(x, 0, y)));
-            return 1;
         }
 
-        private int AddRoad(IntPtr arrayPointer, int count)
+        [ScriptingFunction]
+        public bool AddRoad(IntPtr arrayPointer, int count)
         {
             if (count%2 != 0)
                 count--;
             if (count < 4)
-                return 0;
+                return false;
 
             var nodes = new List<Vector3>();
             for (var i = 0; i < count/2; i++)
@@ -293,10 +292,11 @@ namespace AIWorld
 
             Road.GenerateRoad(this, nodes.ToArray());
 
-            return 1;
+            return true;
         }
 
-        private int AddGameObject(string name, float size, float x, float y, float angle)
+        [ScriptingFunction]
+        public int AddGameObject(string name, float size, float x, float y, float angle)
         {
             _gameWorldService.Add(new WorldObject(this, name, size, new Vector3(x, 0, y), angle, false));
             return 1;

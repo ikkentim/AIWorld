@@ -68,6 +68,7 @@
     <Compile Include="Scripting\IScripted.cs" />
     <Compile Include="Scripting\IScriptingNatives.cs" />
     <Compile Include="Scripting\ScriptBox.cs" />
+    <Compile Include="Scripting\ScriptingFunctionAttribute.cs" />
     <Compile Include="Services\CameraService.cs" />
     <Compile Include="Entities\Entity.cs" />
     <Compile Include="Services\GameWorldService.cs" />
@@ -83,7 +84,6 @@
     <Compile Include="Simulation.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Entities\Vehicle.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MonoGame.Framework">

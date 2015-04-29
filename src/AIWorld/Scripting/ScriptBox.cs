@@ -18,6 +18,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using AMXWrapper;
 
@@ -25,6 +26,8 @@ namespace AIWorld.Scripting
 {
     public class ScriptBox : AMX, IEnumerable<KeyValuePair<string, Cell>>
     {
+        private static readonly DefaultFunctions _defaultFunctions = new DefaultFunctions();
+
         private readonly Dictionary<string, CellPtr> _publicVars = new Dictionary<string, CellPtr>();
 
         /// <summary>
@@ -37,8 +40,7 @@ namespace AIWorld.Scripting
             LoadLibrary(AMXDefaultLibrary.Core | AMXDefaultLibrary.Float | AMXDefaultLibrary.String |
                         AMXDefaultLibrary.Time);
 
-            Register("log", Log);
-            Register("logf", LogFormat);
+            Register(_defaultFunctions);
 
             // Prepare public vars table
             for (var i = 0; i < PublicVarCount; i++)
@@ -58,12 +60,6 @@ namespace AIWorld.Scripting
             set { _publicVars[name].Set(value); }
         }
 
-        public void Register(IScriptingNatives natives)
-        {
-            if (natives == null) throw new ArgumentNullException("natives");
-            natives.Register(this);
-        }
-
         public void Register(AMXNativeFunction function)
         {
             if (function == null) throw new ArgumentNullException("function");
@@ -73,259 +69,266 @@ namespace AIWorld.Scripting
             Register(function.Method.Name, function);
         }
 
-        #region native calls
-
-        private int Log(AMX amx, AMXArgumentList arguments)
+        private Func<Cell,object> CreateInTypeCaster(ParameterInfo info)
         {
-            if (arguments.Length < 1)
-                return 0;
-
-            var msg = arguments[0].AsString();
-
-            Debug.WriteLine(msg);
-
-            return 1;
-        }
-
-        private static string Sprintf(string input, object[] inpVars)
-        {
-            var i = 0;
-            input = Regex.Replace(input, "%.", m => ("{" + i++ + "}"));
-            return string.Format(input, inpVars);
-        }
-
-        private static IEnumerable<char> FormatChars(string input)
-        {
-            for (int i = 0; i < input.Length - 1; i++)
+            if (!info.ParameterType.IsByRef)
             {
-                if (input[i] == '%')
-                    yield return input[++i];
+                if (info.ParameterType == typeof (string)) return cell => cell.AsString();
+                if (info.ParameterType == typeof (int)) return cell => cell.AsInt32();
+                if (info.ParameterType == typeof (float)) return cell => cell.AsFloat();
+                if (info.ParameterType == typeof (IntPtr)) return cell => cell.AsIntPtr();
+                if (info.ParameterType == typeof (CellPtr)) return cell => cell.AsCellPtr();
+
+                throw new ArgumentException("Invalid argument type " + info.ParameterType);
+            }
+
+            return cell => null;
+        }
+
+        private Action<Cell, object> CreateOutTypeCaster(ParameterInfo info)
+        {
+            if (info.ParameterType.IsByRef)
+            {
+                if (info.ParameterType.GetElementType() == typeof (int)) return (cell, value) => { cell.AsCellPtr().Set((int) value); };
+                if (info.ParameterType.GetElementType() == typeof(float))
+                    return (cell, value) => { cell.AsCellPtr().Set(Cell.FromFloat((float) value)); };
+                throw new ArgumentException("Invalid argument type " + info.ParameterType);
+            }
+            return null;
+        }
+
+        public void Register(IScriptingNatives instance)
+        {
+            if (instance == null) throw new ArgumentNullException("instance");
+
+            var properties =
+                instance.GetType()
+                    .GetProperties()
+                    .Where(m => m.GetCustomAttributes(typeof(ScriptingFunctionAttribute), true).Any());
+
+            foreach (var property in properties)
+            {
+                var attribute =
+                    property.GetCustomAttributes(typeof (ScriptingFunctionAttribute), true).First() as
+                        ScriptingFunctionAttribute;
+
+                // Indexers are illegal
+                if (property.GetIndexParameters().Length > 0) continue;
+
+                var name = attribute.Name ?? property.Name;
+
+                var propertyLocalCopy = property;
+
+                if (property.PropertyType == typeof (string))
+                {
+
+                    Register(string.Format("Get{0}", name), (amx, arguments) =>
+                    {
+                        if (arguments.Length < 2)
+                            return -1;
+
+                        var length = arguments[1].AsInt32() - 1;
+                        if (length <= 0) return -1;
+
+                        var value = propertyLocalCopy.GetValue(instance, null) as string;
+                        if (value == null) return -1;
+
+                        SetString(arguments[0].AsCellPtr(), value.Length > length ? value.Substring(0, length) : value,
+                            false);
+
+                        return value.Length;
+                    });
+
+                    if (property.GetSetMethod() != null)
+                        Register(string.Format("Set{0}", name), (amx, arguments) =>
+                        {
+                            if (arguments.Length < 1)
+                                return 0;
+
+                            propertyLocalCopy.SetValue(instance, arguments[0].AsString(), null);
+
+                            return 1;
+                        });
+                }
+                else if (property.PropertyType == typeof (int))
+                {
+                    Register(string.Format("Get{0}", name),
+                        (amx, arguments) => (int) propertyLocalCopy.GetValue(instance, null));
+
+                    if (property.GetSetMethod() != null)
+                        Register(string.Format("Set{0}", name), (amx, arguments) =>
+                        {
+                            if (arguments.Length < 1)
+                                return 0;
+
+                            propertyLocalCopy.SetValue(instance, arguments[0].AsInt32(), null);
+
+                            return 1;
+                        });
+                }
+                else if (property.PropertyType == typeof (bool))
+                {
+                    Register(string.Format("Get{0}", name),
+                        (amx, arguments) => (bool) propertyLocalCopy.GetValue(instance, null) ? 1 : 0);
+
+                    if (property.GetSetMethod() != null)
+                        Register(string.Format("Set{0}", name), (amx, arguments) =>
+                        {
+                            if (arguments.Length < 1)
+                                return 0;
+
+                            propertyLocalCopy.SetValue(instance, arguments[0].AsInt32() != 0, null);
+
+                            return 1;
+                        });
+                }
+                else if (property.PropertyType == typeof (float))
+                {
+                    Register(string.Format("Get{0}", name),
+                        (amx, arguments) => Cell.FromFloat((float) propertyLocalCopy.GetValue(instance, null)).AsInt32());
+
+                    if (property.GetSetMethod() != null)
+                        Register(string.Format("Set{0}", name), (amx, arguments) =>
+                        {
+                            if (arguments.Length < 1)
+                                return 0;
+
+                            propertyLocalCopy.SetValue(instance, arguments[0].AsFloat(), null);
+
+                            return 1;
+                        });
+                }
+            }
+
+            var methods =
+                instance.GetType()
+                    .GetMethods()
+                    .Where(m => m.GetCustomAttributes(typeof (ScriptingFunctionAttribute), true).Any());
+
+            foreach (var method in methods)
+            {
+                var attribute = method.GetCustomAttributes(typeof (ScriptingFunctionAttribute), true).First() as ScriptingFunctionAttribute;
+
+                var name = attribute.Name ?? method.Name;
+
+                var parameters = method.GetParameters();
+                var paramcount = parameters.Count();
+
+                var outTypeCaster = (Func<object, int>) (o => 1);
+
+                if (method.ReturnParameter.ParameterType == typeof (int))
+                    outTypeCaster = o => (int)o;
+                if (method.ReturnParameter.ParameterType == typeof(float))
+                    outTypeCaster = o => Cell.FromFloat((float)o).AsInt32();
+                else if (method.ReturnParameter.ParameterType == typeof (bool))
+                    outTypeCaster = o => (bool) o ? 1 : 0;
+
+                var methodLocalCopy = method;
+
+                if (paramcount == 1 && parameters.First().ParameterType == typeof (AMXArgumentList))
+                {
+                    Register(name,
+                        (amx, arguments) => outTypeCaster(methodLocalCopy.Invoke(instance, new object[] {arguments})));
+                }
+                else
+                {
+                    var inCasters = parameters.Select(CreateInTypeCaster).ToArray();
+                    var outCasters = parameters.Select(CreateOutTypeCaster).ToArray();
+
+                    Register(name, (amx, arguments) =>
+                    {
+                        if (arguments.Length != paramcount) return 0;
+
+                        var parms = new object[paramcount];
+                        for (var i = 0; i < paramcount; i++)
+                            parms[i] = inCasters[i](arguments[i]);
+
+                        var output = methodLocalCopy.Invoke(instance, parms);
+
+                        for (var i = 0; i < paramcount; i++)
+                            if (outCasters[i] != null)
+                                outCasters[i](arguments[i], parms[i]);
+
+                        return outTypeCaster(output);
+                    });
+                }
             }
         }
 
-        private int LogFormat(AMX amx, AMXArgumentList arguments)
+        #region native calls
+
+        private class DefaultFunctions : IScriptingNatives
         {
+            private Random _random;
 
-            if (arguments.Length < 1)
-                return 0;
-
-            var format = arguments[0].AsString();
-            int i = 1;
-            var parms = FormatChars(format).Select(c =>
+            private static string Sprintf(string input, object[] inpVars)
             {
-                switch (c)
+                var i = 0;
+                input = Regex.Replace(input, "%.", m => ("{" + i++ + "}"));
+                return string.Format(input, inpVars);
+            }
+
+            private static IEnumerable<char> FormatChars(string input)
+            {
+                for (int i = 0; i < input.Length - 1; i++)
                 {
-                    case 'd':
-                    case 'i':
-                        return (object)arguments[i++].AsCellPtr().Get().AsInt32();
-                    case 's':
-                        return (object) arguments[i++].AsString();
-                    case 'f':
-                        return (object)arguments[i++].AsCellPtr().Get().AsFloat();
-                    case 'c':
-                        return (char)arguments[i++].AsCellPtr().Get().AsInt32();
-                    case 'x':
-                        return string.Format("0x{0:X}", arguments[i++].AsCellPtr().Get().AsInt32());
-                    case 'b':
-                        return "0b" + Convert.ToString(arguments[i++].AsCellPtr().Get().AsInt32(), 2);
-                    case '%':
-                        return '%';
-                    default:
-                        i++;
-                        return (object)0;
+                    if (input[i] == '%')
+                        yield return input[++i];
                 }
-            }).ToArray();
+            }
 
-
-            Debug.WriteLine(Sprintf(format, parms));
-
-            return 1;
-        }
-        #endregion
-
-        #region Easy type register
-
-        private object TypeCast(Type type, Cell cell)
-        {
-            if (type == typeof (string)) return cell.AsString();
-            if (type == typeof (int)) return cell.AsInt32();
-            if (type == typeof (float)) return cell.AsFloat();
-            if (type == typeof (IntPtr)) return cell.AsIntPtr();
-            if (type == typeof (CellPtr)) return cell.AsCellPtr();
-            throw new ArgumentException("Invalid type " + type);
-        }
-
-        public void Register(Func<int> function)
-        {
-            if (function == null) throw new ArgumentNullException("function");
-            var name = function.Method.Name;
-            Register(name, (amx, arguments) =>
+            [ScriptingFunction("frand")]
+            public float FloatRandom()
             {
-                if (arguments.Length != 0) throw new ArgumentException(name + " accepts 0 argument");
-                return (int) function.Method.Invoke(function.Target, null);
-            });
-        }
+                if(_random == null) _random = new Random();
 
-        public void Register<T1>(Func<T1, int> function)
-        {
-            if (function == null) throw new ArgumentNullException("function");
-            var name = function.Method.Name;
-            Register(name, (amx, arguments) =>
+                return (float)_random.NextDouble();
+            }
+            [ScriptingFunction("log")]
+            public void Log(string message)
             {
-                if (arguments.Length != 1) throw new ArgumentException(name + " accepts 1 argument");
-                return (int) function.Method.Invoke(function.Target, new[]
+                Debug.WriteLine(message);
+            }
+
+            [ScriptingFunction("logf")]
+            public bool LogFormat(AMXArgumentList arguments)
+            {
+
+                if (arguments.Length < 1)
+                    return false;
+
+                var format = arguments[0].AsString();
+                int i = 1;
+                var parms = FormatChars(format).Select(c =>
                 {
-                    TypeCast(typeof (T1), arguments[0])
-                });
-            });
-        }
+                    switch (c)
+                    {
+                        case 'd':
+                        case 'i':
+                            return (object) arguments[i++].AsCellPtr().Get().AsInt32();
+                        case 's':
+                            return (object) arguments[i++].AsString();
+                        case 'f':
+                            return (object) arguments[i++].AsCellPtr().Get().AsFloat();
+                        case 'c':
+                            return (char) arguments[i++].AsCellPtr().Get().AsInt32();
+                        case 'x':
+                            return string.Format("0x{0:X}", arguments[i++].AsCellPtr().Get().AsInt32());
+                        case 'b':
+                            return "0b" + Convert.ToString(arguments[i++].AsCellPtr().Get().AsInt32(), 2);
+                        case '%':
+                            return '%';
+                        default:
+                            i++;
+                            return (object) 0;
+                    }
+                }).ToArray();
 
-        public void Register<T1, T2>(Func<T1, T2, int> function)
-        {
-            if (function == null) throw new ArgumentNullException("function");
-            var name = function.Method.Name;
-            Register(name, (amx, arguments) =>
-            {
-                if (arguments.Length != 2) throw new ArgumentException(name + " accepts 2 argument");
-                return (int) function.Method.Invoke(function.Target, new[]
-                {
-                    TypeCast(typeof (T1), arguments[0]),
-                    TypeCast(typeof (T2), arguments[1])
-                });
-            });
-        }
 
-        public void Register<T1, T2, T3>(Func<T1, T2, T3, int> function)
-        {
-            if (function == null) throw new ArgumentNullException("function");
-            var name = function.Method.Name;
-            Register(name, (amx, arguments) =>
-            {
-                if (arguments.Length != 3) throw new ArgumentException(name + " accepts 3 argument");
-                return (int) function.Method.Invoke(function.Target, new[]
-                {
-                    TypeCast(typeof (T1), arguments[0]),
-                    TypeCast(typeof (T2), arguments[1]),
-                    TypeCast(typeof (T3), arguments[2])
-                });
-            });
-        }
+                Log(Sprintf(format, parms));
 
-        public void Register<T1, T2, T3, T4>(Func<T1, T2, T3, T4, int> function)
-        {
-            if (function == null) throw new ArgumentNullException("function");
-            var name = function.Method.Name;
-            Register(name, (amx, arguments) =>
-            {
-                if (arguments.Length != 4) throw new ArgumentException(name + " accepts 4 argument");
-                return (int) function.Method.Invoke(function.Target, new[]
-                {
-                    TypeCast(typeof (T1), arguments[0]),
-                    TypeCast(typeof (T2), arguments[1]),
-                    TypeCast(typeof (T3), arguments[2]),
-                    TypeCast(typeof (T4), arguments[3])
-                });
-            });
-        }
-
-        public void Register<T1, T2, T3, T4, T5>(Func<T1, T2, T3, T4, T5, int> function)
-        {
-            if (function == null) throw new ArgumentNullException("function");
-            var name = function.Method.Name;
-            Register(name, (amx, arguments) =>
-            {
-                if (arguments.Length != 5) throw new ArgumentException(name + " accepts 5 argument");
-                return (int) function.Method.Invoke(function.Target, new[]
-                {
-                    TypeCast(typeof (T1), arguments[0]),
-                    TypeCast(typeof (T2), arguments[1]),
-                    TypeCast(typeof (T3), arguments[2]),
-                    TypeCast(typeof (T4), arguments[3]),
-                    TypeCast(typeof (T5), arguments[4])
-                });
-            });
-        }
-
-        public void Register<T1, T2, T3, T4, T5, T6>(Func<T1, T2, T3, T4, T5, T6, int> function)
-        {
-            if (function == null) throw new ArgumentNullException("function");
-            var name = function.Method.Name;
-            Register(name, (amx, arguments) =>
-            {
-                if (arguments.Length != 6) throw new ArgumentException(name + " accepts 6 argument");
-                return (int) function.Method.Invoke(function.Target, new[]
-                {
-                    TypeCast(typeof (T1), arguments[0]),
-                    TypeCast(typeof (T2), arguments[1]),
-                    TypeCast(typeof (T3), arguments[2]),
-                    TypeCast(typeof (T4), arguments[3]),
-                    TypeCast(typeof (T5), arguments[4]),
-                    TypeCast(typeof (T6), arguments[5])
-                });
-            });
-        }
-
-        public void Register<T1, T2, T3, T4, T5, T6, T7>(Func<T1, T2, T3, T4, T5, T6, T7, int> function)
-        {
-            if (function == null) throw new ArgumentNullException("function");
-            var name = function.Method.Name;
-            Register(name, (amx, arguments) =>
-            {
-                if (arguments.Length != 7) throw new ArgumentException(name + " accepts 7 argument");
-                return (int) function.Method.Invoke(function.Target, new[]
-                {
-                    TypeCast(typeof (T1), arguments[0]),
-                    TypeCast(typeof (T2), arguments[1]),
-                    TypeCast(typeof (T3), arguments[2]),
-                    TypeCast(typeof (T4), arguments[3]),
-                    TypeCast(typeof (T5), arguments[4]),
-                    TypeCast(typeof (T6), arguments[5]),
-                    TypeCast(typeof (T7), arguments[6])
-                });
-            });
-        }
-
-        public void Register<T1, T2, T3, T4, T5, T6, T7, T8>(Func<T1, T2, T3, T4, T5, T6, T7, T8, int> function)
-        {
-            if (function == null) throw new ArgumentNullException("function");
-            var name = function.Method.Name;
-            Register(name, (amx, arguments) =>
-            {
-                if (arguments.Length != 8) throw new ArgumentException(name + " accepts 8 argument");
-                return (int) function.Method.Invoke(function.Target, new[]
-                {
-                    TypeCast(typeof (T1), arguments[0]),
-                    TypeCast(typeof (T2), arguments[1]),
-                    TypeCast(typeof (T3), arguments[2]),
-                    TypeCast(typeof (T4), arguments[3]),
-                    TypeCast(typeof (T5), arguments[4]),
-                    TypeCast(typeof (T6), arguments[5]),
-                    TypeCast(typeof (T7), arguments[6]),
-                    TypeCast(typeof (T8), arguments[7])
-                });
-            });
-        }
-
-        public void Register<T1, T2, T3, T4, T5, T6, T7, T8, T9>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, int> function)
-        {
-            if (function == null) throw new ArgumentNullException("function");
-            var name = function.Method.Name;
-            Register(name, (amx, arguments) =>
-            {
-                if (arguments.Length != 9) throw new ArgumentException(name + " accepts 9 argument");
-                return (int) function.Method.Invoke(function.Target, new[]
-                {
-                    TypeCast(typeof (T1), arguments[0]),
-                    TypeCast(typeof (T2), arguments[1]),
-                    TypeCast(typeof (T3), arguments[2]),
-                    TypeCast(typeof (T4), arguments[3]),
-                    TypeCast(typeof (T5), arguments[4]),
-                    TypeCast(typeof (T6), arguments[5]),
-                    TypeCast(typeof (T7), arguments[6]),
-                    TypeCast(typeof (T8), arguments[7]),
-                    TypeCast(typeof (T9), arguments[8])
-                });
-            });
+                return true;
+            }
         }
 
         #endregion

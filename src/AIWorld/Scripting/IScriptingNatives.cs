@@ -17,6 +17,5 @@ namespace AIWorld.Scripting
 {
     public interface IScriptingNatives
     {
-        void Register(ScriptBox scriptBox);
     }
 }

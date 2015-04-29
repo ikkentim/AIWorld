@@ -15,7 +15,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Remoting;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Core
@@ -52,44 +54,43 @@ namespace AIWorld.Core
 
         public IEnumerable<Vector3> ShortestPath(Vector3 start, Vector3 finish)
         {
-            var nodes = new List<Node>(Values);
+                var nodes = new List<Node>(Values);
+                foreach (var n in Values) n.Distance = float.PositiveInfinity;
 
-            foreach (var n in Values) n.Distance = float.PositiveInfinity;
+                this[start].Distance = 0;
+                this[start].Previous = null;
 
-            this[start].Distance = 0;
-            while (nodes.Count != 0)
-            {
-                nodes.Sort((x, y) => x.Distance.CompareTo(y.Distance));
-
-
-                var smallest = nodes.First();
-                nodes.Remove(smallest);
-
-                if (smallest.Position == finish)
+                while (nodes.Count != 0)
                 {
-                    while (smallest.Previous != null)
+                    var minDistance = nodes.Min(n => n.Distance);
+
+                    // Start and end nodes are in different graphs
+                    if (float.IsPositiveInfinity(minDistance)) yield break;
+
+                    var smallest = nodes.First(n => n.Distance == minDistance);
+                    nodes.Remove(smallest);
+
+                    if (smallest.Position == finish)
                     {
-                        yield return smallest.Position;
-                        smallest = smallest.Previous;
+                        while (smallest.Previous != null)
+                        {
+                            yield return smallest.Position;
+                            smallest = smallest.Previous;
+                        }
+
+                        yield break;
                     }
 
-                    yield break;
-                }
-
-                // Start and end nodes are in different graphs
-                if (float.IsNegativeInfinity(smallest.Distance)) yield break;
-
-
-                foreach (var neighbor in smallest)
-                {
-                    var alt = smallest.Distance + neighbor.Distance;
-                    if (alt < neighbor.Target.Distance)
+                    foreach (var neighbor in smallest)
                     {
-                        neighbor.Target.Distance = alt;
-                        neighbor.Target.Previous = smallest;
+                        var alt = smallest.Distance + neighbor.Distance;
+                        if (alt < neighbor.Target.Distance)
+                        {
+                            neighbor.Target.Distance = alt;
+                            neighbor.Target.Previous = smallest;
+                        }
                     }
                 }
-            }
         }
     }
 }
