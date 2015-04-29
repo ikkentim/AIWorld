@@ -1,0 +1,18 @@
+{
+  "cmd": "pawncc.exe",
+  "args": [
+    "{FILE_ACTIVE}",
+    "-i{PROJECT_PATH}",
+    "-D{PROJECT_PATH}",
+    "-o{FILE_ACTIVE_PATH}\\{FILE_ACTIVE_NAME_BASE}.amx",
+    "-r{PROJECT_PATH}\\DOCS\\{FILE_ACTIVE_NAME_BASE}.xhtml",
+    "-;+",
+    "-(+",
+    "-d0 -O1"
+    ],
+  "sh": false,
+  "cwd": "{PROJECT_PATH}",
+  "env": {
+
+  }
+}
