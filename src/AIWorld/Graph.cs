@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld
@@ -26,6 +28,69 @@ namespace AIWorld
             var node2 = ContainsKey(vector2) ? this[vector2] : this[vector2] = new Node(vector2);
 
             node1.Add(new Edge(node2, (vector2 - vector1).Length()));
+        }
+
+        public Vector3 NearestNode(Vector3 point)
+        {
+            float distance = float.PositiveInfinity;
+
+            Vector3 node = Vector3.Zero;
+
+            foreach (var k in Keys)
+            {
+                var d = (k - point).LengthSquared();
+                if (!(d < distance)) continue;
+
+                node = k;
+                distance = d;
+            }
+
+            if(float.IsPositiveInfinity(distance))
+                throw new Exception("graph is empty");
+            return node;
+        }
+
+        public IEnumerable<Vector3> ShortestPath(Vector3 start, Vector3 finish)
+        {
+            var nodes = new List<Node>(Values);
+
+            foreach (var n in Values) n.Distance = float.PositiveInfinity;
+
+            this[start].Distance = 0;
+            while (nodes.Count != 0)
+            {
+                nodes.Sort((x, y) => x.Distance.CompareTo(y.Distance));
+
+
+                var smallest = nodes.First();
+                nodes.Remove(smallest);
+
+                if (smallest.Position == finish)
+                {
+                    while (smallest.Previous != null)
+                    {
+                        yield return smallest.Position;
+                        smallest = smallest.Previous;
+                    }
+
+                    yield break;
+                }
+
+                // Start and end nodes are in different graphs
+                if (float.IsNegativeInfinity(smallest.Distance)) yield break;
+                
+
+                foreach (var neighbor in smallest)
+                {
+                    var alt = smallest.Distance + neighbor.Distance;
+                    if (alt < neighbor.Target.Distance)
+                    {
+                        neighbor.Target.Distance = alt;
+                        neighbor.Target.Previous = smallest;
+                    }
+                }
+            }
+
         }
     }
 }

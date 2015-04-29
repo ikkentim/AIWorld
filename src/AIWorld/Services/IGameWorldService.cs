@@ -13,10 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using AIWorld.Entities;
+
 namespace AIWorld.Services
 {
     public interface IGameWorldService
     {
         QuadTree Entities { get; }
+        Graph Graph { get; }
+        void Add(Entity entity);
+        void Add(QuadPlane plane);
     }
 }

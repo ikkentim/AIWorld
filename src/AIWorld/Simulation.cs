@@ -51,8 +51,6 @@ namespace AIWorld
         private Vector3 _cameraTarget = new Vector3(0.0f, 0.0f, 0.0f);
         private GameWorldService _gameWorldService;
         private Texture2D _grass;
-        private Road _mainRoad;
-        private List<QuadPlane> _terrainTiles;
         private Entity _tracingEntity;
         private SoundEffect _ambientEffect;
         private bool _isMiddleButtonDown;
@@ -61,7 +59,7 @@ namespace AIWorld
         private float _unprocessedScrollDelta;
         private BasicEffect _basicEffect;
 
-        private ScriptBox _mainLogic;
+        private ScriptBox _script;
         /// <summary>
         ///     Initializes a new instance of the <see cref="Simulation" /> class.
         /// </summary>
@@ -71,10 +69,10 @@ namespace AIWorld
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
-            _mainLogic = new ScriptBox("main", "main");
-            _mainLogic.Register<string,float,float,float,float>(AddGameObject);
-            _mainLogic.Register<IntPtr,int>(AddRoad);
-            _mainLogic.Register<string,float,float>(AddAgent);
+            _script = new ScriptBox("main", "main");
+            _script.Register<string,float,float,float,float>(AddGameObject);
+            _script.Register<IntPtr,int>(AddRoad);
+            _script.Register<string,float,float>(AddAgent);
         }
 
         /// <summary>
@@ -104,16 +102,34 @@ namespace AIWorld
             ambient.Play();
 
             //Create terrain
-            _terrainTiles = new List<QuadPlane>();
             for (int x = -5; x <= 5; x++)
                 for (int y = -5; y <= 5; y++)
-                    _terrainTiles.Add(new QuadPlane(GraphicsDevice, new Vector3(x*4, -0.01f, y*4), 4, PlaneRotation.None,
+                    _gameWorldService.Add(new QuadPlane(this, new Vector3(x*4, -0.01f, y*4), 4, PlaneRotation.None,
                         _grass));
 
-            _mainLogic.ExecuteMain();
+            _script.ExecuteMain();
 
             // Create road
-            _gameWorldService.Add(_mainRoad = new Road(this, new[]
+            
+//            _gameWorldService.Add(_mainRoad = new Road(this, new[]
+//            {
+//                new Vector3(0, 0, 0),
+//                new Vector3(1, 0, 0),
+//                new Vector3(2, 0, 0),
+//                new Vector3(3, 0, 1),
+//                new Vector3(3, 0, 2),
+//                new Vector3(3, 0, 3),
+//                new Vector3(3, 0, 4),
+//                new Vector3(3, 0, 5),
+//                new Vector3(3, 0, 6),
+//                new Vector3(3, 0, 7),
+//                new Vector3(3, 0, 8),
+//                new Vector3(2, 0, 9),
+//                new Vector3(1, 0, 9),
+//                new Vector3(0, 0, 9)
+//            }));
+
+            Road.GenerateRoad(this, new[]
             {
                 new Vector3(0, 0, 0),
                 new Vector3(1, 0, 0),
@@ -129,13 +145,13 @@ namespace AIWorld
                 new Vector3(2, 0, 9),
                 new Vector3(1, 0, 9),
                 new Vector3(0, 0, 9)
-            }));
+            });
 
             //Create vehicles
-            _gameWorldService.Add(_tracingEntity = new Vehicle(new Vector3(1, 0, 1), this, _mainRoad));
-            _gameWorldService.Add(new Vehicle(new Vector3(8, 0, 5), this, _mainRoad));
-            _gameWorldService.Add(new Vehicle(new Vector3(10, 0, 10), this, _mainRoad));
-            _gameWorldService.Add(new Vehicle(new Vector3(15, 0, 15), this, _mainRoad));
+            _gameWorldService.Add(_tracingEntity = new Vehicle(new Vector3(1, 0, 1), this));
+//            _gameWorldService.Add(new Vehicle(new Vector3(8, 0, 5), this));
+//            _gameWorldService.Add(new Vehicle(new Vector3(10, 0, 10), this));
+//            _gameWorldService.Add(new Vehicle(new Vector3(15, 0, 15), this));
 
         }
 
@@ -158,7 +174,8 @@ namespace AIWorld
                 nodes.Add(new Vector3(x.AsFloat(), 0, y.AsFloat()));
             }
 
-            _gameWorldService.Add(new Road(this, nodes.ToArray()));
+            Road.GenerateRoad(this, nodes.ToArray());
+
             return 1;
         }
 
@@ -317,14 +334,6 @@ namespace AIWorld
         protected override void Draw(GameTime gameTime)
         {
             _graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            // Draw tiles
-
-            foreach (QuadPlane t in _terrainTiles)
-                t.Render(GraphicsDevice, Matrix.Identity, _cameraService.View, _cameraService.Projection);
-
-            // /
-
 
 //            _basicEffect.VertexColorEnabled = true;
 //            _basicEffect.World = Matrix.Identity;

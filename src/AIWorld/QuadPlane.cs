@@ -1,19 +1,22 @@
-﻿using Microsoft.Xna.Framework;
+﻿using AIWorld.Services;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld
 {
-    public class QuadPlane
+    public class QuadPlane : DrawableGameComponent
     {
         private static readonly short[] Indexes = {0, 1, 2, 2, 1, 3};
 
         private readonly BasicEffect _effect;
         private readonly VertexPositionNormalTexture[] _vertices;
+        private readonly ICameraService _cameraService;
 
-        public QuadPlane(GraphicsDevice graphicsDevice, Vector3 position, float size, PlaneRotation textureRotation,
-            Texture2D texture)
+        public QuadPlane(Game game, Vector3 position, float size, PlaneRotation textureRotation,
+            Texture2D texture) : base(game)
         {
-            _effect = new BasicEffect(graphicsDevice) {TextureEnabled = true, Texture = texture};
+            _cameraService = game.Services.GetService<ICameraService>();
+            _effect = new BasicEffect(game.GraphicsDevice) {TextureEnabled = true, Texture = texture};
             _effect.EnableDefaultLighting();
 
             var corners = new[]
@@ -42,10 +45,11 @@ namespace AIWorld
             _vertices[3].TextureCoordinate = corners[(1 + offset)%4];
         }
 
-        public QuadPlane(GraphicsDevice graphicsDevice, Vector3 position, float width, float height, PlaneRotation textureRotation,
-            Texture2D texture)
+        public QuadPlane(Game game, Vector3 position, float width, float height, PlaneRotation textureRotation,
+            Texture2D texture) : base(game)
         {
-            _effect = new BasicEffect(graphicsDevice) { TextureEnabled = true, Texture = texture };
+            _cameraService = game.Services.GetService<ICameraService>();
+            _effect = new BasicEffect(game.GraphicsDevice) { TextureEnabled = true, Texture = texture };
             _effect.EnableDefaultLighting();
 
             var corners = new[]
@@ -74,11 +78,12 @@ namespace AIWorld
             _vertices[3].TextureCoordinate = corners[(1 + offset) % 4];
         }
 
-        public QuadPlane(GraphicsDevice graphicsDevice, Vector3 upperLeft, Vector3 upperRight, Vector3 lowerLeft,
+        public QuadPlane(Game game, Vector3 upperLeft, Vector3 upperRight, Vector3 lowerLeft,
             Vector3 lowerRight, PlaneRotation textureRotation,
-            Texture2D texture)
+            Texture2D texture) : base(game)
         {
-            _effect = new BasicEffect(graphicsDevice) { TextureEnabled = true, Texture = texture };
+            _cameraService = game.Services.GetService<ICameraService>();
+            _effect = new BasicEffect(game.GraphicsDevice) { TextureEnabled = true, Texture = texture };
             _effect.EnableDefaultLighting();
 
             var corners = new[]
@@ -104,21 +109,22 @@ namespace AIWorld
             _vertices[3].TextureCoordinate = corners[(1 + offset) % 4];
         }
 
-        public void Render(GraphicsDevice graphicsDevice, Matrix world, Matrix view, Matrix projection)
+        public override void Draw(GameTime gameTime)
         {
-            _effect.World = world;
-            _effect.View = view;
-            _effect.Projection = projection;
+            _effect.World = _cameraService.World;
+            _effect.View = _cameraService.View;
+            _effect.Projection = _cameraService.Projection;
 
             foreach (EffectPass pass in _effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
 
-                graphicsDevice.DrawUserIndexedPrimitives(
+                Game.GraphicsDevice.DrawUserIndexedPrimitives(
                     PrimitiveType.TriangleList,
                     _vertices, 0, 4,
                     Indexes, 0, 2);
             }
+            base.Draw(gameTime);
         }
     }
 }

@@ -78,7 +78,6 @@
     <Compile Include="PlaneRotation.cs" />
     <Compile Include="Core\QuadTree.cs" />
     <Compile Include="Road.cs" />
-    <Compile Include="RoadPlanesGenerator.cs" />
     <Compile Include="Simulation.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

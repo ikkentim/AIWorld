@@ -15,9 +15,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using AIWorld.Helpers;
 using AIWorld.Services;
+using Microsoft.Win32.SafeHandles;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
@@ -27,7 +29,7 @@ namespace AIWorld.Entities
     public class Vehicle : Entity, IMovingEntity
     {
         private const float MinimumDetectionBoxLength = 0.75f;
-        private const float ArriveDecelerationTweaker = 0.5f;
+        private const float ArriveDecelerationTweaker = 1.3f;
         private const float AproxMaxObjectSize = 1.0f;
         private const float BreakingWeight = 0.005f;
         private readonly AudioEmitter _audioEmitter;
@@ -36,16 +38,13 @@ namespace AIWorld.Entities
         private readonly ICameraService _cameraService;
         private readonly IGameWorldService _gameWorldService;
         private readonly Model _model;
-        private readonly Road _road;
         private readonly SoundEffectInstance _soundEffectInstance;
         private bool _istouch;
-        private int _targetnode;
-        private bool _targetnodeisright = true;
         private Vector3 _touch;
 
-        public Vehicle(Vector3 position, Game game, Road road) : base(game)
+        private Stack<Vector3> path;
+        public Vehicle(Vector3 position, Game game) : base(game)
         {
-            _road = road;
             Position = position;
 
             MaxTurnRate = 2;
@@ -59,6 +58,11 @@ namespace AIWorld.Entities
             _basicEffect = new BasicEffect(game.GraphicsDevice);
             _cameraService = game.Services.GetService<ICameraService>();
             _gameWorldService = game.Services.GetService<IGameWorldService>();
+
+            var a = _gameWorldService.Graph.NearestNode(Vector3.Zero);
+            var b = _gameWorldService.Graph.NearestNode(new Vector3(10, 0, 10));
+            path = new Stack<Vector3>(_gameWorldService.Graph.ShortestPath(a, b));
+            
             // Setup engine sound
             _audioListener = new AudioListener
             {
@@ -116,7 +120,7 @@ namespace AIWorld.Entities
 
             Position += Velocity*deltaTime;
 
-            if (Velocity.LengthSquared() > 0.00001)
+            if (Velocity.LengthSquared() > 0.001)
             {
                 Heading = Vector3.Normalize(Velocity);
                 Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
@@ -125,17 +129,16 @@ namespace AIWorld.Entities
 
         private void UpdateTarget()
         {
-            if (
-                (Position - (_targetnodeisright ? _road.RightNodes[_targetnode] : _road.LeftNodes[_targetnode])).Length() <
-                0.8f)
+            if (!path.Any()) return;
+            if (path.Count == 1)
             {
-                _targetnode++;
-                if (_targetnode >= _road.Nodes.Length)
+                if (Velocity.LengthSquared() < 0.001)
                 {
-                    _targetnodeisright = !_targetnodeisright;
-                    _targetnode = 0;
+                    Velocity = Vector3.Zero;
+                    path.Pop();
                 }
             }
+            else if ((Position - path.Peek()).LengthSquared() < 0.9f) path.Pop();
         }
 
         private Vector3 Seek(Vector3 target)
@@ -143,14 +146,14 @@ namespace AIWorld.Entities
             return (target - Position).Truncate(MaxSpeed) - Velocity;
         }
 
-        private Vector3 Arrive(Vector3 target, int decel)
+        private Vector3 Arrive(Vector3 target)
         {
             Vector3 toTarget = target - Position;
             float distance = toTarget.Length();
 
             if (distance > 0.00001)
             {
-                float speed = distance/(decel*ArriveDecelerationTweaker);
+                float speed = distance/(ArriveDecelerationTweaker);
                 speed = Math.Min(speed, MaxSpeed);
                 Vector3 desiredVelocity = toTarget*speed/distance;
 
@@ -228,9 +231,18 @@ namespace AIWorld.Entities
 
         private Vector3 CalculateSteeringForce()
         {
-            Vector3 target = _targetnodeisright ? _road.RightNodes[_targetnode] : _road.LeftNodes[_targetnode];
+            if(!path.Any()) return Vector3.Zero;
+            
+//            Vector3 target = _targetnodeisright ? _road.RightNodes[_targetnode] : _road.LeftNodes[_targetnode];
 
-            Vector3 force = Seek(target)*0.9f;
+            Vector3 target = path.Peek();
+            Vector3 force = Vector3.Zero;
+
+            if (path.Count > 1)
+                force += Seek(target)*0.9f;
+            else
+                force += Arrive(target)*0.9f;
+
             force += AvoidObstacles()*1.6f;
 
             return force.Truncate(MaxForce);
@@ -290,6 +302,7 @@ namespace AIWorld.Entities
             Line(Position, Position + Vector3.Up/3, Color.Green);
             Line(Position, Position + Heading/3, Color.Blue);
 
+            foreach(var n in path) Line(n, n + Vector3.Up, Color.Yellow);
             base.Draw(gameTime);
         }
 
