@@ -26,7 +26,6 @@ namespace AIWorld
         }
 
         public Vector3 Center { get; private set; }
-
         public Vector3 HalfDimension { get; private set; }
 
         public bool ContainsPoint(Vector3 point)

@@ -21,7 +21,7 @@ namespace AIWorld.Scripting
     public class ScriptingFunctionAttribute : Attribute
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptingFunctionAttribute"/> class.
+        ///     Initializes a new instance of the <see cref="ScriptingFunctionAttribute" /> class.
         /// </summary>
         /// <param name="name">The name.</param>
         public ScriptingFunctionAttribute(string name)
@@ -30,14 +30,14 @@ namespace AIWorld.Scripting
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptingFunctionAttribute"/> class.
+        ///     Initializes a new instance of the <see cref="ScriptingFunctionAttribute" /> class.
         /// </summary>
         public ScriptingFunctionAttribute()
         {
         }
 
         /// <summary>
-        /// Gets the name.
+        ///     Gets the name.
         /// </summary>
         public string Name { get; private set; }
     }

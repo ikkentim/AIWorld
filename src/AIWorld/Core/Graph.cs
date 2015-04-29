@@ -15,9 +15,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.Remoting;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Core
@@ -54,43 +52,43 @@ namespace AIWorld.Core
 
         public IEnumerable<Vector3> ShortestPath(Vector3 start, Vector3 finish)
         {
-                var nodes = new List<Node>(Values);
-                foreach (var n in Values) n.Distance = float.PositiveInfinity;
+            var nodes = new List<Node>(Values);
+            foreach (var n in Values) n.Distance = float.PositiveInfinity;
 
-                this[start].Distance = 0;
-                this[start].Previous = null;
+            this[start].Distance = 0;
+            this[start].Previous = null;
 
-                while (nodes.Count != 0)
+            while (nodes.Count != 0)
+            {
+                var minDistance = nodes.Min(n => n.Distance);
+
+                // Start and end nodes are in different graphs
+                if (float.IsPositiveInfinity(minDistance)) yield break;
+
+                var smallest = nodes.First(n => n.Distance == minDistance);
+                nodes.Remove(smallest);
+
+                if (smallest.Position == finish)
                 {
-                    var minDistance = nodes.Min(n => n.Distance);
-
-                    // Start and end nodes are in different graphs
-                    if (float.IsPositiveInfinity(minDistance)) yield break;
-
-                    var smallest = nodes.First(n => n.Distance == minDistance);
-                    nodes.Remove(smallest);
-
-                    if (smallest.Position == finish)
+                    while (smallest.Previous != null)
                     {
-                        while (smallest.Previous != null)
-                        {
-                            yield return smallest.Position;
-                            smallest = smallest.Previous;
-                        }
-
-                        yield break;
+                        yield return smallest.Position;
+                        smallest = smallest.Previous;
                     }
 
-                    foreach (var neighbor in smallest)
+                    yield break;
+                }
+
+                foreach (var neighbor in smallest)
+                {
+                    var alt = smallest.Distance + neighbor.Distance;
+                    if (alt < neighbor.Target.Distance)
                     {
-                        var alt = smallest.Distance + neighbor.Distance;
-                        if (alt < neighbor.Target.Distance)
-                        {
-                            neighbor.Target.Distance = alt;
-                            neighbor.Target.Previous = smallest;
-                        }
+                        neighbor.Target.Distance = alt;
+                        neighbor.Target.Previous = smallest;
                     }
                 }
+            }
         }
     }
 }

@@ -41,7 +41,6 @@ namespace AIWorld
         private const float CameraTargetOffset = 0.2f;
         private const float CameraHeightOffset = 0.75f;
         private const bool Use45DegreeCamera = false;
-
         private readonly GraphicsDeviceManager _graphics;
         private SoundEffect _ambientEffect;
         private float _aspectRatio;
@@ -71,6 +70,8 @@ namespace AIWorld
             Script = new ScriptBox("main", "main");
             Script.Register(this);
         }
+
+        public ScriptBox Script { get; private set; }
 
         /// <summary>
         ///     Initializes this instance.
@@ -303,7 +304,5 @@ namespace AIWorld
         }
 
         #endregion
-
-        public ScriptBox Script { get; private set; }
     }
 }

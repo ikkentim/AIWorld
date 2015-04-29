@@ -27,7 +27,6 @@ namespace AIWorld.Scripting
     public class ScriptBox : AMX, IEnumerable<KeyValuePair<string, Cell>>
     {
         private static readonly DefaultFunctions _defaultFunctions = new DefaultFunctions();
-
         private readonly Dictionary<string, CellPtr> _publicVars = new Dictionary<string, CellPtr>();
 
         /// <summary>
@@ -69,7 +68,7 @@ namespace AIWorld.Scripting
             Register(function.Method.Name, function);
         }
 
-        private Func<Cell,object> CreateInTypeCaster(ParameterInfo info)
+        private Func<Cell, object> CreateInTypeCaster(ParameterInfo info)
         {
             if (!info.ParameterType.IsByRef)
             {
@@ -89,8 +88,9 @@ namespace AIWorld.Scripting
         {
             if (info.ParameterType.IsByRef)
             {
-                if (info.ParameterType.GetElementType() == typeof (int)) return (cell, value) => { cell.AsCellPtr().Set((int) value); };
-                if (info.ParameterType.GetElementType() == typeof(float))
+                if (info.ParameterType.GetElementType() == typeof (int))
+                    return (cell, value) => { cell.AsCellPtr().Set((int) value); };
+                if (info.ParameterType.GetElementType() == typeof (float))
                     return (cell, value) => { cell.AsCellPtr().Set(Cell.FromFloat((float) value)); };
                 throw new ArgumentException("Invalid argument type " + info.ParameterType);
             }
@@ -104,7 +104,7 @@ namespace AIWorld.Scripting
             var properties =
                 instance.GetType()
                     .GetProperties()
-                    .Where(m => m.GetCustomAttributes(typeof(ScriptingFunctionAttribute), true).Any());
+                    .Where(m => m.GetCustomAttributes(typeof (ScriptingFunctionAttribute), true).Any());
 
             foreach (var property in properties)
             {
@@ -121,7 +121,6 @@ namespace AIWorld.Scripting
 
                 if (property.PropertyType == typeof (string))
                 {
-
                     Register(string.Format("Get{0}", name), (amx, arguments) =>
                     {
                         if (arguments.Length < 2)
@@ -207,7 +206,9 @@ namespace AIWorld.Scripting
 
             foreach (var method in methods)
             {
-                var attribute = method.GetCustomAttributes(typeof (ScriptingFunctionAttribute), true).First() as ScriptingFunctionAttribute;
+                var attribute =
+                    method.GetCustomAttributes(typeof (ScriptingFunctionAttribute), true).First() as
+                        ScriptingFunctionAttribute;
 
                 var name = attribute.Name ?? method.Name;
 
@@ -217,9 +218,9 @@ namespace AIWorld.Scripting
                 var outTypeCaster = (Func<object, int>) (o => 1);
 
                 if (method.ReturnParameter.ParameterType == typeof (int))
-                    outTypeCaster = o => (int)o;
-                if (method.ReturnParameter.ParameterType == typeof(float))
-                    outTypeCaster = o => Cell.FromFloat((float)o).AsInt32();
+                    outTypeCaster = o => (int) o;
+                if (method.ReturnParameter.ParameterType == typeof (float))
+                    outTypeCaster = o => Cell.FromFloat((float) o).AsInt32();
                 else if (method.ReturnParameter.ParameterType == typeof (bool))
                     outTypeCaster = o => (bool) o ? 1 : 0;
 
@@ -280,10 +281,11 @@ namespace AIWorld.Scripting
             [ScriptingFunction("frand")]
             public float FloatRandom()
             {
-                if(_random == null) _random = new Random();
+                if (_random == null) _random = new Random();
 
-                return (float)_random.NextDouble();
+                return (float) _random.NextDouble();
             }
+
             [ScriptingFunction("log")]
             public void Log(string message)
             {
@@ -293,7 +295,6 @@ namespace AIWorld.Scripting
             [ScriptingFunction("logf")]
             public bool LogFormat(AMXArgumentList arguments)
             {
-
                 if (arguments.Length < 1)
                     return false;
 

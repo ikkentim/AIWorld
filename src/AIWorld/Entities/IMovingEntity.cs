@@ -25,6 +25,5 @@ namespace AIWorld.Entities
         Vector3 Side { get; }
         float MaxSpeed { get; }
         float MaxForce { get; }
-        //float MaxTurnRate { get; }
     }
 }

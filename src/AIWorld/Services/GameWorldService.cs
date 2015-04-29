@@ -17,7 +17,6 @@ using System;
 using AIWorld.Core;
 using AIWorld.Entities;
 using AIWorld.Scripting;
-using AMXWrapper;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services

@@ -22,7 +22,6 @@ namespace AIWorld.Services
         Matrix World { get; }
         Matrix View { get; }
         Matrix Projection { get; }
-
         void Update(Vector3 cameraPosition, Vector3 cameraTargetPosition, float aspectRatio);
     }
 }

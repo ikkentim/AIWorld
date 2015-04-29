@@ -23,7 +23,6 @@ namespace AIWorld
     {
         private static readonly short[] Indexes = {0, 1, 2, 2, 1, 3};
         private readonly ICameraService _cameraService;
-
         private readonly BasicEffect _effect;
         private readonly VertexPositionNormalTexture[] _vertices;
 
