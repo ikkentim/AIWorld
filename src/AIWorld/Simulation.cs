@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -109,46 +110,8 @@ namespace AIWorld
 
             _script.ExecuteMain();
 
-            // Create road
-            
-//            _gameWorldService.Add(_mainRoad = new Road(this, new[]
-//            {
-//                new Vector3(0, 0, 0),
-//                new Vector3(1, 0, 0),
-//                new Vector3(2, 0, 0),
-//                new Vector3(3, 0, 1),
-//                new Vector3(3, 0, 2),
-//                new Vector3(3, 0, 3),
-//                new Vector3(3, 0, 4),
-//                new Vector3(3, 0, 5),
-//                new Vector3(3, 0, 6),
-//                new Vector3(3, 0, 7),
-//                new Vector3(3, 0, 8),
-//                new Vector3(2, 0, 9),
-//                new Vector3(1, 0, 9),
-//                new Vector3(0, 0, 9)
-//            }));
-
-            Road.GenerateRoad(this, new[]
-            {
-                new Vector3(0, 0, 0),
-                new Vector3(1, 0, 0),
-                new Vector3(2, 0, 0),
-                new Vector3(3, 0, 1),
-                new Vector3(3, 0, 2),
-                new Vector3(3, 0, 3),
-                new Vector3(3, 0, 4),
-                new Vector3(3, 0, 5),
-                new Vector3(3, 0, 6),
-                new Vector3(3, 0, 7),
-                new Vector3(3, 0, 8),
-                new Vector3(2, 0, 9),
-                new Vector3(1, 0, 9),
-                new Vector3(0, 0, 9)
-            });
-
             //Create vehicles
-            _gameWorldService.Add(_tracingEntity = new Vehicle(new Vector3(1, 0, 1), this));
+//            _gameWorldService.Add(_tracingEntity = new Vehicle(new Vector3(1, 0, 1), this));
 //            _gameWorldService.Add(new Vehicle(new Vector3(8, 0, 5), this));
 //            _gameWorldService.Add(new Vehicle(new Vector3(10, 0, 10), this));
 //            _gameWorldService.Add(new Vehicle(new Vector3(15, 0, 15), this));
@@ -165,8 +128,13 @@ namespace AIWorld
 
         private int AddRoad(IntPtr arrayPointer, int count)
         {
+            if (count % 2 != 0)
+                count--;
+            if (count < 4)
+                return 0;
+
             var nodes = new List<Vector3>();
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count / 2; i++)
             {
                 var x = Cell.FromIntPtr(IntPtr.Add(arrayPointer, (i*2 + 0)*Marshal.SizeOf(typeof (Cell))));
                 var y = Cell.FromIntPtr(IntPtr.Add(arrayPointer, (i*2 + 1)*Marshal.SizeOf(typeof (Cell))));

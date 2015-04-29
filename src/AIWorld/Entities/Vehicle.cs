@@ -15,11 +15,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using AIWorld.Helpers;
 using AIWorld.Services;
-using Microsoft.Win32.SafeHandles;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
@@ -39,10 +37,10 @@ namespace AIWorld.Entities
         private readonly IGameWorldService _gameWorldService;
         private readonly Model _model;
         private readonly SoundEffectInstance _soundEffectInstance;
+        private readonly Stack<Vector3> path;
         private bool _istouch;
         private Vector3 _touch;
 
-        private Stack<Vector3> path;
         public Vehicle(Vector3 position, Game game) : base(game)
         {
             Position = position;
@@ -59,10 +57,11 @@ namespace AIWorld.Entities
             _cameraService = game.Services.GetService<ICameraService>();
             _gameWorldService = game.Services.GetService<IGameWorldService>();
 
+            var target = new Vector3(10, 0, 10);
             var a = _gameWorldService.Graph.NearestNode(Vector3.Zero);
-            var b = _gameWorldService.Graph.NearestNode(new Vector3(10, 0, 10));
-            path = new Stack<Vector3>(_gameWorldService.Graph.ShortestPath(a, b));
-            
+            var b = _gameWorldService.Graph.NearestNode(target);
+            path = new Stack<Vector3>(new[] {target}.Concat(_gameWorldService.Graph.ShortestPath(a, b)));
+
             // Setup engine sound
             _audioListener = new AudioListener
             {
@@ -95,7 +94,7 @@ namespace AIWorld.Entities
 
         private void UpdateAudioPosition()
         {
-            Vector3 cpos = Matrix.Invert(_cameraService.View).Translation;
+            var cpos = Matrix.Invert(_cameraService.View).Translation;
             _audioListener.Position = cpos;
             _audioListener.Forward = new Vector3(_cameraService.View.M31, _cameraService.View.M32,
                 _cameraService.View.M33); // Think this is the right col?
@@ -111,9 +110,9 @@ namespace AIWorld.Entities
         private void UpdatePosition(GameTime gameTime)
         {
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
-            Vector3 steeringForce = CalculateSteeringForce();
+            var steeringForce = CalculateSteeringForce();
 
-            Vector3 acceleration = steeringForce/Mass;
+            var acceleration = steeringForce/Mass;
             Velocity += acceleration*deltaTime;
 
             Velocity = Velocity.Truncate(MaxSpeed);
@@ -148,14 +147,14 @@ namespace AIWorld.Entities
 
         private Vector3 Arrive(Vector3 target)
         {
-            Vector3 toTarget = target - Position;
-            float distance = toTarget.Length();
+            var toTarget = target - Position;
+            var distance = toTarget.Length();
 
             if (distance > 0.00001)
             {
-                float speed = distance/(ArriveDecelerationTweaker);
+                var speed = distance/(ArriveDecelerationTweaker);
                 speed = Math.Min(speed, MaxSpeed);
-                Vector3 desiredVelocity = toTarget*speed/distance;
+                var desiredVelocity = toTarget*speed/distance;
 
                 return desiredVelocity - Velocity;
             }
@@ -163,47 +162,30 @@ namespace AIWorld.Entities
             return Vector3.Zero;
         }
 
-        private Vector3 ToLocalSpace(Vector3 point)
-        {
-            float tx = -Vector3.Dot(Position, Heading);
-            float ty = -Vector3.Dot(Position, Vector3.Up);
-            float tz = -Vector3.Dot(Position, Side);
-
-            return Vector3.Transform(point,
-                new Matrix(Heading.X, 0, Side.X, 0, Heading.Y, 1, Side.Y, 0, Heading.Z, 0, Side.Z, 0, tx, ty, tz, 0));
-        }
-
-        private Vector3 VectorToWorldSpace(Vector3 vec)
-        {
-            return Vector3.Transform(vec,
-                Matrix.Identity*
-                new Matrix(Heading.X, 0, Side.X, 0, Heading.Y, 1, Side.Y, 0, Heading.Z, 0, Side.Z, 0, 0, 0, 0, 0));
-        }
-
         private Vector3 AvoidObstacles()
         {
-            float bLength = DetectionBoxLength;
+            var bLength = DetectionBoxLength;
 
-            IEnumerable<IEntity> entities =
+            var entities =
                 _gameWorldService.Entities.Query(new AABB(Position, new Vector3(bLength + AproxMaxObjectSize)))
                     .Where(e => e != this && (e.Position - Position).Length() < e.Size + bLength);
 
             IEntity closest = null;
-            float closestDistance = float.MaxValue;
-            Vector3 localPositionOfClosestPoint = Vector3.Zero;
+            var closestDistance = float.MaxValue;
+            var localPositionOfClosestPoint = Vector3.Zero;
 
-            foreach (IEntity e in entities)
+            foreach (var e in entities)
             {
-                Vector3 localPoint = ToLocalSpace(e.Position);
+                var localPoint = Transform.ToLocalSpace(Position, Heading, Vector3.Up, Side, e.Position);
                 if (localPoint.X > 0)
                 {
-                    float combinedSize = e.Size + Size;
+                    var combinedSize = e.Size + Size;
 
                     if (Math.Abs(localPoint.Z) < combinedSize)
                     {
                         var sqrtpart = (float) Math.Sqrt(combinedSize*combinedSize - localPoint.Z*localPoint.Z);
 
-                        float ip = sqrtpart <= localPoint.X ? localPoint.X - sqrtpart : localPoint.X + sqrtpart;
+                        var ip = sqrtpart <= localPoint.X ? localPoint.X - sqrtpart : localPoint.X + sqrtpart;
 
                         if (ip < closestDistance)
                         {
@@ -217,26 +199,28 @@ namespace AIWorld.Entities
 
             // debug value
             _istouch = closest != null;
-            _touch = VectorToWorldSpace(localPositionOfClosestPoint);
+            _touch = Transform.VectorToWorldSpace(Heading, Vector3.Up, Side, localPositionOfClosestPoint)
+            ;
 
             if (closest == null)
                 return Vector3.Zero;
 
-            float multiplier = 1 + (bLength - localPositionOfClosestPoint.X)/bLength;
+            var multiplier = 1 + (bLength - localPositionOfClosestPoint.X)/bLength;
 
             return
-                VectorToWorldSpace(new Vector3((closest.Size - localPositionOfClosestPoint.X)*BreakingWeight, 0,
-                    closest.Size - localPositionOfClosestPoint.Z*multiplier));
+                Transform.VectorToWorldSpace(Heading, Vector3.Up, Side,
+                    new Vector3((closest.Size - localPositionOfClosestPoint.X)*BreakingWeight, 0,
+                        closest.Size - localPositionOfClosestPoint.Z*multiplier));
         }
 
         private Vector3 CalculateSteeringForce()
         {
-            if(!path.Any()) return Vector3.Zero;
-            
+            if (!path.Any()) return Vector3.Zero;
+
 //            Vector3 target = _targetnodeisright ? _road.RightNodes[_targetnode] : _road.LeftNodes[_targetnode];
 
-            Vector3 target = path.Peek();
-            Vector3 force = Vector3.Zero;
+            var target = path.Peek();
+            var force = Vector3.Zero;
 
             if (path.Count > 1)
                 force += Seek(target)*0.9f;
@@ -272,7 +256,7 @@ namespace AIWorld.Entities
             var transforms = new Matrix[_model.Bones.Count];
             _model.CopyAbsoluteBoneTransformsTo(transforms);
 
-            foreach (ModelMesh mesh in _model.Meshes)
+            foreach (var mesh in _model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
                 {
@@ -302,7 +286,7 @@ namespace AIWorld.Entities
             Line(Position, Position + Vector3.Up/3, Color.Green);
             Line(Position, Position + Heading/3, Color.Blue);
 
-            foreach(var n in path) Line(n, n + Vector3.Up, Color.Yellow);
+            foreach (var n in path) Line(n, n + Vector3.Up, Color.Yellow);
             base.Draw(gameTime);
         }
 

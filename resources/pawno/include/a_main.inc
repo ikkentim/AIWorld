@@ -9,7 +9,7 @@ native AddGameObject(modelname[], Float:size, Float:x, Float:y, Float:angle=0.0)
 
 /**************************************************/
 /* Adds a road to the world */
-native AddRoad(Float:pointsxy[], count);
+native AddRoad(Float:pointsxy[], count = sizeof pointsxy);
 
 /**************************************************/
 /* Adds an agent to the world */

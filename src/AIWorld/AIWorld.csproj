@@ -61,6 +61,7 @@
     <Compile Include="Core\BoundlessQuadTree.cs" />
     <Compile Include="Edge.cs" />
     <Compile Include="Entities\Agent.cs" />
+    <Compile Include="Entities\Transform.cs" />
     <Compile Include="Entities\WorldObject.cs" />
     <Compile Include="Graph.cs" />
     <Compile Include="Node.cs" />
