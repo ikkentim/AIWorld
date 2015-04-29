@@ -54,7 +54,7 @@ namespace AIWorld
                 yield break;
             }
 
-            foreach (AABB a in Parts.SelectMany(p => p.GetDebugBoxes()))
+            foreach (var a in Parts.SelectMany(p => p.GetDebugBoxes()))
                 yield return a;
         }
 
@@ -101,13 +101,13 @@ namespace AIWorld
 
         public virtual IEnumerable<IEntity> Query(AABB box)
         {
-            for (int i = 0; i < _count; i++)
+            for (var i = 0; i < _count; i++)
                 if (box.ContainsPoint(_entities[i].Position))
                     yield return _entities[i];
 
             if (Parts == null) yield break;
 
-            foreach (IEntity e in Parts.Where(p => p.Boundaries.IntersectsWith(box)).SelectMany(p => p.Query(box)))
+            foreach (var e in Parts.Where(p => p.Boundaries.IntersectsWith(box)).SelectMany(p => p.Query(box)))
                 yield return e;
         }
 
@@ -147,11 +147,11 @@ namespace AIWorld
         {
             if (entity == null) throw new ArgumentNullException("entity");
 
-            for (int i = 0; i < _count; i++)
+            for (var i = 0; i < _count; i++)
             {
                 if (_entities[i] != entity) continue;
 
-                for (int j = i; j < _count - 1; j++)
+                for (var j = i; j < _count - 1; j++)
                     _entities[j] = _entities[j + 1];
 
                 _entities[--_count] = null;
@@ -214,12 +214,12 @@ namespace AIWorld
         /// </returns>
         public IEnumerator<IEntity> GetEnumerator()
         {
-            for (int i = 0; i < _count; i++)
+            for (var i = 0; i < _count; i++)
                 yield return _entities[i];
 
             if (Parts == null) yield break;
 
-            foreach (IEntity e in Parts.SelectMany(p => p).ToArray())
+            foreach (var e in Parts.SelectMany(p => p).ToArray())
                 yield return e;
         }
 

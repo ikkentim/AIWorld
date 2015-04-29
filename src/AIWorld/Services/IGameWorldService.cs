@@ -13,11 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using AIWorld.Core;
 using AIWorld.Entities;
+using AIWorld.Scripting;
 
 namespace AIWorld.Services
 {
-    public interface IGameWorldService
+    public interface IGameWorldService : IScriptingNatives
     {
         QuadTree Entities { get; }
         Graph Graph { get; }

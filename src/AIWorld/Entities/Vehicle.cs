@@ -200,7 +200,7 @@ namespace AIWorld.Entities
             // debug value
             _istouch = closest != null;
             _touch = Transform.VectorToWorldSpace(Heading, Vector3.Up, Side, localPositionOfClosestPoint)
-            ;
+                ;
 
             if (closest == null)
                 return Vector3.Zero;

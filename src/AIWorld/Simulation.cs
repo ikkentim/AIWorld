@@ -15,12 +15,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using AIWorld.Entities;
-using AIWorld.Helpers;
+using AIWorld.Scripting;
 using AIWorld.Services;
 using AMXWrapper;
 using Microsoft.Xna.Framework;
@@ -33,7 +31,7 @@ namespace AIWorld
     /// <summary>
     ///     This is the main type for your game
     /// </summary>
-    public class Simulation : Game
+    public class Simulation : Game, IScripted
     {
         private const float MinZoom = 1;
         private const float MaxZoom = 20;
@@ -45,22 +43,22 @@ namespace AIWorld
         private const bool Use45DegreeCamera = false;
 
         private readonly GraphicsDeviceManager _graphics;
+        private SoundEffect _ambientEffect;
         private float _aspectRatio;
+        private BasicEffect _basicEffect;
         private float _cameraDistance = 3;
         private float _cameraRotation;
         private ICameraService _cameraService;
         private Vector3 _cameraTarget = new Vector3(0.0f, 0.0f, 0.0f);
         private GameWorldService _gameWorldService;
         private Texture2D _grass;
-        private Entity _tracingEntity;
-        private SoundEffect _ambientEffect;
         private bool _isMiddleButtonDown;
         private int _lastScroll;
+        private bool _leftclick;
         private float _scrollVelocity;
+        private Entity _tracingEntity;
         private float _unprocessedScrollDelta;
-        private BasicEffect _basicEffect;
 
-        private ScriptBox _script;
         /// <summary>
         ///     Initializes a new instance of the <see cref="Simulation" /> class.
         /// </summary>
@@ -70,10 +68,10 @@ namespace AIWorld
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
-            _script = new ScriptBox("main", "main");
-            _script.Register<string,float,float,float,float>(AddGameObject);
-            _script.Register<IntPtr,int>(AddRoad);
-            _script.Register<string,float,float>(AddAgent);
+            Script = new ScriptBox("main", "main");
+            Script.Register<string, float, float, float, float>(AddGameObject);
+            Script.Register<IntPtr, int>(AddRoad);
+            Script.Register<string, float, float>(AddAgent);
         }
 
         /// <summary>
@@ -103,57 +101,13 @@ namespace AIWorld
             ambient.Play();
 
             //Create terrain
-            for (int x = -5; x <= 5; x++)
-                for (int y = -5; y <= 5; y++)
+            for (var x = -5; x <= 5; x++)
+                for (var y = -5; y <= 5; y++)
                     _gameWorldService.Add(new QuadPlane(this, new Vector3(x*4, -0.01f, y*4), 4, PlaneRotation.None,
                         _grass));
 
-            _script.ExecuteMain();
-
-            //Create vehicles
-//            _gameWorldService.Add(_tracingEntity = new Vehicle(new Vector3(1, 0, 1), this));
-//            _gameWorldService.Add(new Vehicle(new Vector3(8, 0, 5), this));
-//            _gameWorldService.Add(new Vehicle(new Vector3(10, 0, 10), this));
-//            _gameWorldService.Add(new Vehicle(new Vector3(15, 0, 15), this));
-
+            Script.ExecuteMain();
         }
-
-        #region scripting natives
-
-        private int AddAgent(string scriptname, float x, float y)
-        {
-            _gameWorldService.Add(new Agent(this, scriptname, new Vector3(x, 0, y)));
-            return 1;
-        }
-
-        private int AddRoad(IntPtr arrayPointer, int count)
-        {
-            if (count % 2 != 0)
-                count--;
-            if (count < 4)
-                return 0;
-
-            var nodes = new List<Vector3>();
-            for (var i = 0; i < count / 2; i++)
-            {
-                var x = Cell.FromIntPtr(IntPtr.Add(arrayPointer, (i*2 + 0)*Marshal.SizeOf(typeof (Cell))));
-                var y = Cell.FromIntPtr(IntPtr.Add(arrayPointer, (i*2 + 1)*Marshal.SizeOf(typeof (Cell))));
-
-                nodes.Add(new Vector3(x.AsFloat(), 0, y.AsFloat()));
-            }
-
-            Road.GenerateRoad(this, nodes.ToArray());
-
-            return 1;
-        }
-
-        private int AddGameObject(string name, float size, float x, float y, float angle)
-        {
-            _gameWorldService.Add(new WorldObject(this, name, size, new Vector3(x, 0, y), angle, false));
-            return 1;
-        }
-
-        #endregion
 
         /// <summary>
         ///     Unloads the content.
@@ -163,7 +117,6 @@ namespace AIWorld
             // TODO: Unload any non ContentManager content here
         }
 
-        private bool _leftclick;
         protected override void Update(GameTime gameTime)
         {
             if (!IsActive) return;
@@ -182,7 +135,8 @@ namespace AIWorld
 
             if (Math.Abs(_unprocessedScrollDelta) > 0.5)
             {
-                _scrollVelocity += Math.Min(_unprocessedScrollDelta/DecelerationTweaker, MaxScrollSpeed) - _scrollVelocity;
+                _scrollVelocity += Math.Min(_unprocessedScrollDelta/DecelerationTweaker, MaxScrollSpeed) -
+                                   _scrollVelocity;
 
                 _unprocessedScrollDelta -= _scrollVelocity;
 
@@ -194,7 +148,7 @@ namespace AIWorld
                 if (_isMiddleButtonDown)
                 {
                     //_cameraRotation
-                    int mx = mouseState.X;
+                    var mx = mouseState.X;
 
                     _cameraRotation += (mx - Window.ClientBounds.Width/2)/100f;
 
@@ -241,12 +195,12 @@ namespace AIWorld
 
             var realCameraTarget = _cameraTarget + new Vector3(0, CameraTargetOffset, 0);
             var cameraPosition = realCameraTarget +
-                                     new Vector3((float)Math.Cos(_cameraRotation),
-                                         Use45DegreeCamera
-                                             ? 1
-                                             : _cameraDistance / 3 - MinZoom + CameraTargetOffset + CameraHeightOffset,
-                                         (float)Math.Sin(_cameraRotation)) *
-                                     _cameraDistance;
+                                 new Vector3((float) Math.Cos(_cameraRotation),
+                                     Use45DegreeCamera
+                                         ? 1
+                                         : _cameraDistance/3 - MinZoom + CameraTargetOffset + CameraHeightOffset,
+                                     (float) Math.Sin(_cameraRotation))*
+                                 _cameraDistance;
 
             _cameraService.Update(cameraPosition, realCameraTarget, _aspectRatio);
             if (mouseState.LeftButton == ButtonState.Released)
@@ -276,7 +230,7 @@ namespace AIWorld
                 {
                     var groundPos = nearPoint + ray.Direction*groundDistance.Value;
 
-                    var rect = new AABB(groundPos, Vector3.One * 10);
+                    var rect = new AABB(groundPos, Vector3.One*10);
                     var clicker =
                         _gameWorldService.Entities.Query(rect)
                             .OfType<Entity>()
@@ -312,5 +266,44 @@ namespace AIWorld
 
             base.Draw(gameTime);
         }
+
+        #region scripting natives
+
+        private int AddAgent(string scriptname, float x, float y)
+        {
+            _gameWorldService.Add(new Agent(this, scriptname, new Vector3(x, 0, y)));
+            return 1;
+        }
+
+        private int AddRoad(IntPtr arrayPointer, int count)
+        {
+            if (count%2 != 0)
+                count--;
+            if (count < 4)
+                return 0;
+
+            var nodes = new List<Vector3>();
+            for (var i = 0; i < count/2; i++)
+            {
+                var x = Cell.FromIntPtr(IntPtr.Add(arrayPointer, (i*2 + 0)*Marshal.SizeOf(typeof (Cell))));
+                var y = Cell.FromIntPtr(IntPtr.Add(arrayPointer, (i*2 + 1)*Marshal.SizeOf(typeof (Cell))));
+
+                nodes.Add(new Vector3(x.AsFloat(), 0, y.AsFloat()));
+            }
+
+            Road.GenerateRoad(this, nodes.ToArray());
+
+            return 1;
+        }
+
+        private int AddGameObject(string name, float size, float x, float y, float angle)
+        {
+            _gameWorldService.Add(new WorldObject(this, name, size, new Vector3(x, 0, y), angle, false));
+            return 1;
+        }
+
+        #endregion
+
+        public ScriptBox Script { get; private set; }
     }
 }

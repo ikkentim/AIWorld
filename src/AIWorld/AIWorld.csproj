@@ -59,17 +59,18 @@
   <ItemGroup>
     <Compile Include="Core\AABB.cs" />
     <Compile Include="Core\BoundlessQuadTree.cs" />
-    <Compile Include="Edge.cs" />
+    <Compile Include="Core\Edge.cs" />
     <Compile Include="Entities\Agent.cs" />
-    <Compile Include="Entities\Transform.cs" />
+    <Compile Include="Helpers\Transform.cs" />
     <Compile Include="Entities\WorldObject.cs" />
-    <Compile Include="Graph.cs" />
-    <Compile Include="Node.cs" />
-    <Compile Include="ScriptBox.cs" />
+    <Compile Include="Core\Graph.cs" />
+    <Compile Include="Core\Node.cs" />
+    <Compile Include="Scripting\IScripted.cs" />
+    <Compile Include="Scripting\IScriptingNatives.cs" />
+    <Compile Include="Scripting\ScriptBox.cs" />
     <Compile Include="Services\CameraService.cs" />
     <Compile Include="Entities\Entity.cs" />
     <Compile Include="Services\GameWorldService.cs" />
-    <Compile Include="Entities\House.cs" />
     <Compile Include="Services\ICameraService.cs" />
     <Compile Include="Entities\IEntity.cs" />
     <Compile Include="Services\IGameWorldService.cs" />

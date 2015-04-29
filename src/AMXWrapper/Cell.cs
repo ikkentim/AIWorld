@@ -86,6 +86,15 @@ namespace AMXWrapper
         }
 
         /// <summary>
+        /// Gets an pointer representation of this instance.
+        /// </summary>
+        /// <returns></returns>
+        public CellPtr AsCellPtr()
+        {
+            return new CellPtr(AsIntPtr());
+        }
+
+        /// <summary>
         /// Gets an float representation of this instance.
         /// </summary>
         /// <returns>An float representation of this instance.</returns>

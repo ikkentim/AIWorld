@@ -1,0 +1,1 @@
+native GetClosestNode(Float:x, Float:y, &Float:tx, &Float:ty);

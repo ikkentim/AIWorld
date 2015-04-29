@@ -1,9 +1,23 @@
-﻿using System;
+﻿// AIWorld
+// Copyright 2015 Tim Potze
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using AIWorld.Helpers;
+using AIWorld.Scripting;
 using AIWorld.Services;
 using AMXWrapper;
 using Microsoft.Xna.Framework;
@@ -11,49 +25,50 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld.Entities
 {
-    public class Agent : Entity, IMovingEntity
+    public class Agent : Entity, IMovingEntity, IScripted
     {
         private const float MinimumDetectionBoxLength = 0.75f;
         private const float ArriveDecelerationTweaker = 1.3f;
         private const float AproxMaxObjectSize = 1.0f;
         private const float BreakingWeight = 0.005f;
 
-        private readonly ScriptBox _script;
-        private Model _model;
-        private Matrix[] _transforms;
         private readonly ICameraService _cameraService;
         private readonly IGameWorldService _gameWorldService;
 
-        private readonly Stack<Vector3> _path = null; 
+        private readonly Stack<Vector3> _path;
+        private Model _model;
+        private Matrix[] _transforms;
+
         public Agent(Game game, string scriptname, Vector3 position)
             : base(game)
         {
             if (scriptname == null) throw new ArgumentNullException("scriptname");
             Position = position;
-    
-            _script = new ScriptBox("agent", scriptname);
-            _script.Register<string>(SetModel);
-            _script.Register<float>(SetSize);
-            _script.Register<float>(SetMaxForce);
-            _script.Register<float>(SetMaxSpeed);
-            _script.Register<float>(SetMass);
-            _script.ExecuteMain();
 
             _cameraService = game.Services.GetService<ICameraService>();
             _gameWorldService = game.Services.GetService<IGameWorldService>();
+
+            Script = new ScriptBox("agent", scriptname);
+            Script.Register<string>(SetModel);
+            Script.Register<float>(SetSize);
+            Script.Register<float>(SetMaxForce);
+            Script.Register<float>(SetMaxSpeed);
+            Script.Register<float>(SetMass);
+            Script.Register(_gameWorldService);
+            Script.ExecuteMain();
 
             // simple default route for testing
             var target = new Vector3(10, 0, 10);
             var a = _gameWorldService.Graph.NearestNode(Vector3.Zero);
             var b = _gameWorldService.Graph.NearestNode(target);
-            _path = new Stack<Vector3>(new[] { target }.Concat(_gameWorldService.Graph.ShortestPath(a, b)));
+            _path = new Stack<Vector3>(new[] {target}.Concat(_gameWorldService.Graph.ShortestPath(a, b)));
         }
 
         #region Steering behaviour
 
         private float DetectionBoxLength
         {
-            get { return MinimumDetectionBoxLength + (Velocity.Length() / MaxSpeed) * MinimumDetectionBoxLength; }
+            get { return MinimumDetectionBoxLength + (Velocity.Length()/MaxSpeed)*MinimumDetectionBoxLength; }
         }
 
         private Vector3 Seek(Vector3 target)
@@ -68,9 +83,9 @@ namespace AIWorld.Entities
 
             if (distance > 0.00001)
             {
-                var speed = distance / (ArriveDecelerationTweaker);
+                var speed = distance/(ArriveDecelerationTweaker);
                 speed = Math.Min(speed, MaxSpeed);
-                var desiredVelocity = toTarget * speed / distance;
+                var desiredVelocity = toTarget*speed/distance;
 
                 return desiredVelocity - Velocity;
             }
@@ -132,11 +147,11 @@ namespace AIWorld.Entities
             var force = Vector3.Zero;
 
             if (_path.Count > 1)
-                force += Seek(target) * 0.9f;
+                force += Seek(target)*0.9f;
             else
-                force += Arrive(target) * 0.9f;
+                force += Arrive(target)*0.9f;
 
-            force += AvoidObstacles() * 1.6f;
+            force += AvoidObstacles()*1.6f;
 
             return force.Truncate(MaxForce);
         }
@@ -150,11 +165,13 @@ namespace AIWorld.Entities
             Mass = mass;
             return 1;
         }
+
         private int SetMaxForce(float maxForce)
         {
             MaxForce = maxForce;
             return 1;
         }
+
         private int SetMaxSpeed(float maxSpeed)
         {
             MaxSpeed = maxSpeed;
@@ -180,15 +197,15 @@ namespace AIWorld.Entities
 
         private void UpdatePosition(GameTime gameTime)
         {
-            var deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            Vector3 steeringForce = CalculateSteeringForce();
+            var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
+            var steeringForce = CalculateSteeringForce();
 
-            Vector3 acceleration = steeringForce / Mass;
-            Velocity += acceleration * deltaTime;
+            var acceleration = steeringForce/Mass;
+            Velocity += acceleration*deltaTime;
 
             Velocity = Velocity.Truncate(MaxSpeed);
 
-            Position += Velocity * deltaTime;
+            Position += Velocity*deltaTime;
 
             if (Velocity.LengthSquared() > 0.00001)
             {
@@ -209,7 +226,7 @@ namespace AIWorld.Entities
 
                     try
                     {
-                        _script.FindPublic("OnPathEnd").Execute();
+                        Script.FindPublic("OnPathEnd").Execute();
                     }
                     catch (AMXException)
                     {
@@ -266,5 +283,7 @@ namespace AIWorld.Entities
         public float MaxTurnRate { get; private set; }
 
         #endregion
+
+        public ScriptBox Script { get; private set; }
     }
 }

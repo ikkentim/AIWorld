@@ -14,7 +14,10 @@
 // limitations under the License.
 
 using System;
+using AIWorld.Core;
 using AIWorld.Entities;
+using AIWorld.Scripting;
+using AMXWrapper;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
@@ -61,5 +64,19 @@ namespace AIWorld.Services
         }
 
         #endregion
+
+        public void Register(ScriptBox scriptBox)
+        {
+            scriptBox.Register<float, float, CellPtr, CellPtr>(GetClosestNode);
+        }
+
+        private int GetClosestNode(float x, float y, CellPtr tx, CellPtr ty)
+        {
+            var closest = Graph.NearestNode(new Vector3(x, 0, y));
+
+            tx.Set(Cell.FromFloat(closest.X));
+            ty.Set(Cell.FromFloat(closest.Z));
+            return 1;
+        }
     }
 }

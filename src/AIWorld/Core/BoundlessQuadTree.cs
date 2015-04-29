@@ -58,19 +58,19 @@ namespace AIWorld
 
         #region Overrides of QuadTree
 
-        public override IEnumerable<IEntity> RemoveEntitiesOutsideBoundaries(QuadTree partentTree)
-        {
-            return null;
-        }
-
         protected override IEnumerable<QuadTree> Parts
         {
             get { return _parts; }
         }
 
+        public override IEnumerable<IEntity> RemoveEntitiesOutsideBoundaries(QuadTree partentTree)
+        {
+            return null;
+        }
+
         public override void Add(IEntity entity)
         {
-            QuadTree part = Parts.FirstOrDefault(p => p.ContainsPoint(entity.Position));
+            var part = Parts.FirstOrDefault(p => p.ContainsPoint(entity.Position));
 
             if (part != null)
             {
@@ -78,7 +78,7 @@ namespace AIWorld
                 return;
             }
 
-            Vector3 vec = entity.Position;
+            var vec = entity.Position;
 
             vec.X = GetQuadTreePositionForPosition(vec.X, Size);
             vec.Y = GetQuadTreePositionForPosition(vec.Y, Size);
@@ -101,7 +101,7 @@ namespace AIWorld
 
         public override int Remove(IEntity entity)
         {
-            QuadTree part = Parts.FirstOrDefault(p => p.ContainsEntity(entity));
+            var part = Parts.FirstOrDefault(p => p.ContainsEntity(entity));
 
             base.Remove(entity);
 
@@ -116,7 +116,7 @@ namespace AIWorld
 
         public override QuadTree FindQuadTreeForEntity(IEntity entity)
         {
-            QuadTree part = Parts.FirstOrDefault(p => p.ContainsPoint(entity.Position));
+            var part = Parts.FirstOrDefault(p => p.ContainsPoint(entity.Position));
 
             return part == null ? this : part.FindQuadTreeForEntity(entity);
         }
