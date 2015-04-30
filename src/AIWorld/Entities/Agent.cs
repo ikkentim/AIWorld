@@ -75,17 +75,29 @@ namespace AIWorld.Entities
         }
 
         [ScriptingFunction]
-        public void ClearPathStack()
+        public bool ClearPathStack()
         {
+            if (_path.Count == 0) return false;
+
             _path.Clear();
+            return true;
         }
 
         [ScriptingFunction]
-        public void PopPathNode(out float x, out float y)
+        public bool PopPathNode(out float x, out float y)
         {
+            if (_path.Count == 0)
+            {
+                x = 0;
+                y = 0;
+                return false;
+            }
+
             var node = _path.Pop();
+
             x = node.X;
             y = node.Z;
+            return true;
         }
 
         [ScriptingFunction]
