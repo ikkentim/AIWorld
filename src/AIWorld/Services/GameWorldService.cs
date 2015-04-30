@@ -25,6 +25,7 @@ namespace AIWorld.Services
     {
         private readonly BoundlessQuadTree _entities = new BoundlessQuadTree();
         private readonly Graph _graph = new Graph();
+        private int _agentId;
 
         public GameWorldService(Game game) : base(game)
         {
@@ -43,6 +44,8 @@ namespace AIWorld.Services
         public void Add(Entity entity)
         {
             if (entity == null) throw new ArgumentNullException("entity");
+
+            entity.Id = _agentId++;
             Game.Components.Add(entity);
             Entities.Add(entity);
         }
@@ -63,11 +66,6 @@ namespace AIWorld.Services
         }
 
         #endregion
-
-//        public void Register(ScriptBox scriptBox)
-//        {
-//            scriptBox.Register<float, float, CellPtr, CellPtr>(GetClosestNode);
-//        }
 
         [ScriptingFunction]
         public int GetClosestNode(float x, float y, out float nx, out float ny)

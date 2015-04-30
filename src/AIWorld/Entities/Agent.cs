@@ -35,6 +35,7 @@ namespace AIWorld.Entities
         private readonly IGameWorldService _gameWorldService;
         private readonly Stack<Vector3> _path = new Stack<Vector3>();
         private Model _model;
+        private AMXPublic _onUpdate;
         private Matrix[] _transforms;
 
         public Agent(Game game, string scriptname, Vector3 position)
@@ -47,17 +48,15 @@ namespace AIWorld.Entities
             _gameWorldService = game.Services.GetService<IGameWorldService>();
 
             Script = new ScriptBox("agent", scriptname);
-            Script.Register(this);
-            Script.Register(_gameWorldService);
+            Script.Register(this, _gameWorldService, game.Services.GetService<IConsoleService>());
+
+            _onUpdate = Script.FindPublic("OnUpdate");
 
             Script.ExecuteMain();
-
-            // simple default route for testing
-//            var target = new Vector3(10, 0, 10);
-//            var a = _gameWorldService.Graph.NearestNode(Vector3.Zero);
-//            var b = _gameWorldService.Graph.NearestNode(target);
-//            _path = new Stack<Vector3>(new[] {target}.Concat(_gameWorldService.Graph.ShortestPath(a, b)));
         }
+
+        [ScriptingFunction]
+        public override int Id { get; set; }
 
         public ScriptBox Script { get; private set; }
 
@@ -66,6 +65,13 @@ namespace AIWorld.Entities
         {
             x = Position.X;
             y = Position.Z;
+        }
+
+        [ScriptingFunction]
+        public void GetHeading(out float x, out float y)
+        {
+            x = Heading.X;
+            y = Heading.Z;
         }
 
         [ScriptingFunction]
@@ -315,9 +321,6 @@ namespace AIWorld.Entities
 
         [ScriptingFunction]
         public float MaxForce { get; set; }
-
-        //[ScriptingFunction]
-        //public float MaxTurnRate { get; private set; }
 
         #endregion
 

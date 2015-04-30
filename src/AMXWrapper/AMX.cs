@@ -357,9 +357,9 @@ namespace AMXWrapper
             int index;
 
             AssertNotDisposed();
-            AssertNoError(AMXCall.FindPublic(ref _amx, name, out index));
-
-            return new AMXPublic(this, index);
+            return AMXCall.FindPublic(ref _amx, name, out index) != (int) AMXError.None
+                ? null
+                : new AMXPublic(this, index);
         }
 
         /// <summary>

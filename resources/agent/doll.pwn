@@ -7,11 +7,11 @@
 
 main()
 {
-	SetModel("models/car");
-	SetSize(0.3);
-	SetMaxForce(15);
-	SetMaxSpeed(1.2);
-	SetMass(0.35);
+	SetModel("models/doll");
+	SetSize(0.1);
+	SetMaxForce(20);
+	SetMaxSpeed(0.4);
+	SetMass(0.02);
 
 	new
 	  Float:targetx,

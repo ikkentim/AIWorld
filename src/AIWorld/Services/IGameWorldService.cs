@@ -16,10 +16,11 @@
 using AIWorld.Core;
 using AIWorld.Entities;
 using AIWorld.Scripting;
+using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
 {
-    public interface IGameWorldService : IScriptingNatives
+    public interface IGameWorldService : IScriptingNatives, IGameComponent
     {
         QuadTree Entities { get; }
         Graph Graph { get; }

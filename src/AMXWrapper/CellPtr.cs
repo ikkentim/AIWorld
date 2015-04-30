@@ -40,6 +40,10 @@ namespace AMXWrapper
             return Cell.FromIntPtr(_value);
         }
 
+        public Cell Get(int cellsOffset)
+        {
+            return Cell.FromIntPtr(IntPtr.Add(_value, cellsOffset*Marshal.SizeOf(typeof (Cell))));
+        }
         public void Set(int value)
         {
             Marshal.WriteInt32(_value, value);

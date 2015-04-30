@@ -1,4 +1,4 @@
-// AIWorld
+﻿// AIWorld
 // Copyright 2015 Tim Potze
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,24 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 
-namespace AIWorld.Entities
+namespace AIWorld.Services
 {
-    public abstract class Entity : DrawableGameComponent, IEntity
+    public interface IConsoleService : IScriptingNatives, IGameComponent
     {
-        public const float MaxSize = 4;
-
-        protected Entity(Game game) : base(game)
-        {
-        }
-
-        #region Implementation of IEntity
-
-        public virtual int Id { get; set; }
-        public virtual Vector3 Position { get; set; }
-        public virtual float Size { get; set; }
-
-        #endregion
+        void WriteLine(Color color, string message);
     }
 }

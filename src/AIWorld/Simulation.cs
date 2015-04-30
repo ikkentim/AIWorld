@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using AIWorld.Entities;
@@ -40,22 +41,20 @@ namespace AIWorld
         private const float CameraSpeedModifier = 2.5f;
         private const float CameraTargetOffset = 0.2f;
         private const float CameraHeightOffset = 0.75f;
-        private const bool Use45DegreeCamera = false;
         private readonly GraphicsDeviceManager _graphics;
         private SoundEffect _ambientEffect;
         private float _aspectRatio;
-        private BasicEffect _basicEffect;
         private float _cameraDistance = 3;
         private float _cameraRotation;
         private ICameraService _cameraService;
-        private Vector3 _cameraTarget = new Vector3(0.0f, 0.0f, 0.0f);
-        private GameWorldService _gameWorldService;
-        private Texture2D _grass;
-        private bool _isMiddleButtonDown;
+        private Vector3 _cameraTarget;
+        private IGameWorldService _gameWorldService;
+        private IConsoleService _consoleService;
+        private KeyboardState _lastKeyboardState;
+        private MouseState _lastMouseState;
         private int _lastScroll;
-        private bool _leftclick;
         private float _scrollVelocity;
-        private Entity _tracingEntity;
+        private IEntity _trackingEntity;
         private float _unprocessedScrollDelta;
 
         /// <summary>
@@ -66,12 +65,36 @@ namespace AIWorld
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
-
-            Script = new ScriptBox("main", "main");
-            Script.Register(this);
         }
 
         public ScriptBox Script { get; private set; }
+
+        private void InitializeSimulation()
+        {
+            
+            Services.AddService(typeof(IConsoleService), _consoleService = new ConsoleService(this));
+            Services.AddService(typeof (ICameraService), _cameraService = new CameraService());
+            Services.AddService(typeof (IGameWorldService), _gameWorldService = new GameWorldService(this));
+
+            Components.Add(_consoleService);
+            Components.Add(_gameWorldService);
+
+            Script = new ScriptBox("main", "main");
+            Script.Register(this, _gameWorldService, _consoleService);
+
+            _trackingEntity = null;
+
+            Script.ExecuteMain();
+        }
+
+        private void DeinitializeSimulation()
+        {
+            Components.Clear();
+
+            Services.RemoveService(typeof (IConsoleService));
+            Services.RemoveService(typeof (ICameraService));
+            Services.RemoveService(typeof (IGameWorldService));
+        }
 
         /// <summary>
         ///     Initializes this instance.
@@ -80,8 +103,7 @@ namespace AIWorld
         {
             _aspectRatio = _graphics.GraphicsDevice.Viewport.AspectRatio;
 
-            Services.AddService(typeof (ICameraService), _cameraService = new CameraService());
-            Services.AddService(typeof (IGameWorldService), _gameWorldService = new GameWorldService(this));
+            // todo: is removed on reset
 
             base.Initialize();
         }
@@ -91,21 +113,13 @@ namespace AIWorld
         /// </summary>
         protected override void LoadContent()
         {
-            _grass = Content.Load<Texture2D>(@"textures/grass");
             _ambientEffect = Content.Load<SoundEffect>(@"sounds/ambient");
-            _basicEffect = new BasicEffect(GraphicsDevice);
             var ambient = _ambientEffect.CreateInstance();
             ambient.IsLooped = true;
             ambient.Volume = 0.015f;
             ambient.Play();
 
-            //Create terrain
-            for (var x = -5; x <= 5; x++)
-                for (var y = -5; y <= 5; y++)
-                    _gameWorldService.Add(new QuadPlane(this, new Vector3(x*4, -0.01f, y*4), 4, PlaneRotation.None,
-                        _grass));
-
-            Script.ExecuteMain();
+            InitializeSimulation();
         }
 
         /// <summary>
@@ -126,6 +140,16 @@ namespace AIWorld
             var keyboardState = Keyboard.GetState();
             var mouseState = Mouse.GetState();
 
+            if (keyboardState.IsKeyDown(Keys.F5) && !_lastKeyboardState.IsKeyDown(Keys.F5))
+            {
+                _lastMouseState = mouseState;
+                _lastKeyboardState = keyboardState;
+
+                DeinitializeSimulation();
+                InitializeSimulation();
+                return;
+            }
+
             var scroll = mouseState.ScrollWheelValue;
             var deltaScroll = scroll - _lastScroll;
             _lastScroll = scroll;
@@ -144,9 +168,9 @@ namespace AIWorld
 
             if (mouseState.MiddleButton == ButtonState.Pressed || mouseState.RightButton == ButtonState.Pressed)
             {
-                if (_isMiddleButtonDown)
+                if (_lastMouseState.MiddleButton == ButtonState.Pressed ||
+                    _lastMouseState.RightButton == ButtonState.Pressed)
                 {
-                    //_cameraRotation
                     var mx = mouseState.X;
 
                     _cameraRotation += (mx - Window.ClientBounds.Width/2)/100f;
@@ -157,15 +181,16 @@ namespace AIWorld
                 }
                 else
                 {
-                    _isMiddleButtonDown = true;
+                    IsMouseVisible = false;
                     Mouse.SetPosition(
                         Window.ClientBounds.Width/2,
                         Window.ClientBounds.Height/2);
                 }
             }
-            else
+            else if (_lastMouseState.MiddleButton == ButtonState.Pressed ||
+                     _lastMouseState.RightButton == ButtonState.Pressed)
             {
-                _isMiddleButtonDown = false;
+                IsMouseVisible = true;
             }
 
             if (keyboardState.IsKeyDown(Keys.Down))
@@ -192,81 +217,60 @@ namespace AIWorld
                 _unprocessedScrollDelta = 0;
             }
 
+            if (_trackingEntity != null)
+                _cameraTarget = _trackingEntity.Position;
+
             var realCameraTarget = _cameraTarget + new Vector3(0, CameraTargetOffset, 0);
             var cameraPosition = realCameraTarget +
                                  new Vector3((float) Math.Cos(_cameraRotation),
-                                     Use45DegreeCamera
-                                         ? 1
-                                         : _cameraDistance/3 - MinZoom + CameraTargetOffset + CameraHeightOffset,
-                                     (float) Math.Sin(_cameraRotation))*
-                                 _cameraDistance;
+                                     _cameraDistance/3 - MinZoom + CameraTargetOffset + CameraHeightOffset,
+                                     (float) Math.Sin(_cameraRotation))*_cameraDistance;
 
             _cameraService.Update(cameraPosition, realCameraTarget, _aspectRatio);
-            if (mouseState.LeftButton == ButtonState.Released)
-            {
-                _leftclick = false;
-            }
-            if (mouseState.LeftButton == ButtonState.Pressed && !_leftclick)
-            {
-                _leftclick = true;
 
-                var nearsource = new Vector3(mouseState.Position.ToVector2(), 0f);
-                var farsource = new Vector3(mouseState.Position.ToVector2(), 1f);
-
-                var nearPoint = GraphicsDevice.Viewport.Unproject(nearsource,
+            if (mouseState.LeftButton == ButtonState.Pressed && _lastMouseState.LeftButton != ButtonState.Pressed)
+            {
+                var nearPoint = GraphicsDevice.Viewport.Unproject(new Vector3(mouseState.Position.ToVector2(), 0),
                     _cameraService.Projection, _cameraService.View, Matrix.Identity);
 
-                var farPoint = GraphicsDevice.Viewport.Unproject(farsource,
+                var farPoint = GraphicsDevice.Viewport.Unproject(new Vector3(mouseState.Position.ToVector2(), 1),
                     _cameraService.Projection, _cameraService.View, Matrix.Identity);
 
                 var ray = new Ray(nearPoint, Vector3.Normalize(farPoint - nearPoint));
 
-                var ground = new Plane(Vector3.Up, 0);
-
-                var groundDistance = ray.Intersects(ground);
-
+                var groundDistance = ray.Intersects(new Plane(Vector3.Up, 0));
                 if (groundDistance != null)
                 {
                     var groundPos = nearPoint + ray.Direction*groundDistance.Value;
 
-                    var rect = new AABB(groundPos, Vector3.One*10);
-                    var clicker =
-                        _gameWorldService.Entities.Query(rect)
-                            .OfType<Entity>()
-                            .FirstOrDefault(e => ray.Intersects(new BoundingSphere(e.Position, e.Size)) != null);
+                    var rect = new AABB(groundPos, Vector3.One*(Entity.MaxSize / 3));
 
-                    if (clicker != null)
-                    {
-                        _tracingEntity = clicker;
-                    }
+                    var nearbyObjects = _gameWorldService.Entities.Query(rect);
+                    
+                    var clickedEntity =
+                        nearbyObjects.FirstOrDefault(e => ray.Intersects(new BoundingSphere(e.Position, e.Size)) != null);
+
+                    if (clickedEntity != null) _trackingEntity = clickedEntity;
                 }
             }
 
-            if (_tracingEntity != null)
-                _cameraTarget = _tracingEntity.Position;
+            _lastMouseState = mouseState;
+            _lastKeyboardState = keyboardState;
         }
-
-//        private void Line(Vector3 a, Vector3 b, Color c)
-//        {
-//            var vertices = new[] { new VertexPositionColor(a, c), new VertexPositionColor(b, c) };
-//            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
-//        }
 
         protected override void Draw(GameTime gameTime)
         {
             _graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
-//            _basicEffect.VertexColorEnabled = true;
-//            _basicEffect.World = Matrix.Identity;
-//            _basicEffect.View = _cameraService.View;
-//            _basicEffect.Projection = _cameraService.Projection;
-//
-//            _basicEffect.CurrentTechnique.Passes[0].Apply();
-
             base.Draw(gameTime);
         }
 
-        #region scripting natives
+        [ScriptingFunction]
+        public void AddQuadPlane(float x, float y, float z, float size, int rotation, string texture)
+        {
+            _gameWorldService.Add(new QuadPlane(this, new Vector3(x, y, z), size, (PlaneRotation) rotation,
+                Content.Load<Texture2D>(texture)));
+        }
 
         [ScriptingFunction]
         public void AddAgent(string scriptname, float x, float y)
@@ -275,12 +279,16 @@ namespace AIWorld
         }
 
         [ScriptingFunction]
+        public void AddGameObject(string name, float size, float x, float y, float angle)
+        {
+            _gameWorldService.Add(new WorldObject(this, name, size, new Vector3(x, 0, y), angle, false));
+        }
+
+        [ScriptingFunction]
         public bool AddRoad(IntPtr arrayPointer, int count)
         {
-            if (count%2 != 0)
-                count--;
-            if (count < 4)
-                return false;
+            if (count%2 != 0) count--;
+            if (count < 4) return false;
 
             var nodes = new List<Vector3>();
             for (var i = 0; i < count/2; i++)
@@ -295,14 +303,5 @@ namespace AIWorld
 
             return true;
         }
-
-        [ScriptingFunction]
-        public int AddGameObject(string name, float size, float x, float y, float angle)
-        {
-            _gameWorldService.Add(new WorldObject(this, name, size, new Vector3(x, 0, y), angle, false));
-            return 1;
-        }
-
-        #endregion
     }
 }

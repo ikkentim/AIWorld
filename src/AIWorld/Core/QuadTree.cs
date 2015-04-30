@@ -172,7 +172,7 @@ namespace AIWorld
         {
             if (partentTree == null) throw new ArgumentNullException("partentTree");
 
-            foreach (var entity in _entities.Where(entity => !ContainsPoint(entity.Position)).ToArray())
+            foreach (var entity in _entities.Take(_count).Where(entity => !ContainsPoint(entity.Position)).ToArray())
             {
                 Remove(entity);
                 yield return entity;
