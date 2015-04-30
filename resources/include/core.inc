@@ -3,7 +3,7 @@
  * (c) Copyright 1998-2011, ITB CompuPhase
  * This file is provided as is (no warranties).
  */
- 
+
  #if defined _core_included
   #endinput
 #endif
@@ -33,4 +33,3 @@ native getproperty(id=0, const name[]=``'', value=cellmin, string[]=``'', size=s
 native setproperty(id=0, const name[]=``'', value=cellmin, const string[]=``'');
 native deleteproperty(id=0, const name[]=``'', value=cellmin);
 native existproperty(id=0, const name[]=``'', value=cellmin);
-

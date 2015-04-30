@@ -3,7 +3,7 @@
  * (c) Copyright 2001-2011, ITB CompuPhase
  * This file is provided as is (no warranties).
  */
- 
+
  #if defined _time_included
   #endinput
 #endif

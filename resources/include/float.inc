@@ -7,12 +7,12 @@
  *
  * This file is provided as is (no warranties).
  */
- 
+
  #if defined _float_included
   #endinput
 #endif
 #define _float_included
- 
+
 #pragma library Float
 
 /* Different methods of rounding */
@@ -183,4 +183,3 @@ stock bool:operator!(Float:oper)
 forward operator%(Float:oper1, Float:oper2);
 forward operator%(Float:oper1, oper2);
 forward operator%(oper1, Float:oper2);
-

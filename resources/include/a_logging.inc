@@ -1,5 +1,5 @@
 #if defined _logging_included
-  #endinput
+    #endinput
 #endif
 #define _logging_included
 

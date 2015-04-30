@@ -1,5 +1,5 @@
 #if defined _colors_included
-  #endinput
+    #endinput
 #endif
 #define _colors_included
 
