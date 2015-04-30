@@ -1,9 +1,4 @@
-#include <float>
-#include <math>
 #include <a_main>
-#include <colors>
-
-
 
 main()
 {

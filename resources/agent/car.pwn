@@ -1,9 +1,5 @@
-#include <float>
 #include <a_agent>
 #include <a_world>
-#include <a_logging>
-#include <math>
-#include <colors>
 
 main()
 {
