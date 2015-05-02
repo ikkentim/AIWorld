@@ -125,7 +125,7 @@ namespace AIWorld
 
         public override void Draw(GameTime gameTime)
         {
-            _effect.World = _cameraService.World;
+            _effect.World = Matrix.Identity;
             _effect.View = _cameraService.View;
             _effect.Projection = _cameraService.Projection;
 

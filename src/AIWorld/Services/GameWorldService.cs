@@ -21,17 +21,24 @@ using AIWorld.Core;
 using AIWorld.Entities;
 using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace AIWorld.Services
 {
-    public class GameWorldService : GameComponent, IGameWorldService
+    public class GameWorldService : DrawableGameComponent, IGameWorldService
     {
+        private readonly BasicEffect _basicEffect;
+        private readonly ICameraService _cameraService;
         private readonly BoundlessQuadTree _entities = new BoundlessQuadTree();
         private readonly Dictionary<string, Graph> _graphsByName = new Dictionary<string, Graph>();
         private int _agentId;
+        private bool _drawGraphs;
 
         public GameWorldService(Game game) : base(game)
         {
+            _basicEffect = new BasicEffect(GraphicsDevice);
+            _cameraService = game.Services.GetService<ICameraService>();
         }
 
         public QuadTree Entities
@@ -41,10 +48,7 @@ namespace AIWorld.Services
 
         public Graph this[string key]
         {
-            get
-            {
-                return _graphsByName.ContainsKey(key) ? _graphsByName[key] : null;
-            }
+            get { return _graphsByName.ContainsKey(key) ? _graphsByName[key] : null; }
         }
 
         public void Add(Entity entity)
@@ -62,11 +66,22 @@ namespace AIWorld.Services
             Game.Components.Add(plane);
         }
 
+        [ScriptingFunction]
+        public bool CreateGraph(string name)
+        {
+            if (name == null || _graphsByName.ContainsKey(name)) return false;
+
+            _graphsByName[name] = new Graph();
+            return true;
+        }
+
         #region Overrides of GameComponent
 
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
+
+            _drawGraphs = Keyboard.GetState().IsKeyDown(Keys.F9);
 
             _entities.FixPositions();
         }
@@ -93,15 +108,6 @@ namespace AIWorld.Services
             return true;
         }
 
-        [ScriptingFunction]
-        public bool CreateGraph(string name)
-        {
-            if (name == null || _graphsByName.ContainsKey(name)) return false;
-
-            _graphsByName[name] = new Graph();
-            return true;
-        }
-
         public bool IsPointOccupied(Vector3 point)
         {
             return
@@ -114,6 +120,7 @@ namespace AIWorld.Services
         {
             return IsPointOccupied(new Vector3(x, 0, y));
         }
+
         [ScriptingFunction]
         public bool FillGraph(string name, float minX, float minY, float maxX, float maxY, float offset)
         {
@@ -127,8 +134,13 @@ namespace AIWorld.Services
                 new Vector3(offset, 0, offset),
                 new Vector3(-offset, 0, -offset),
                 new Vector3(offset, 0, -offset),
-                new Vector3(-offset, 0, offset)
+                new Vector3(-offset, 0, offset),
+                new Vector3(-offset, 0, 0),
+                new Vector3(offset, 0, 0),
+                new Vector3(0, 0, -offset),
+                new Vector3(0, 0, offset)
             };
+
             for (var x = minX; x <= maxX; x += offset)
                 for (var y = minY; y <= maxY; y += offset)
                 {
@@ -144,8 +156,43 @@ namespace AIWorld.Services
                         graph.Add(point, p);
                 }
 
-            Debug.WriteLine("Created nodes: {0}", graph.Keys.Count-init);
+            Debug.WriteLine("Created nodes: {0}", graph.Keys.Count - init);
             return true;
         }
+
+        private void Line(Vector3 a, Vector3 b, Color c, Color d)
+        {
+            var vertices = new[] {new VertexPositionColor(a, c), new VertexPositionColor(b, d)};
+            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
+        }
+
+        #region Overrides of DrawableGameComponent
+
+        public override void Draw(GameTime gameTime)
+        {
+            if (_drawGraphs)
+            {
+                _basicEffect.VertexColorEnabled = true;
+                _basicEffect.World = Matrix.Identity;
+                _basicEffect.View = _cameraService.View;
+                _basicEffect.Projection = _cameraService.Projection;
+
+                _basicEffect.CurrentTechnique.Passes[0].Apply();
+
+                var height = new Vector3(0, 0.2f, 0);
+                foreach (var graph in _graphsByName.Values)
+                {
+                    foreach (var node in graph.Values)
+                    {
+                        foreach (var n in node)
+                            Line(node.Position + height, n.Target.Position + height, Color.Red, Color.GreenYellow);
+                    }
+
+                    height.Y += 0.2f;
+                }
+            }
+        }
+
+        #endregion
     }
 }

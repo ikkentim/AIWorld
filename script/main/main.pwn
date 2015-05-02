@@ -5,8 +5,8 @@ main()
     CreateGraph("road");
 
     CreateGraph("ground");
-    FillGraph("ground", -10, -10, 10, 10, 0.2);
-    
+    FillGraph("ground", -5, -5, 5, 5, 1);
+
     for (new x = -5; x <= 5; x++)
         for (new y = -5; y <= 5; y++)
           AddQuadPlane(x*4, -0.01, y*4, 4, ROTATION_NONE, "textures/grass");

@@ -21,14 +21,12 @@ namespace AIWorld.Services
     {
         public CameraService()
         {
-            World = Matrix.Identity;
             View = Matrix.Identity;
             Projection = Matrix.Identity;
         }
 
         #region Implementation of ICameraService
 
-        public Matrix World { get; private set; }
         public Matrix View { get; private set; }
         public Matrix Projection { get; private set; }
 
