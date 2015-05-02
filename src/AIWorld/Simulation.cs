@@ -283,7 +283,7 @@ namespace AIWorld
         }
 
         [ScriptingFunction]
-        public bool AddRoad(IntPtr arrayPointer, int count)
+        public bool AddRoad(string key, IntPtr arrayPointer, int count)
         {
             if (count%2 != 0) count--;
             if (count < 4) return false;
@@ -297,7 +297,7 @@ namespace AIWorld
                 nodes.Add(new Vector3(x.AsFloat(), 0, y.AsFloat()));
             }
 
-            Road.GenerateRoad(this, nodes.ToArray());
+            Road.GenerateRoad(this, _gameWorldService[key], nodes.ToArray());
 
             return true;
         }

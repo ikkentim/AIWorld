@@ -25,6 +25,7 @@ native AddGameObject(const modelname[], Float:size, Float:x, Float:y,
 
 /**--------------------------------------------------------------------------**\
 <summary>Adds a road to the game world.</summary>
+<param name="key">The key of the graph in which to put the road nodes.</param>
 <param name="pointsxy">
     An array of the points within the road to create. Every pair represents a
     set of x-and y-coordinates.
@@ -33,7 +34,7 @@ native AddGameObject(const modelname[], Float:size, Float:x, Float:y,
 <returns>This function does not return a specific value.</returns>
 <remarks>This function can only be used within the main script.</remarks>
 \**--------------------------------------------------------------------------**/
-native AddRoad(Float:pointsxy[], count = sizeof pointsxy);
+native AddRoad(const key[], Float:pointsxy[], count = sizeof pointsxy);
 
 /**--------------------------------------------------------------------------**\
 <summary>Adds an agent to the game world.</summary>

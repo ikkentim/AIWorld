@@ -125,14 +125,17 @@ namespace AIWorld.Entities
         }
 
         [ScriptingFunction]
-        public bool PushPath(float startx, float starty, float endx, float endy)
+        public bool PushPath(string key, float startx, float starty, float endx, float endy)
         {
             var a = new Vector3(startx, 0, starty);
             var b = new Vector3(endx, 0, endy);
 
             var l = _path.Count;
 
-            foreach (var n in _gameWorldService.Graph.ShortestPath(a, b))
+            var graph = _gameWorldService[key];
+            if (graph == null) return false;
+
+            foreach (var n in _gameWorldService[key].ShortestPath(a, b))
                 _path.Push(n);
 
             return _path.Count > l;

@@ -23,8 +23,9 @@ namespace AIWorld.Services
     public interface IGameWorldService : IScriptingNatives, IGameComponent
     {
         QuadTree Entities { get; }
-        Graph Graph { get; }
+        Graph this[string key] { get; }
         void Add(Entity entity);
         void Add(QuadPlane plane);
+        bool CreateGraph(string name);
     }
 }

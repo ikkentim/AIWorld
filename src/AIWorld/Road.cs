@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using AIWorld.Core;
 using AIWorld.Helpers;
 using AIWorld.Services;
 using Microsoft.Xna.Framework;
@@ -24,10 +25,11 @@ namespace AIWorld
 {
     public static class Road
     {
-        public static void GenerateRoad(Game game, Vector3[] nodes)
+        public static void GenerateRoad(Game game, Graph graph, Vector3[] nodes)
         {
             var world = game.Services.GetService<IGameWorldService>();
             if (game == null) throw new ArgumentNullException("game");
+            if (graph == null) throw new ArgumentNullException("graph");
             if (nodes == null) throw new ArgumentNullException("nodes");
             if (nodes.Length < 2) throw new ArgumentException("nodes must contain 2 or more items");
 
@@ -95,12 +97,12 @@ namespace AIWorld
             {
                 if (i > 0)
                 {
-                    world.Graph.Add(leftNodes[i - 1], leftNodes[i]);
-                    world.Graph.Add(rightNodes[i - 1], rightNodes[i]);
+                    graph.Add(leftNodes[i - 1], leftNodes[i]);
+                    graph.Add(rightNodes[i - 1], rightNodes[i]);
                 }
 
-                world.Graph.Add(leftNodes[i], rightNodes[nodes.Length - 1 - i]);
-                world.Graph.Add(rightNodes[nodes.Length - 1 - i], leftNodes[i]);
+                graph.Add(leftNodes[i], rightNodes[nodes.Length - 1 - i]);
+                graph.Add(rightNodes[nodes.Length - 1 - i], leftNodes[i]);
             }
 
             foreach (

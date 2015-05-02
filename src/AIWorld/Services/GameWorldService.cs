@@ -14,6 +14,9 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using AIWorld.Core;
 using AIWorld.Entities;
 using AIWorld.Scripting;
@@ -24,7 +27,7 @@ namespace AIWorld.Services
     public class GameWorldService : GameComponent, IGameWorldService
     {
         private readonly BoundlessQuadTree _entities = new BoundlessQuadTree();
-        private readonly Graph _graph = new Graph();
+        private readonly Dictionary<string, Graph> _graphsByName = new Dictionary<string, Graph>();
         private int _agentId;
 
         public GameWorldService(Game game) : base(game)
@@ -36,9 +39,12 @@ namespace AIWorld.Services
             get { return _entities; }
         }
 
-        public Graph Graph
+        public Graph this[string key]
         {
-            get { return _graph; }
+            get
+            {
+                return _graphsByName.ContainsKey(key) ? _graphsByName[key] : null;
+            }
         }
 
         public void Add(Entity entity)
@@ -68,13 +74,78 @@ namespace AIWorld.Services
         #endregion
 
         [ScriptingFunction]
-        public int GetClosestNode(float x, float y, out float nx, out float ny)
+        public int GetClosestNode(string key, float x, float y, out float nx, out float ny)
         {
-            var closest = Graph.NearestNode(new Vector3(x, 0, y));
+            var closest = this[key].NearestNode(new Vector3(x, 0, y));
 
             nx = closest.X;
             ny = closest.Z;
             return 1;
+        }
+
+        [ScriptingFunction]
+        public bool AddGraphNode(string key, float x1, float y1, float x2, float y2)
+        {
+            var graph = this[key];
+            if (graph == null) return false;
+
+            graph.Add(new Vector3(x1, 0, y1), new Vector3(x2, 0, y2));
+            return true;
+        }
+
+        [ScriptingFunction]
+        public bool CreateGraph(string name)
+        {
+            if (name == null || _graphsByName.ContainsKey(name)) return false;
+
+            _graphsByName[name] = new Graph();
+            return true;
+        }
+
+        public bool IsPointOccupied(Vector3 point)
+        {
+            return
+                Entities.Query(new AABB(point, new Vector3(WorldObject.MaxSize)))
+                    .Any(e => (e.Position - point).Length() < e.Size);
+        }
+
+        [ScriptingFunction]
+        public bool IsPointOccupied(float x, float y)
+        {
+            return IsPointOccupied(new Vector3(x, 0, y));
+        }
+        [ScriptingFunction]
+        public bool FillGraph(string name, float minX, float minY, float maxX, float maxY, float offset)
+        {
+            if (name == null || !_graphsByName.ContainsKey(name)) return false;
+
+            var graph = _graphsByName[name];
+
+            var init = graph.Keys.Count;
+            var offsets = new[]
+            {
+                new Vector3(offset, 0, offset),
+                new Vector3(-offset, 0, -offset),
+                new Vector3(offset, 0, -offset),
+                new Vector3(-offset, 0, offset)
+            };
+            for (var x = minX; x <= maxX; x += offset)
+                for (var y = minY; y <= maxY; y += offset)
+                {
+                    var point = new Vector3(x, 0, y);
+                    if (IsPointOccupied(point)) continue;
+
+                    foreach (
+                        var p in
+                            offsets.Select(o => o + point)
+                                .Where(
+                                    p => p.X >= minX && p.X <= maxX && p.Z >= minY && p.Z <= maxY && !IsPointOccupied(p))
+                        )
+                        graph.Add(point, p);
+                }
+
+            Debug.WriteLine("Created nodes: {0}", graph.Keys.Count-init);
+            return true;
         }
     }
 }

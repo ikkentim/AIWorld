@@ -52,6 +52,7 @@ namespace AIWorld.Core
 
         public IEnumerable<Vector3> ShortestPath(Vector3 start, Vector3 finish)
         {
+            // TODO: Convert to A*
             var nodes = new List<Node>(Values);
             foreach (var n in Values) n.Distance = float.PositiveInfinity;
 

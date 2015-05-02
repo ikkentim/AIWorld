@@ -87,6 +87,7 @@ native PeekPathNode(&Float:x, &Float:y);
     Calculates the path from the start coordinates to the end coordinates using
     the Dijkstra's algorithm.
 </summary>
+<param name="name">The graph in which to calculate the path.</param>
 <param name="xstart">The x-coordinate to start from.</param>
 <param name="ystart">The y-coordinate to start from.</param>
 <param name="xend">The x-coordinate to move to.</param>
@@ -97,7 +98,7 @@ native PeekPathNode(&Float:x, &Float:y);
 </returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \**--------------------------------------------------------------------------**/
-native PushPath(Float:xstart, Float:ystart, Float:xend, Float:yend);
+native PushPath(const name[], Float:xstart, Float:ystart, Float:xend, Float:yend);
 
 /**--------------------------------------------------------------------------**\
 <summary>Sets the model drawn at the position of this agent.</summary>

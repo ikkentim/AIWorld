@@ -1,5 +1,4 @@
 #include <a_agent>
-#include <a_world>
 
 main()
 {
@@ -21,12 +20,12 @@ main()
     targety = frandom(-5,5);
 
     GetPosition(startx,starty);
-    GetClosestNode(startx,starty,startx,starty);
+    GetClosestNode("road",startx,starty,startx,starty);
 
-    GetClosestNode(targetx,targety,targetnodex,targetnodey);
+    GetClosestNode("road",targetx,targety,targetnodex,targetnodey);
 
     PushPathNode(targetx,targety);
-    PushPath(startx,starty,targetnodex,targetnodey);
+    PushPath("road",startx,starty,targetnodex,targetnodey);
 
     AddSteeringBehavior("target", BEHAVIOR_EXPLORE, 0.78, 2.5, 2.5);
     AddSteeringBehavior("avoidance", BEHAVIOR_OBSTACLE_AVOIDANCE, 1.5);

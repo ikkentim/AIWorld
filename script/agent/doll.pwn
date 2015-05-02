@@ -1,5 +1,4 @@
 #include <a_agent>
-#include <a_world>
 
 main()
 {

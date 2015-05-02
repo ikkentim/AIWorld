@@ -42,35 +42,21 @@ namespace AIWorld.Steering
         {
             var target = _isTargetBottom ? new Vector3(_topLeft.X, 0, _bottomRight.Z) : _topLeft;
 
-            //Debug.WriteLine("Current target is {0}", target);
-            if (_behavior is ArriveSteeringBehavior)
-            {
-                return _behavior.Calculate();
-            }
-
+            if (_behavior is ArriveSteeringBehavior) return _behavior.Calculate();
+            
             if (Agent.IsInTargetRangeOfPoint(target))
             {
-                Debug.WriteLine("Reached target");
                 _isTargetBottom = !_isTargetBottom;
                 _behavior = null;
                 _topLeft.X += Math.Max(1, Agent.TargetRange * 2);
                 target = _isTargetBottom ? new Vector3(_topLeft.X, 0, _bottomRight.Z) : _topLeft;
             }
 
-            if (_behavior == null)
-            {
-                Debug.WriteLine("Target wideness = {0}", Math.Abs(_bottomRight.X - _topLeft.X));
-                if (Math.Abs(_bottomRight.X - _topLeft.X) < Math.Max(1, Agent.TargetRange*2))
-                {
-                    Debug.WriteLine("Create arrive");
-                    _behavior = new ArriveSteeringBehavior(Agent, target);
-                }
-                else
-                {
-                    Debug.WriteLine("Create seek");
-                    _behavior = new SeekSteeringBehavior(Agent, target);
-                }
-            }
+            if (_behavior != null) return _behavior.Calculate();
+
+            _behavior = ((Math.Abs(_bottomRight.X - _topLeft.X) < Math.Max(1, Agent.TargetRange*2))
+                ? (ITargetedSteeringBehavior) new ArriveSteeringBehavior(Agent, target)
+                : new SeekSteeringBehavior(Agent, target));
 
             return _behavior.Calculate();
         }
