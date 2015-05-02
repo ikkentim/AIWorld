@@ -1,20 +1,45 @@
 #include <a_main>
 
+/**--------------------------------------------------------------------------**\
+<summary>Contains the setup logic of the simulation.</summary>
+\**--------------------------------------------------------------------------**/
 main()
 {
-    CreateGraph("road");
+    CreatePlanes();
+    CreateObjects();
+    CreateGroundGraph();
+    CreateRoads();
+    CreateAgents();
+}
 
-    CreateGraph("ground");
-    FillGraph("ground", -5, -5, 5, 5, 1);
-
+CreatePlanes()
+{
+    // Create the floor.
     for (new x = -5; x <= 5; x++)
         for (new y = -5; y <= 5; y++)
           AddQuadPlane(x*4, -0.01, y*4, 4, ROTATION_NONE, "textures/grass");
+}
 
+CreateObjects()
+{
+    // Add a few house models objects.
     AddGameObject("models/house02", 0.35, 3.9, 2.5, DEG2RAD(-90));
     AddGameObject("models/house02", 0.35, 3.9, 3.5, DEG2RAD(-90));
     AddGameObject("models/house02", 0.35, 3.9, 4.5, DEG2RAD(-90));
     AddGameObject("models/house02", 0.35, 3.9, 5.5, DEG2RAD(-90));
+}
+
+CreateGroundGraph()
+{
+    // Create and fill a 'ground' graph and fill it automatically
+    CreateGraph("ground");
+    FillGraph("ground", -5, -5, 5, 5, 1);
+}
+
+CreateRoads()
+{
+    // Create a 'road' graph and fill it with a few roads.
+    CreateGraph("road");
 
     new Float:road1[] = [
         -1.0, 9.0,
@@ -50,7 +75,10 @@ main()
 
     AddRoad("road", road1);
     AddRoad("road", road2);
+}
 
+CreateAgents()
+{
     for(new i=0;i<10;i++)
         AddAgent("doll", frandom(-5,5), frandom(-5,5));
 

@@ -240,14 +240,6 @@ namespace AIWorld.Entities
                 {
                     Velocity = Vector3.Zero;
                     _path.Pop();
-
-                    try
-                    {
-                        Script.FindPublic("OnPathEnd").Execute();
-                    }
-                    catch (AMXException)
-                    {
-                    }
                 }
             }
             else if ((Position - _path.Peek()).LengthSquared() < 0.9f) _path.Pop();
