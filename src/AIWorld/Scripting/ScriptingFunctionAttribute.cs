@@ -42,7 +42,7 @@ namespace AIWorld.Scripting
         public string Name { get; private set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to ingore the setter of the property.
+        ///     Gets or sets a value indicating whether to ingore the setter of the property.
         /// </summary>
         public bool IngoreSetter { get; set; }
     }

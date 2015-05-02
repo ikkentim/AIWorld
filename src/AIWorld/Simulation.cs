@@ -15,7 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using AIWorld.Entities;
@@ -48,8 +47,8 @@ namespace AIWorld
         private float _cameraRotation;
         private ICameraService _cameraService;
         private Vector3 _cameraTarget;
-        private IGameWorldService _gameWorldService;
         private IConsoleService _consoleService;
+        private IGameWorldService _gameWorldService;
         private KeyboardState _lastKeyboardState;
         private MouseState _lastMouseState;
         private int _lastScroll;
@@ -71,8 +70,7 @@ namespace AIWorld
 
         private void InitializeSimulation()
         {
-            
-            Services.AddService(typeof(IConsoleService), _consoleService = new ConsoleService(this));
+            Services.AddService(typeof (IConsoleService), _consoleService = new ConsoleService(this));
             Services.AddService(typeof (ICameraService), _cameraService = new CameraService());
             Services.AddService(typeof (IGameWorldService), _gameWorldService = new GameWorldService(this));
 
@@ -243,10 +241,10 @@ namespace AIWorld
                 {
                     var groundPos = nearPoint + ray.Direction*groundDistance.Value;
 
-                    var rect = new AABB(groundPos, Vector3.One*(Entity.MaxSize / 3));
+                    var rect = new AABB(groundPos, Vector3.One*(Entity.MaxSize/3));
 
                     var nearbyObjects = _gameWorldService.Entities.Query(rect);
-                    
+
                     var clickedEntity =
                         nearbyObjects.FirstOrDefault(e => ray.Intersects(new BoundingSphere(e.Position, e.Size)) != null);
 

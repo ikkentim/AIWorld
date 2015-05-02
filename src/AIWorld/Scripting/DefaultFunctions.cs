@@ -32,7 +32,7 @@ namespace AIWorld.Scripting
         private static string StringPrintFormatted(string input, object[] inpVars)
         {
             var i = 0;
-            input = Regex.Replace(input, "%.", m => ("{" + i++ + "}"));
+            input = Regex.Replace(input.Replace("{", "{{").Replace("}", "}}"), "%.", m => ("{" + i++ + "}"));
             return string.Format(input, inpVars);
         }
 
@@ -55,13 +55,13 @@ namespace AIWorld.Scripting
                 {
                     case 'd':
                     case 'i':
-                        return (object)arguments[i++].AsCellPtr().Get().AsInt32();
+                        return (object) arguments[i++].AsCellPtr().Get().AsInt32();
                     case 's':
-                        return (object)arguments[i++].AsString();
+                        return (object) arguments[i++].AsString();
                     case 'f':
-                        return (object)arguments[i++].AsCellPtr().Get().AsFloat();
+                        return (object) arguments[i++].AsCellPtr().Get().AsFloat();
                     case 'c':
-                        return (char)arguments[i++].AsCellPtr().Get().AsInt32();
+                        return (char) arguments[i++].AsCellPtr().Get().AsInt32();
                     case 'x':
                         return string.Format("0x{0:X}", arguments[i++].AsCellPtr().Get().AsInt32());
                     case 'b':
@@ -70,7 +70,7 @@ namespace AIWorld.Scripting
                         return '%';
                     default:
                         i++;
-                        return (object)0;
+                        return (object) 0;
                 }
             }).ToArray();
 

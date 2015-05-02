@@ -36,6 +36,7 @@ namespace AIWorld.Services
         private readonly SpriteFont _font;
         private readonly Queue<ConsoleMessage> _messages = new Queue<ConsoleMessage>();
         private readonly SpriteBatch _spriteBatch;
+        private readonly ConsoleTraceListener _traceListener;
         private bool _isConsoleVisible;
         private KeyboardState _lastKeyboardState;
         private float _scrollableHeight;
@@ -43,7 +44,6 @@ namespace AIWorld.Services
         private Rectangle _scrollBarSize;
         private float _scrollPosition;
         private int _scrollWheel;
-        private readonly ConsoleTraceListener _traceListener;
 
         public ConsoleService(Game game) : base(game)
         {
@@ -55,11 +55,6 @@ namespace AIWorld.Services
             _font = Game.Content.Load<SpriteFont>("fonts/consolas");
 
             Debug.Listeners.Add(_traceListener = new ConsoleTraceListener(this));
-        }
-
-        ~ConsoleService()
-        {
-            Debug.Listeners.Remove(_traceListener);
         }
 
         public void WriteLine(Color color, string message)
@@ -75,6 +70,11 @@ namespace AIWorld.Services
 
             if (_messages.Count > MaxMessages)
                 _messages.Dequeue();
+        }
+
+        ~ConsoleService()
+        {
+            Debug.Listeners.Remove(_traceListener);
         }
 
         [ScriptingFunction("logprintf")]
@@ -189,7 +189,7 @@ namespace AIWorld.Services
             #region Overrides of TraceListener
 
             /// <summary>
-            /// Initializes a new instance of the <see cref="T:System.Diagnostics.TraceListener"/> class.
+            ///     Initializes a new instance of the <see cref="T:System.Diagnostics.TraceListener" /> class.
             /// </summary>
             public ConsoleTraceListener(IConsoleService console)
             {
@@ -197,7 +197,7 @@ namespace AIWorld.Services
             }
 
             /// <summary>
-            /// When overridden in a derived class, writes the specified message to the listener you create in the derived class.
+            ///     When overridden in a derived class, writes the specified message to the listener you create in the derived class.
             /// </summary>
             /// <param name="message">A message to write. </param>
             public override void Write(string message)
@@ -206,7 +206,8 @@ namespace AIWorld.Services
             }
 
             /// <summary>
-            /// When overridden in a derived class, writes a message to the listener you create in the derived class, followed by a line terminator.
+            ///     When overridden in a derived class, writes a message to the listener you create in the derived class, followed by a
+            ///     line terminator.
             /// </summary>
             /// <param name="message">A message to write. </param>
             public override void WriteLine(string message)

@@ -19,12 +19,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AMXWrapper;
+using Microsoft.Xna.Framework;
 
 namespace AIWorld.Scripting
 {
     public class ScriptBox : AMX, IEnumerable<KeyValuePair<string, Cell>>
     {
         private static readonly DefaultFunctions DefaultFunctions = new DefaultFunctions();
+        private readonly Dictionary<string, AMXPublic> _publics = new Dictionary<string, AMXPublic>();
         private readonly Dictionary<string, CellPtr> _publicVars = new Dictionary<string, CellPtr>();
 
         /// <summary>
@@ -46,15 +48,23 @@ namespace AIWorld.Scripting
                 var ptr = GetPublicVar(i, out varname);
                 _publicVars[varname] = ptr;
             }
+
+            for (var i = 0; i < PublicCount; i++)
+            {
+                string publicname;
+                GetPublic(i, out publicname);
+                _publics[publicname] = new AMXPublic(this, i);
+            }
         }
 
-        /// <summary>
-        ///     Gets or sets the <see cref="Cell" /> with the specified name.
-        /// </summary>
-        public Cell this[string name]
+        public IDictionary<string, AMXPublic> Publics
         {
-            get { return _publicVars[name].Get(); }
-            set { _publicVars[name].Set(value); }
+            get { return _publics; }
+        }
+
+        public IDictionary<string, CellPtr> PublicVars
+        {
+            get { return _publicVars; }
         }
 
         public void Register(AMXNativeFunction function)
@@ -70,9 +80,12 @@ namespace AIWorld.Scripting
         {
             if (info.ParameterType.IsByRef) return cell => null;
 
+            if (info.ParameterType.IsEnum && info.ParameterType.GetEnumUnderlyingType() == typeof (int))
+                return cell => Enum.ToObject(info.ParameterType, cell.AsInt32());
+
             if (info.ParameterType == typeof (string)) return cell => cell.AsString();
-            if (info.ParameterType == typeof(int)) return cell => cell.AsInt32();
-            if (info.ParameterType == typeof(uint)) return cell => cell.AsUInt32();
+            if (info.ParameterType == typeof (int)) return cell => cell.AsInt32();
+            if (info.ParameterType == typeof (uint)) return cell => cell.AsUInt32();
             if (info.ParameterType == typeof (float)) return cell => cell.AsFloat();
             if (info.ParameterType == typeof (IntPtr)) return cell => cell.AsIntPtr();
             if (info.ParameterType == typeof (CellPtr)) return cell => cell.AsCellPtr();
@@ -117,7 +130,33 @@ namespace AIWorld.Scripting
 
                     var propertyLocalCopy = property;
 
-                    if (property.PropertyType == typeof (string))
+                    if (property.PropertyType == typeof (Vector3))
+                    {
+                        Register(string.Format("Get{0}", name), (amx, arguments) =>
+                        {
+                            if (arguments.Length < 2)
+                                return 0;
+
+                            var value = (Vector3) propertyLocalCopy.GetValue(instanceLocalCopy, null);
+
+                            arguments[0].AsCellPtr().Set(Cell.FromFloat(value.X));
+                            arguments[1].AsCellPtr().Set(Cell.FromFloat(value.Z));
+                            return 1;
+                        });
+
+                        if (property.GetSetMethod() != null && !attribute.IngoreSetter)
+                            Register(string.Format("Set{0}", name), (amx, arguments) =>
+                            {
+                                if (arguments.Length < 2)
+                                    return 0;
+
+                                propertyLocalCopy.SetValue(instanceLocalCopy,
+                                    new Vector3(arguments[0].AsFloat(), 0, arguments[1].AsFloat()), null);
+
+                                return 1;
+                            });
+                    }
+                    else if (property.PropertyType == typeof (string))
                     {
                         Register(string.Format("Get{0}", name), (amx, arguments) =>
                         {
@@ -151,7 +190,7 @@ namespace AIWorld.Scripting
                     else if (property.PropertyType == typeof (int))
                     {
                         Register(string.Format("Get{0}", name),
-                            (amx, arguments) => (int)propertyLocalCopy.GetValue(instanceLocalCopy, null));
+                            (amx, arguments) => (int) propertyLocalCopy.GetValue(instanceLocalCopy, null));
 
                         if (property.GetSetMethod() != null && !attribute.IngoreSetter)
                             Register(string.Format("Set{0}", name), (amx, arguments) =>
@@ -167,7 +206,7 @@ namespace AIWorld.Scripting
                     else if (property.PropertyType == typeof (bool))
                     {
                         Register(string.Format("Get{0}", name),
-                            (amx, arguments) => (bool)propertyLocalCopy.GetValue(instanceLocalCopy, null) ? 1 : 0);
+                            (amx, arguments) => (bool) propertyLocalCopy.GetValue(instanceLocalCopy, null) ? 1 : 0);
 
                         if (property.GetSetMethod() != null && !attribute.IngoreSetter)
                             Register(string.Format("Set{0}", name), (amx, arguments) =>
@@ -184,7 +223,7 @@ namespace AIWorld.Scripting
                     {
                         Register(string.Format("Get{0}", name),
                             (amx, arguments) =>
-                                Cell.FromFloat((float)propertyLocalCopy.GetValue(instanceLocalCopy, null)).AsInt32());
+                                Cell.FromFloat((float) propertyLocalCopy.GetValue(instanceLocalCopy, null)).AsInt32());
 
                         if (property.GetSetMethod() != null && !attribute.IngoreSetter)
                             Register(string.Format("Set{0}", name), (amx, arguments) =>
@@ -230,7 +269,7 @@ namespace AIWorld.Scripting
                     {
                         Register(name,
                             (amx, arguments) =>
-                                outTypeCaster(methodLocalCopy.Invoke(instanceLocalCopy, new object[] { arguments })));
+                                outTypeCaster(methodLocalCopy.Invoke(instanceLocalCopy, new object[] {arguments})));
                     }
                     else
                     {

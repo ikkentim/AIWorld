@@ -15,10 +15,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using AIWorld.Helpers;
 using AIWorld.Scripting;
 using AIWorld.Services;
+using AIWorld.Steering;
 using AMXWrapper;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -27,15 +29,17 @@ namespace AIWorld.Entities
 {
     public class Agent : Entity, IMovingEntity, IScripted
     {
-        private const float MinimumDetectionBoxLength = 0.75f;
-        private const float ArriveDecelerationTweaker = 1.3f;
-        private const float AproxMaxObjectSize = 1.0f;
-        private const float BreakingWeight = 0.005f;
         private readonly ICameraService _cameraService;
         private readonly IGameWorldService _gameWorldService;
+        private readonly AMXPublic _onUpdate;
         private readonly Stack<Vector3> _path = new Stack<Vector3>();
+
+        private readonly Dictionary<string, WeightedSteeringBehavior> _steeringBehaviors =
+            new Dictionary<string, WeightedSteeringBehavior>();
+
         private Model _model;
-        private AMXPublic _onUpdate;
+        private float _targetRange;
+        private float _targetRangeSquared;
         private Matrix[] _transforms;
 
         public Agent(Game game, string scriptname, Vector3 position)
@@ -58,21 +62,18 @@ namespace AIWorld.Entities
         [ScriptingFunction]
         public override int Id { get; set; }
 
+        [ScriptingFunction]
+        public float TargetRange
+        {
+            get { return _targetRange; }
+            set
+            {
+                _targetRange = value;
+                _targetRangeSquared = value*value;
+            }
+        }
+
         public ScriptBox Script { get; private set; }
-
-        [ScriptingFunction]
-        public void GetPosition(out float x, out float y)
-        {
-            x = Position.X;
-            y = Position.Z;
-        }
-
-        [ScriptingFunction]
-        public void GetHeading(out float x, out float y)
-        {
-            x = Heading.X;
-            y = Heading.Z;
-        }
 
         [ScriptingFunction]
         public bool ClearPathStack()
@@ -146,6 +147,68 @@ namespace AIWorld.Entities
             _model.CopyAbsoluteBoneTransformsTo(_transforms);
         }
 
+        [ScriptingFunction]
+        public void AddSteeringBehavior(string key, SteeringBehaviorType type, float weight, float x, float y)
+        {
+            if (key == null) throw new ArgumentNullException("key");
+
+            switch (type)
+            {
+                case SteeringBehaviorType.Arrive:
+                    _steeringBehaviors[key] =
+                        new WeightedSteeringBehavior(new ArriveSteeringBehavior(this, new Vector3(x, 0, y)), weight);
+                    break;
+                case SteeringBehaviorType.Seek:
+                    _steeringBehaviors[key] =
+                        new WeightedSteeringBehavior(new SeekSteeringBehavior(this, new Vector3(x, 0, y)), weight);
+                    break;
+                case SteeringBehaviorType.ObstacleAvoidance:
+                    _steeringBehaviors[key] = new WeightedSteeringBehavior(new AvoidObstaclesBehavior(this), weight);
+                    break;
+                case SteeringBehaviorType.Explore:
+                    _steeringBehaviors[key] =
+                        new WeightedSteeringBehavior(new ExploreSteeringBehavior(this, new Vector3(x, 0, y)), weight);
+                    break;
+                default:
+                    throw new Exception("Invalid steering behaviour");
+            }
+        }
+
+        [ScriptingFunction]
+        public bool RemoveSteeringBehavior(string key)
+        {
+            return _steeringBehaviors.Remove(key);
+        }
+
+        public bool IsInRangeOfPoint(Vector3 point, float range)
+        {
+            return (point - Position).Length() < range;
+        }
+
+        public bool IsInTargetRangeOfPoint(Vector3 point)
+        {
+            return (point-Position).LengthSquared() < _targetRangeSquared;
+        }
+
+        [ScriptingFunction]
+        public bool IsInRangeOfPoint(float x, float y, float range)
+        {
+            return IsInRangeOfPoint(new Vector3(x, 0, y), range);
+        }
+
+        [ScriptingFunction]
+        public bool IsInTargetRangeOfPoint(float x, float y)
+        {
+            return IsInTargetRangeOfPoint(new Vector3(x, 0, y));
+        }
+
+        private Vector3 CalculateSteeringForce()
+        {
+            return
+                _steeringBehaviors.Values.Aggregate(Vector3.Zero,
+                    (current, behavior) => current + behavior.Behavior.Calculate()*behavior.Weight).Truncate(MaxForce);
+        }
+
         private void UpdatePosition(GameTime gameTime)
         {
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
@@ -191,6 +254,11 @@ namespace AIWorld.Entities
 
         public override void Update(GameTime gameTime)
         {
+            if (_onUpdate != null)
+            {
+                _onUpdate.Execute();
+            }
+
             UpdatePosition(gameTime);
             UpdateTarget();
 
@@ -223,100 +291,6 @@ namespace AIWorld.Entities
 
         #endregion
 
-        #region Steering behaviour
-
-        private float DetectionBoxLength
-        {
-            get { return MinimumDetectionBoxLength + (Velocity.Length()/MaxSpeed)*MinimumDetectionBoxLength; }
-        }
-
-        private Vector3 Seek(Vector3 target)
-        {
-            return (target - Position).Truncate(MaxSpeed) - Velocity;
-        }
-
-        private Vector3 Arrive(Vector3 target)
-        {
-            var toTarget = target - Position;
-            var distance = toTarget.Length();
-
-            if (distance > 0.00001)
-            {
-                var speed = distance/(ArriveDecelerationTweaker);
-                speed = Math.Min(speed, MaxSpeed);
-                var desiredVelocity = toTarget*speed/distance;
-
-                return desiredVelocity - Velocity;
-            }
-
-            return Vector3.Zero;
-        }
-
-        private Vector3 AvoidObstacles()
-        {
-            var bLength = DetectionBoxLength;
-
-            var entities =
-                _gameWorldService.Entities.Query(new AABB(Position, new Vector3(bLength + AproxMaxObjectSize)))
-                    .Where(e => e != this && (e.Position - Position).Length() < e.Size + bLength);
-
-            IEntity closest = null;
-            var closestDistance = float.MaxValue;
-            var localPositionOfClosestPoint = Vector3.Zero;
-
-            foreach (var e in entities)
-            {
-                var localPoint = Transform.ToLocalSpace(Position, Heading, Vector3.Up, Side, e.Position);
-                if (localPoint.X > 0)
-                {
-                    var combinedSize = e.Size + Size;
-
-                    if (Math.Abs(localPoint.Z) < combinedSize)
-                    {
-                        var sqrtpart = (float) Math.Sqrt(combinedSize*combinedSize - localPoint.Z*localPoint.Z);
-
-                        var ip = sqrtpart <= localPoint.X ? localPoint.X - sqrtpart : localPoint.X + sqrtpart;
-
-                        if (ip < closestDistance)
-                        {
-                            closestDistance = ip;
-                            closest = e;
-                            localPositionOfClosestPoint = localPoint;
-                        }
-                    }
-                }
-            }
-
-            if (closest == null)
-                return Vector3.Zero;
-
-            var multiplier = 1 + (bLength - localPositionOfClosestPoint.X)/bLength;
-
-            return
-                Transform.VectorToWorldSpace(Heading, Vector3.Up, Side,
-                    new Vector3((closest.Size - localPositionOfClosestPoint.X)*BreakingWeight, 0,
-                        closest.Size - localPositionOfClosestPoint.Z*multiplier));
-        }
-
-        private Vector3 CalculateSteeringForce()
-        {
-            if (_path == null || !_path.Any()) return Vector3.Zero;
-
-            var target = _path.Peek();
-            var force = Vector3.Zero;
-
-            if (_path.Count > 1)
-                force += Seek(target)*0.9f;
-            else
-                force += Arrive(target)*0.9f;
-
-            force += AvoidObstacles()*1.6f;
-
-            return force.Truncate(MaxForce);
-        }
-
-        #endregion
-
         #region Implementation of IMovingEntity
 
         public Vector3 Velocity { get; private set; }
@@ -324,6 +298,7 @@ namespace AIWorld.Entities
         [ScriptingFunction]
         public float Mass { get; set; }
 
+        [ScriptingFunction]
         public Vector3 Heading { get; private set; }
 
         public Vector3 Side { get; private set; }
@@ -338,6 +313,7 @@ namespace AIWorld.Entities
 
         #region Overrides of Entity
 
+        [ScriptingFunction]
         public override Vector3 Position { get; set; }
 
         [ScriptingFunction]

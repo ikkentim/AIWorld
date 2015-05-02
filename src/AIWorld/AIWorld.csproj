@@ -61,6 +61,14 @@
     <Compile Include="Core\BoundlessQuadTree.cs" />
     <Compile Include="Core\Edge.cs" />
     <Compile Include="Entities\Agent.cs" />
+    <Compile Include="Steering\ArriveSteeringBehavior.cs" />
+    <Compile Include="Steering\AvoidObstaclesBehavior.cs" />
+    <Compile Include="Steering\ExploreSteeringBehavior.cs" />
+    <Compile Include="Steering\ISteeringBehavior.cs" />
+    <Compile Include="Steering\ITargetedSteeringBehavior.cs" />
+    <Compile Include="Steering\SeekSteeringBehavior.cs" />
+    <Compile Include="Steering\SteeringBehaviorType.cs" />
+    <Compile Include="Steering\WeightedSteeringBehavior.cs" />
     <Compile Include="Helpers\Transform.cs" />
     <Compile Include="Entities\WorldObject.cs" />
     <Compile Include="Core\Graph.cs" />
@@ -133,6 +141,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MonoGame\v3.0\MonoGame.Content.Builder.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

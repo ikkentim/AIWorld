@@ -9,8 +9,7 @@ main()
     SetMaxSpeed(0.4);
     SetMass(0.02);
 
-    new
-		Float:targetx,
+    new Float:targetx,
         Float:targety,
         Float:targetnodex,
         Float:targetnodey,
@@ -33,5 +32,5 @@ main()
 forward OnPathEnd();
 public OnPathEnd()
 {
-    logprintf(COLOR_LIME, "OnPathEnd()");
+    logprintf(COLOR_LIME, "[doll] OnPathEnd()");
 }
