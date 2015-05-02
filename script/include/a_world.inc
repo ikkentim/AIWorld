@@ -3,7 +3,7 @@
 #endif
 #define _world_included
 
-/**--------------------------------------------------------------------------**\
+/** ************************************************************************ **\
 <summary>
     Gets the coordinates of the node nearest to the specified coordinates in the
     specified graph.
@@ -18,19 +18,19 @@
     A float variable in which to store the y-coordinate in, passed by reference.
 </param>
 <returns>This function does not return a specific value.</returns>
-\**--------------------------------------------------------------------------**/
+\** ************************************************************************ **/
 native GetClosestNode(const name[], Float:x, Float:y, &Float:nx, &Float:ny);
 
-/**--------------------------------------------------------------------------**\
+/** ************************************************************************ **\
 <summary>Creates a new empty graph.</summary>
 <param name="name">The name of the graph.</param>
 <returns>
     True if succesfully created; False otherwise (e.g. key already in use).
 </returns>
-\**--------------------------------------------------------------------------**/
+\** ************************************************************************ **/
 native CreateGraph(const name[]);
 
-/**--------------------------------------------------------------------------**\
+/** ************************************************************************ **\
 <summary>
     Fills the specified graph with nodes at every specified offset between the
     specified minimum and maximum coordinates.
@@ -46,6 +46,6 @@ native CreateGraph(const name[]);
 <returns>
     True if succesfully filled; False otherwise (e.g. key does not exist).
 </returns>
-\**--------------------------------------------------------------------------**/
+\** ************************************************************************ **/
 native FillGraph(const name[], Float:minX, Float:minY, Float:maxX,
     Float:maxY, Float:offset);
