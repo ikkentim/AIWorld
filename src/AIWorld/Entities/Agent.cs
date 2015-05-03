@@ -36,6 +36,7 @@ namespace AIWorld.Entities
         private readonly IGameWorldService _gameWorldService;
         private readonly AMXPublic _onUpdate;
         private readonly AMXPublic _onMouseClick;
+        private readonly AMXPublic _onClicked;
         private readonly AMXPublic _onKeyStateChanged;
         private readonly Stack<Node> _path = new Stack<Node>();
 
@@ -65,9 +66,14 @@ namespace AIWorld.Entities
             Script.Register(this, _gameWorldService, game.Services.GetService<IConsoleService>());
 
             _onUpdate = Script.FindPublic("OnUpdate");
+            _onClicked = Script.FindPublic("OnClicked");
             _onMouseClick = Script.FindPublic("OnMouseClick");
             _onKeyStateChanged = Script.FindPublic("OnKeyStateChanged");
 
+        }
+
+        public void Initialize()
+        {
             Script.ExecuteMain();
         }
 
@@ -102,6 +108,15 @@ namespace AIWorld.Entities
 
             Script.Release(newKeys);
             Script.Release(oldKeys);
+        }
+
+        public override bool OnClicked(MouseClickEventArgs e)
+        {
+            if (_onClicked == null) return false;
+            Script.Push(e.Position.Z);
+            Script.Push(e.Position.X);
+            Script.Push(e.Button);
+            return _onClicked.Execute() == 1;
         }
 
         [ScriptingFunction]

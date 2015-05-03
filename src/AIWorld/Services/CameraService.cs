@@ -13,30 +13,138 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
+using System.Diagnostics;
+using AIWorld.Entities;
+using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
 {
-    public class CameraService : ICameraService
+    public class CameraService : GameComponent, ICameraService
     {
-        public CameraService()
+        public const float MaxCameraSpeed = 20.0f;
+        public const float CameraSpeed = 5.0f;
+        public const float DefaultZoom = 3;
+        public const float MinZoom = 1;
+        public const float MaxZoom = 15;
+        public const float CameraTargetOffset = 0.2f;
+        public const float CameraHeightOffset = 0.75f;
+        private float _aspectRatio;
+        private IEntity _target;
+        private Vector3 _velocity;
+        private Vector3 _undirectedVelocity;
+        private float _zoom = DefaultZoom;
+
+        public CameraService(Game game) : base(game)
         {
-            View = Matrix.Identity;
+            View = Matrix.CreateLookAt(Vector3.Up, Vector3.Zero, Vector3.Up);
             Projection = Matrix.Identity;
         }
 
-        #region Implementation of ICameraService
+        public Vector3 Position { get; set; }
 
-        public Matrix View { get; private set; }
-        public Matrix Projection { get; private set; }
-
-        public void Update(Vector3 cameraPosition, Vector3 cameraTargetPosition, float aspectRatio)
+        public float Zoom
         {
-            View = Matrix.CreateLookAt(cameraPosition, cameraTargetPosition, Vector3.Up);
-            Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), aspectRatio, 0.1f,
-                10000.0f);
+            get { return _zoom; }
         }
 
-        #endregion
+        public float Rotation { get; private set; }
+        public Matrix View { get; private set; }
+        public Matrix Projection { get; private set; }
+        public Vector3 TargetPosition { get; set; }
+
+        public override void Update(GameTime gameTime)
+        {
+            if (_aspectRatio != Game.GraphicsDevice.Viewport.AspectRatio)
+            {
+                _aspectRatio = Game.GraphicsDevice.Viewport.AspectRatio;
+                Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), _aspectRatio, 0.1f,
+                    10000.0f);
+            }
+
+            if (_target != null) TargetPosition = _target.Position;
+            
+            _velocity = (TargetPosition - Position) * CameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            LimitVelocity(ref _undirectedVelocity);
+            LimitVelocity(ref _velocity);
+
+            if (_undirectedVelocity != Vector3.Zero)
+            {
+                var worldCameraVelocity = _undirectedVelocity == Vector3.Zero
+                    ? Vector3.Zero
+                    : Vector3.Transform(_undirectedVelocity, Matrix.CreateRotationY(-Rotation));
+
+                Position += worldCameraVelocity;
+                TargetPosition = Position;
+                _target = null;
+            }
+            else
+            {
+                Position += _velocity;
+            }
+
+            CalculateView();
+            base.Update(gameTime);
+        }
+
+        private void LimitVelocity(ref Vector3 velocity)
+        {
+            if (velocity == Vector3.Zero) return;
+
+            if (velocity.Length() > MaxCameraSpeed)
+            {
+                velocity.Normalize();
+                velocity *= 2;
+            }
+
+            if (velocity.LengthSquared() < 0.00001)
+                velocity = Vector3.Zero;
+            else
+                velocity *= 0.9f;
+        }
+
+        public void SetTarget(IEntity target)
+        {
+            if ((_target = target) != null)
+            {
+                _undirectedVelocity = Vector3.Zero;
+                TargetPosition = target.Position;
+            }
+        }
+
+        public void SetTarget(Vector3 target)
+        {
+            _undirectedVelocity=Vector3.Zero;
+            
+            _target = null;
+            TargetPosition = target;
+        }
+
+        public void AddVelocity(Vector3 acceleration)
+        {
+            _undirectedVelocity += acceleration;
+        }
+
+        public void Move(float deltaRotation, float deltaZoom)
+        {
+            
+            _zoom += deltaZoom;
+            Rotation += deltaRotation;
+
+            _zoom = Math.Max(MinZoom, Math.Min(_zoom, MaxZoom));
+        }
+
+        private void CalculateView()
+        {
+            var realCameraTarget = Position + new Vector3(0, CameraTargetOffset, 0);
+            var cameraPosition = realCameraTarget +
+                                 new Vector3((float) Math.Cos(Rotation),
+                                     _zoom/3 - MinZoom + CameraTargetOffset + CameraHeightOffset,
+                                     (float) Math.Sin(Rotation))*_zoom;
+
+            View = Matrix.CreateLookAt(cameraPosition, realCameraTarget, Vector3.Up);
+        }
     }
 }

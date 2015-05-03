@@ -1,5 +1,6 @@
 #include <a_main>
-#include <keys>
+
+new isShiftDown = false;
 
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of the simulation.</summary>
@@ -16,6 +17,8 @@ main()
 forward OnKeyStateChanged(newKeys[], oldKeys[]);
 public OnKeyStateChanged(newKeys[], oldKeys[])
 {
+    isShiftDown = IsKeyDown(newKeys, KEY_LEFTSHIFT);
+
     if(IsKeyDown(newKeys, KEY_A) && !IsKeyDown(oldKeys, KEY_A))
     {
         logprintf(COLOR_WHITE, "Spawned an agent!");
@@ -24,6 +27,14 @@ public OnKeyStateChanged(newKeys[], oldKeys[])
 
     if(IsKeyDown(newKeys, KEY_F9) != GetDrawGraphs())
         SetDrawGraphs(IsKeyDown(newKeys, KEY_F9));
+}
+
+forward OnMouseClick(button, Float:x, Float:y);
+public OnMouseClick(button, Float:x, Float:y)
+{
+    if(button == 1 && isShiftDown)
+        SetTarget(x,y);
+
 }
 
 CreatePlanes()
@@ -46,13 +57,17 @@ CreateObjects()
     AddGameObject("models/house02", 0.5, 3.9, 3.5, DEG2RAD(-90));
     AddGameObject("models/house02", 0.5, 3.9, 4.5, DEG2RAD(-90));
     AddGameObject("models/house02", 0.5, 3.9, 5.5, DEG2RAD(-90));
+
+    AddGameObject("models/house02", 0.5, 10.0, 10.0, DEG2RAD(90));
 }
 
 CreateGroundGraph()
 {
     // Create and fill a 'ground' graph and fill it automatically
     CreateGraph("ground");
-    FillGraph("ground", -2, -2, 6, 6, 0.5);
+    new nodes = FillGraph("ground", -2, -2, 6, 6, 0.5);
+
+    logprintf(COLOR_MAGENTA, "Filled graph 'ground' with %d nodes.", nodes);
 }
 
 CreateRoads()
@@ -99,5 +114,5 @@ CreateRoads()
 CreateAgents()
 {
     //AddAgent("car", frandom(-5,5), frandom(-5,5));
-    AddAgent("car",0,0);
+    SetTargetEntity(AddAgent("car",0,0));
 }

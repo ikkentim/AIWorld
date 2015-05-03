@@ -9,6 +9,13 @@
 #define BEHAVIOR_EXPLORE                4
 
 /** ************************************************************************ **\
+<summary>Gets the id of this agent.</summary>
+<returns>The id of this agent.</returns>
+<remarks>This function can only be used within an agent script.</remarks>
+\** ************************************************************************ **/
+native GetId();
+
+/** ************************************************************************ **\
 <summary>Gets the position of this agent.</summary>
 <param name="x">
     A float variable in which to store the x-coordinate in, passed by reference.

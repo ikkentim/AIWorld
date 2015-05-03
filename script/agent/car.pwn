@@ -1,6 +1,6 @@
 #include <a_agent>
-#include <keys>
 
+new isCtrlDown = false;
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of this agent.</summary>
 \**--------------------------------------------------------------------------**/
@@ -13,7 +13,6 @@ main()
     SetMaxSpeed(1.2);
     SetMass(0.35);
     SetTargetRange(0.75);
-
     // Generate a random target between (-5,-5) and (5,5).
     new Float:targetx,
         Float:targety,
@@ -50,6 +49,8 @@ main()
 forward OnKeyStateChanged(newKeys[], oldKeys[]);
 public OnKeyStateChanged(newKeys[], oldKeys[])
 {
+    isCtrlDown = IsKeyDown(newKeys, KEY_LEFTCONTROL);
+
     if(IsKeyDown(newKeys, KEY_F8) != GetDrawPath())
         SetDrawPath(IsKeyDown(newKeys, KEY_F8));
 }
@@ -57,11 +58,23 @@ public OnKeyStateChanged(newKeys[], oldKeys[])
 forward OnMouseClick(button, Float:x, Float:y);
 public OnMouseClick(button, Float:x, Float:y)
 {
-    if(button == 1)
+    if(button == 1 && isCtrlDown)
     {
         logprintf(COLOR_WHITE, "[car] left clicked at %f %f", x, y);
 
         RemoveSteeringBehavior("target");
         AddSteeringBehavior("target", BEHAVIOR_ARRIVE, 0.78, x, y);
     }
+}
+
+forward OnClicked(button, Float:x, Float:y);
+public OnClicked(button, Float:x, Float:y)
+{
+    Focus();
+    return 1;
+}
+
+Focus()
+{
+    SetTargetEntity(GetId());
 }

@@ -65,14 +65,12 @@ namespace AIWorld.Services
             _spriteBatch.Dispose();
         }
 
-        public void WriteLine(Color color, string format, params object[] args)
+        public void WriteLine(Color color, string message)
         {
-            if (format == null) throw new ArgumentNullException("format");
-
-            var message = string.Format(format, args);
+            if (message == null) throw new ArgumentNullException("message");
             var item = new ConsoleMessage(color, message)
             {
-                Size = _font.MeasureString(message) * FontScale
+                Size = _font.MeasureString(message)*FontScale
             };
 
             _messages.Enqueue(item);
@@ -80,17 +78,15 @@ namespace AIWorld.Services
             if (_messages.Count > MaxMessages)
                 _messages.Dequeue();
         }
-
-   
-
+        
         public void WriteLine(Color color, Exception exception)
         {
             var tabs = string.Empty;
             while (exception != null)
             {
-                WriteLine(color, "{0}[{2}] Exception: {1} @ {3}", tabs, exception.Message, exception.Source, exception.TargetSite);
+                WriteLine(color, string.Format("{0}[{2}] Exception: {1} @ {3}", tabs, exception.Message, exception.Source, exception.TargetSite));
 
-                tabs += "\t";
+                tabs += ">";
                 exception = exception.InnerException;
             }
         }
@@ -109,9 +105,7 @@ namespace AIWorld.Services
                 new Color(new Vector4((float) r/byte.MaxValue, (float) g/byte.MaxValue, (float) b/byte.MaxValue,
                     (float) a/byte.MaxValue));
 
-            var message = DefaultFunctions.FormatString(arguments, 1);
-
-            WriteLine(color, message);
+            WriteLine(color, DefaultFunctions.FormatString(arguments, 1));
         }
 
         #region Overrides of GameComponent

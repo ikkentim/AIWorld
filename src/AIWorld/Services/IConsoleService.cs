@@ -21,7 +21,7 @@ namespace AIWorld.Services
 {
     public interface IConsoleService : IScriptingNatives, IGameComponent
     {
-        void WriteLine(Color color, string message, params object[] args);
+        void WriteLine(Color color, string message);
         void WriteLine(Color color, Exception exception);
     }
 }

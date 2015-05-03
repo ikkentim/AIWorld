@@ -31,6 +31,8 @@ namespace AIWorld.Entities
         public virtual Vector3 Position { get; set; }
         public virtual float Size { get; set; }
 
+        public abstract bool OnClicked(MouseClickEventArgs e);
+
         #endregion
     }
 }

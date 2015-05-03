@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using AIWorld.Entities;
+using AIWorld.Helpers;
 using AIWorld.Scripting;
 using AIWorld.Services;
 using AMXWrapper;
@@ -34,32 +35,26 @@ namespace AIWorld
     /// </summary>
     public class Simulation : Game, IScripted
     {
-        private const float MinZoom = 1;
-        private const float MaxZoom = 20;
-        private const float MaxScrollSpeed = 1f;
-        private const float DecelerationTweaker = 5f;
-        private const float CameraSpeedModifier = 2.5f;
-        private const float CameraTargetOffset = 0.2f;
-        private const float CameraHeightOffset = 0.75f;
+        private const float ScrollMaxSpeed = 1f;
+        private const float ScrollMultiplier = 0.1f;
+        private const float ScrollModifier = 2.5f;
         private readonly GraphicsDeviceManager _graphics;
+        private readonly string _scriptName;
         private SoundEffect _ambientEffect;
-        private float _aspectRatio;
-        private float _cameraDistance = 3;
-        private float _cameraRotation;
+        private Color _backgroundColor;
         private ICameraService _cameraService;
-        private Vector3 _cameraTarget;
         private IConsoleService _consoleService;
         private IGameWorldService _gameWorldService;
         private KeyboardState _lastKeyboardState;
         private MouseState _lastMouseState;
         private int _lastScroll;
-        private float _scrollVelocity;
-        private IEntity _trackingEntity;
-        private float _unprocessedScrollDelta;
-        private AMXPublic _onMouseClick;
         private AMXPublic _onKeyStateChanged;
-        private readonly string _scriptName ;
-        private Color _backgroundColor;
+        private AMXPublic _onMouseClick;
+        private float _scrollVelocity;
+        private float _unprocessedScrollDelta;
+        private Vector3 cameraVelocity = Vector3.Zero;
+    
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Simulation" /> class.
         /// </summary>
@@ -74,21 +69,19 @@ namespace AIWorld
         }
 
         public ScriptBox Script { get; private set; }
-
         public event EventHandler<MouseClickEventArgs> MouseClick;
         public event EventHandler<KeyStateEventArgs> KeyStateChanged;
 
-
         private void LoadSimulation()
         {
-            _trackingEntity = null;
             _backgroundColor = Color.CornflowerBlue;
 
             Services.AddService(typeof (IConsoleService), _consoleService = new ConsoleService(this));
-            Services.AddService(typeof (ICameraService), _cameraService = new CameraService());
+            Services.AddService(typeof (ICameraService), _cameraService = new CameraService(this));
             Services.AddService(typeof (IGameWorldService), _gameWorldService = new GameWorldService(this));
 
             Components.Add(_consoleService);
+            Components.Add(_cameraService);
             Components.Add(_gameWorldService);
 
             try
@@ -118,16 +111,6 @@ namespace AIWorld
         }
 
         /// <summary>
-        ///     Initializes this instance.
-        /// </summary>
-        protected override void Initialize()
-        {
-            _aspectRatio = _graphics.GraphicsDevice.Viewport.AspectRatio;
-
-            base.Initialize();
-        }
-
-        /// <summary>
         ///     Loads the content.
         /// </summary>
         protected override void LoadContent()
@@ -154,42 +137,10 @@ namespace AIWorld
         {
             base.Update(gameTime);
 
-            // Prevent keyboard input while not in focus
-            if (!IsActive || Script == null) return;
-
-
-            #region Update camera
-
-            if (_cameraDistance < MinZoom)
-            {
-                _cameraDistance = MinZoom;
-                _unprocessedScrollDelta = 0;
-            }
-            if (_cameraDistance > MaxZoom)
-            {
-                _cameraDistance = MaxZoom;
-                _unprocessedScrollDelta = 0;
-            }
-
-            if (_trackingEntity != null)
-                _cameraTarget = _trackingEntity.Position;
-
-            var realCameraTarget = _cameraTarget + new Vector3(0, CameraTargetOffset, 0);
-            var cameraPosition = realCameraTarget +
-                                 new Vector3((float)Math.Cos(_cameraRotation),
-                                     _cameraDistance / 3 - MinZoom + CameraTargetOffset + CameraHeightOffset,
-                                     (float)Math.Sin(_cameraRotation)) * _cameraDistance;
-
-            _cameraService.Update(cameraPosition, realCameraTarget, _aspectRatio);
-
-            #endregion
-
             var keyboardState = Keyboard.GetState();
             var mouseState = Mouse.GetState();
 
-            #region Keyboard keys
-
-            if (keyboardState.IsKeyDown(Keys.F5) && !_lastKeyboardState.IsKeyDown(Keys.F5))
+            if (IsActive && keyboardState.IsKeyDown(Keys.F5) && !_lastKeyboardState.IsKeyDown(Keys.F5))
             {
                 _lastMouseState = mouseState;
                 _lastKeyboardState = keyboardState;
@@ -199,47 +150,20 @@ namespace AIWorld
                 return;
             }
 
-            if (keyboardState.IsKeyDown(Keys.Down)) _cameraDistance -= (float) gameTime.ElapsedGameTime.TotalSeconds;
-            if (keyboardState.IsKeyDown(Keys.Up)) _cameraDistance += (float) gameTime.ElapsedGameTime.TotalSeconds;
-            if (keyboardState.IsKeyDown(Keys.Left)) _cameraRotation -= (float) gameTime.ElapsedGameTime.TotalSeconds;
-            if (keyboardState.IsKeyDown(Keys.Right)) _cameraRotation += (float) gameTime.ElapsedGameTime.TotalSeconds;
+            // Prevent keyboard input while not in focus
+            if (!IsActive || Script == null) return;
 
-            if (keyboardState != _lastKeyboardState)
-                OnKeyStateChanged(new KeyStateEventArgs(keyboardState.GetPressedKeys(),
-                    _lastKeyboardState.GetPressedKeys()));
+            #region Update camera
 
-            #endregion
-
-            #region Scrolling
-
-            var scroll = mouseState.ScrollWheelValue;
-            var deltaScroll = scroll - _lastScroll;
-            _lastScroll = scroll;
-
-            _unprocessedScrollDelta -= deltaScroll*0.0075f;
-
-            if (Math.Abs(_unprocessedScrollDelta) > 0.5)
-            {
-                _scrollVelocity += Math.Min(_unprocessedScrollDelta/DecelerationTweaker, MaxScrollSpeed) -
-                                   _scrollVelocity;
-
-                _unprocessedScrollDelta -= _scrollVelocity;
-
-                _cameraDistance += _scrollVelocity*_cameraDistance/(MaxZoom - MinZoom + 1)*CameraSpeedModifier;
-            }
-
-            #endregion
-
-            #region Mouse buttons
+            float deltaCameraRotation = 0;
+            float deltaCameraZoom = 0;
 
             if (mouseState.MiddleButton == ButtonState.Pressed || mouseState.RightButton == ButtonState.Pressed)
             {
                 if (_lastMouseState.MiddleButton == ButtonState.Pressed ||
                     _lastMouseState.RightButton == ButtonState.Pressed)
                 {
-                    var mx = mouseState.X;
-
-                    _cameraRotation += (mx - Window.ClientBounds.Width/2)/100f;
+                    deltaCameraRotation += (mouseState.X - Window.ClientBounds.Width/2)/100f;
 
                     Mouse.SetPosition(
                         Window.ClientBounds.Width/2,
@@ -259,13 +183,49 @@ namespace AIWorld
                 IsMouseVisible = true;
             }
 
+            var scroll = mouseState.ScrollWheelValue;
+            var deltaScroll = scroll - _lastScroll;
+            _lastScroll = scroll;
+
+            _unprocessedScrollDelta -= deltaScroll*0.01f;
+
+            if (Math.Abs(_unprocessedScrollDelta) > 0.5)
+            {
+                _scrollVelocity = Math.Min(_unprocessedScrollDelta*ScrollMultiplier, ScrollMaxSpeed);
+                _unprocessedScrollDelta -= _scrollVelocity;
+
+                deltaCameraZoom += _scrollVelocity*_cameraService.Zoom/
+                                   (CameraService.MaxZoom - CameraService.MinZoom + 1)*ScrollModifier;
+            }
+
+            Vector3 acceleration = Vector3.Zero;
+            if (keyboardState.IsKeyDown(Keys.Left)) acceleration += Vector3.Backward;
+            if (keyboardState.IsKeyDown(Keys.Right)) acceleration += Vector3.Forward;
+            if (keyboardState.IsKeyDown(Keys.Up)) acceleration += Vector3.Left;
+            if (keyboardState.IsKeyDown(Keys.Down)) acceleration += Vector3.Right;
+
+            _cameraService.AddVelocity(acceleration * (float)gameTime.ElapsedGameTime.TotalSeconds);
+            _cameraService.Move(deltaCameraRotation, deltaCameraZoom);
+
+            #endregion
+
+            #region Keyboard keys
+
+            if (keyboardState != _lastKeyboardState)
+                OnKeyStateChanged(new KeyStateEventArgs(keyboardState.GetPressedKeys(),
+                    _lastKeyboardState.GetPressedKeys()));
+
+            #endregion
+
+            #region Mouse buttons
+
             // Check which buttons were pressed.
             var leftMouseButtonPressed = mouseState.LeftButton == ButtonState.Pressed &&
                                          _lastMouseState.LeftButton == ButtonState.Released;
             var middleMouseButtonPressed = mouseState.MiddleButton == ButtonState.Pressed &&
-                                         _lastMouseState.MiddleButton == ButtonState.Released;
+                                           _lastMouseState.MiddleButton == ButtonState.Released;
             var rightMouseButtonPressed = mouseState.RightButton == ButtonState.Pressed &&
-                                         _lastMouseState.RightButton == ButtonState.Released;
+                                          _lastMouseState.RightButton == ButtonState.Released;
 
             // If any button was pressed, calculate click position.
             if (leftMouseButtonPressed || middleMouseButtonPressed || rightMouseButtonPressed)
@@ -283,27 +243,30 @@ namespace AIWorld
                 {
                     Vector3 clickPostion = nearPoint + ray.Direction*groundDistance.Value;
 
-                    // Trigger OnMouseClick if a mouse key has been pressed
-                    if (leftMouseButtonPressed) OnMouseClick(new MouseClickEventArgs(1, clickPostion));
-                    if (middleMouseButtonPressed) OnMouseClick(new MouseClickEventArgs(2, clickPostion));
-                    if (rightMouseButtonPressed) OnMouseClick(new MouseClickEventArgs(3, clickPostion));
+                    var clickedEntity =
+                        _gameWorldService.Entities.Query(new AABB(clickPostion, Vector3.One*(Entity.MaxSize/2)))
+                            .FirstOrDefault(e => ray.Intersects(new BoundingSphere(e.Position, e.Size)) != null);
 
-                    // Find out which object was clicked
                     if (leftMouseButtonPressed)
                     {
-                        var nearbyObjects =
-                            _gameWorldService.Entities.Query(new AABB(clickPostion, Vector3.One*(Entity.MaxSize/3)));
-
-                        var clickedEntity =
-                            nearbyObjects.FirstOrDefault(
-                                e => ray.Intersects(new BoundingSphere(e.Position, e.Size)) != null);
-
-                        if (clickedEntity != null) _trackingEntity = clickedEntity;
+                        var args = new MouseClickEventArgs(1, clickPostion);
+                        if (clickedEntity == null || clickedEntity.OnClicked(args) == false)
+                            OnMouseClick(args);
+                    }
+                    if (middleMouseButtonPressed)
+                    {
+                        var args = new MouseClickEventArgs(2, clickPostion);
+                        if (clickedEntity == null || clickedEntity.OnClicked(args) == false)
+                            OnMouseClick(args);
+                    }
+                    if (rightMouseButtonPressed)
+                    {
+                        var args = new MouseClickEventArgs(3, clickPostion);
+                        if (clickedEntity == null || clickedEntity.OnClicked(args) == false)
+                            OnMouseClick(args);
                     }
                 }
             }
-
-
 
             #endregion
 
@@ -327,15 +290,22 @@ namespace AIWorld
         }
 
         [ScriptingFunction]
-        public void AddAgent(string scriptname, float x, float y)
+        public int AddAgent(string scriptname, float x, float y)
         {
-            _gameWorldService.Add(new Agent(this, scriptname, new Vector3(x, 0, y)));
+            Agent agent = new Agent(this, scriptname, new Vector3(x, 0, y));
+            _gameWorldService.Add(agent);
+            agent.Initialize();
+
+            return agent.Id;
         }
 
         [ScriptingFunction]
-        public void AddGameObject(string name, float size, float x, float y, float angle)
+        public int AddGameObject(string name, float size, float x, float y, float angle)
         {
-            _gameWorldService.Add(new WorldObject(this, name, size, new Vector3(x, 0, y), angle, false));
+            var obj = new WorldObject(this, name, size, new Vector3(x, 0, y), angle, false);
+            _gameWorldService.Add(obj);
+
+            return obj.Id;
         }
 
         [ScriptingFunction]
@@ -372,6 +342,7 @@ namespace AIWorld
 
                 if (_onMouseClick.Execute() == 1) return;
             }
+
             if (MouseClick != null)
                 MouseClick(this, e);
         }
@@ -406,6 +377,7 @@ namespace AIWorld
 
                 if (result == 1) return;
             }
+
             if (KeyStateChanged != null)
                 KeyStateChanged(this, e);
         }

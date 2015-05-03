@@ -53,7 +53,7 @@ namespace AIWorld.Services
             get { return _graphsByName.ContainsKey(key) ? _graphsByName[key] : null; }
         }
 
-        public void Add(Entity entity)
+        public void Add(IEntity entity)
         {
             if (entity == null) throw new ArgumentNullException("entity");
 
@@ -75,6 +75,19 @@ namespace AIWorld.Services
 
             _graphsByName[name] = new Graph();
             return true;
+        }
+
+        [ScriptingFunction]
+        public void SetTarget(float x, float y)
+        {
+            _cameraService.SetTarget(new Vector3(x, 0, y));
+        }
+
+        [ScriptingFunction]
+        public void SetTargetEntity(int id)
+        {
+            var entity = _entities.FirstOrDefault(a => a.Id == id);
+            _cameraService.SetTarget(entity);
         }
 
         #region Overrides of GameComponent
@@ -144,9 +157,9 @@ namespace AIWorld.Services
         }
 
         [ScriptingFunction]
-        public bool FillGraph(string name, float minX, float minY, float maxX, float maxY, float offset)
+        public int FillGraph(string name, float minX, float minY, float maxX, float maxY, float offset)
         {
-            if (name == null || !_graphsByName.ContainsKey(name)) return false;
+            if (name == null || !_graphsByName.ContainsKey(name)) return 0;
 
             var graph = _graphsByName[name];
 
@@ -178,8 +191,7 @@ namespace AIWorld.Services
                         graph.Add(point, p);
                 }
 
-            Debug.WriteLine("Created nodes: {0}", graph.Keys.Count - init);
-            return true;
+            return graph.Keys.Count - init;
         }
 
         private void Line(Vector3 a, Vector3 b, Color c, Color d)

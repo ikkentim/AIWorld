@@ -13,14 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using AIWorld.Entities;
+using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
 {
-    public interface ICameraService
+    public interface ICameraService : IGameComponent
     {
         Matrix View { get; }
         Matrix Projection { get; }
-        void Update(Vector3 cameraPosition, Vector3 cameraTargetPosition, float aspectRatio);
+        Vector3 TargetPosition { get; set; }
+        float Zoom { get; }
+        float Rotation { get; }
+        void SetTarget(IEntity target);
+        void SetTarget(Vector3 target);
+        void AddVelocity(Vector3 acceleration);
+        void Move(float deltaRotation, float deltaZoom);
     }
 }

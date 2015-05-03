@@ -20,11 +20,11 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
 {
-    public interface IGameWorldService : IScriptingNatives, IGameComponent
+    public interface IGameWorldService : IGameComponent, IScriptingNatives
     {
         QuadTree Entities { get; }
         Graph this[string key] { get; }
-        void Add(Entity entity);
+        void Add(IEntity entity);
         void Add(QuadPlane plane);
         bool CreateGraph(string name);
     }

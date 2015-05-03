@@ -92,5 +92,14 @@ namespace AIWorld.Entities
         }
 
         #endregion
+
+        #region Overrides of Entity
+
+        public override bool OnClicked(MouseClickEventArgs e)
+        {
+            return false;
+        }
+
+        #endregion
     }
 }

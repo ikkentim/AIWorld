@@ -43,9 +43,7 @@ native CreateGraph(const name[]);
 <param name="offset">
     The offset between each horizontal and vertical node.
 </param>
-<returns>
-    True if succesfully filled; False otherwise (e.g. key does not exist).
-</returns>
+<returns>The number of nodes added to the graph.</returns>
 \** ************************************************************************ **/
 native FillGraph(const name[], Float:minX, Float:minY, Float:maxX,
     Float:maxY, Float:offset);
@@ -76,3 +74,18 @@ native SetDrawGraphs(toggle);
 <returns>If true graphs will be drawn; False otherwise.</returns>
 \** ************************************************************************ **/
 native GetDrawGraphs();
+
+/** ************************************************************************ **\
+<summary>Sets the target position of the camera.</summary>
+<param name="x">Sets the x-coordinate of the target position.</param>
+<param name="y">Sets the y-coordinate of the target position.</param>
+<returns>This function does not return a specific value.</returns>
+\** ************************************************************************ **/
+native SetTarget(Float:x, Float:y);
+
+/** ************************************************************************ **\
+<summary>Sets the target entity of the camera.</summary>
+<param name="id">The id of the entity to target.</param>
+<returns>This function does not return a specific value.</returns>
+\** ************************************************************************ **/
+native SetTargetEntity(id);

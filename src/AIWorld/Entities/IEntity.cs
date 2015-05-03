@@ -17,9 +17,12 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Entities
 {
-    public interface IEntity
+    public interface IEntity : IGameComponent
     {
         Vector3 Position { get; }
         float Size { get; }
+        int Id { get; set; }
+
+        bool OnClicked(MouseClickEventArgs e);
     }
 }

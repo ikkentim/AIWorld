@@ -94,22 +94,5 @@ namespace AIWorld.Scripting
         {
             return (new Vector2(x1, y1) - new Vector2(x2, y2)).LengthSquared();
         }
-
-        [ScriptingFunction("log")]
-        public void Log(string message)
-        {
-            Debug.WriteLine(message);
-        }
-
-        [ScriptingFunction("logf")]
-        public bool LogFormatted(AMXArgumentList arguments)
-        {
-            if (arguments.Length < 1)
-                return false;
-
-            Log(FormatString(arguments));
-
-            return true;
-        }
     }
 }

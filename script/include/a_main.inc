@@ -17,7 +17,7 @@ The path to the model to draw at the objects position.
 <param name="x">The x-coordinate at which to draw the model.</param>
 <param name="y">The y-coordinate at which to draw the model.</param>
 <param name="angle">The angle at which to draw the model.</param>
-<returns>This function does not return a specific value.</returns>
+<returns>The id of the added game object.</returns>
 <remarks>This function can only be used within the main script.</remarks>
 \** ************************************************************************ **/
 native AddGameObject(const modelname[], Float:size, Float:x, Float:y,
@@ -43,7 +43,7 @@ native AddRoad(const key[], Float:pointsxy[], count = sizeof pointsxy);
 </param>
 <param name="x">The x-coordinate at which to spawn the agent.</param>
 <param name="y">The y-coordinate at which to spawn the agent.</param>
-<returns>This function does not return a specific value.</returns>
+<returns>The id of the added agent.</returns>
 <remarks>This function can only be used within the main script.</remarks>
 \** ************************************************************************ **/
 native AddAgent(const scriptname[], Float:x, Float:y);
