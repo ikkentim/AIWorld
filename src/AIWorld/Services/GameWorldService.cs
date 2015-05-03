@@ -20,9 +20,9 @@ using System.Linq;
 using AIWorld.Core;
 using AIWorld.Entities;
 using AIWorld.Scripting;
+using AMXWrapper;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace AIWorld.Services
 {
@@ -33,13 +33,15 @@ namespace AIWorld.Services
         private readonly BoundlessQuadTree _entities = new BoundlessQuadTree();
         private readonly Dictionary<string, Graph> _graphsByName = new Dictionary<string, Graph>();
         private int _agentId;
-        private bool _drawGraphs;
 
         public GameWorldService(Game game) : base(game)
         {
             _basicEffect = new BasicEffect(GraphicsDevice);
             _cameraService = game.Services.GetService<ICameraService>();
         }
+
+        [ScriptingFunction]
+        public bool DrawGraphs { get; set; }
 
         public QuadTree Entities
         {
@@ -81,8 +83,6 @@ namespace AIWorld.Services
         {
             base.Update(gameTime);
 
-            _drawGraphs = Keyboard.GetState().IsKeyDown(Keys.F9);
-
             _entities.FixPositions();
         }
 
@@ -119,6 +119,28 @@ namespace AIWorld.Services
         public bool IsPointOccupied(float x, float y)
         {
             return IsPointOccupied(new Vector3(x, 0, y));
+        }
+
+        [ScriptingFunction]
+        public int GetGraphCount()
+        {
+            return _graphsByName.Count;
+        }
+
+        [ScriptingFunction]
+        public bool GetGraphName(int index, CellPtr namePtr, int nameLength)
+        {
+            if (index < 0 || index >= _graphsByName.Count)
+            {
+                return false;
+            }
+            var name = _graphsByName.Keys.ElementAt(index);
+
+            if (name.Length >= nameLength)
+                name = name.Substring(0, nameLength - 1);
+
+            AMX.SetString(namePtr, name, false);
+            return true;
         }
 
         [ScriptingFunction]
@@ -170,7 +192,7 @@ namespace AIWorld.Services
 
         public override void Draw(GameTime gameTime)
         {
-            if (_drawGraphs)
+            if (DrawGraphs)
             {
                 _basicEffect.VertexColorEnabled = true;
                 _basicEffect.World = Matrix.Identity;
@@ -179,7 +201,7 @@ namespace AIWorld.Services
 
                 _basicEffect.CurrentTechnique.Passes[0].Apply();
 
-                var height = new Vector3(0, 0.2f, 0);
+                var height = new Vector3(0, 0.1f, 0);
                 foreach (var graph in _graphsByName.Values)
                 {
                     foreach (var node in graph.Values)

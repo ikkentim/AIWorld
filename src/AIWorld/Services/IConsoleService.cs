@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 
@@ -20,6 +21,7 @@ namespace AIWorld.Services
 {
     public interface IConsoleService : IScriptingNatives, IGameComponent
     {
-        void WriteLine(Color color, string message);
+        void WriteLine(Color color, string message, params object[] args);
+        void WriteLine(Color color, Exception exception);
     }
 }

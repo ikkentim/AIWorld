@@ -245,6 +245,19 @@ native IsInRangeOfPoint(Float:x, Float:y, Float:range);
 native IsInTargetRangeOfPoint(Float:x, Float:y);
 
 /** ************************************************************************ **\
+<summary>Toggles drawing of path.</summary>
+<param name="toggle">If true path will be drawn.</param>
+<returns>This function does not return a specific value.</returns>
+\** ************************************************************************ **/
+native SetDrawPath(toggle);
+
+/** ************************************************************************ **\
+<summary>Gets whether path is being drawn.</summary>
+<returns>If true path will be drawn; False otherwise.</returns>
+\** ************************************************************************ **/
+native GetDrawPath();
+
+/** ************************************************************************ **\
 <summary>This callback is called every time this actor gets updated.</summary>
 <returns>This callback does not handle return values.</returns>
 \** ************************************************************************ **/

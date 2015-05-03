@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AIWorld.Helpers;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Core
@@ -50,10 +51,60 @@ namespace AIWorld.Core
             return node;
         }
 
-        public IEnumerable<Vector3> ShortestPath(Vector3 start, Vector3 finish)
+        public IEnumerable<Node> ShortestPath(Vector3 start, Vector3 finish)
         {
-            // TODO: Convert to A*
+            return ShortestPathAStar(start, finish);
+        }
+
+        public IEnumerable<Node> ShortestPathAStar(Vector3 start, Vector3 finish)
+        {
+            
             var nodes = new List<Node>(Values);
+
+            foreach (var n in Values) n.Distance = float.PositiveInfinity;
+
+            this[start].Distance = 0;
+            this[start].Previous = null;
+
+            while (nodes.Count != 0)
+            {
+                var current = nodes.MinBy(n => n.Distance + (n.Position - finish).ManhattanLength())
+                ;
+
+                //var minDistance = nodes.Min(n => n.Distance);
+
+                // Start and end nodes are in different graphs
+                if (float.IsPositiveInfinity(current.Distance)) yield break;
+
+                nodes.Remove(current);
+
+                if (current.Position == finish)
+                {
+                    while (current.Previous != null)
+                    {
+                        yield return current;
+                        current = current.Previous;
+                    }
+
+                    yield break;
+                }
+
+                foreach (var edge in current)
+                {
+                    var alt = current.Distance + edge.Distance;
+  
+                    if (alt < edge.Target.Distance)
+                    {
+                        edge.Target.Distance = alt;
+                        edge.Target.Previous = current;
+                    }
+                }
+            }
+        }
+        private IEnumerable<Node> ShortestPathDijkstra(Vector3 start, Vector3 finish)
+        {
+            var nodes = new List<Node>(Values);
+
             foreach (var n in Values) n.Distance = float.PositiveInfinity;
 
             this[start].Distance = 0;
@@ -73,7 +124,7 @@ namespace AIWorld.Core
                 {
                     while (smallest.Previous != null)
                     {
-                        yield return smallest.Position;
+                        yield return smallest;
                         smallest = smallest.Previous;
                     }
 

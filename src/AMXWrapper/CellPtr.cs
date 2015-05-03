@@ -40,9 +40,9 @@ namespace AMXWrapper
             return Cell.FromIntPtr(_value);
         }
 
-        public Cell Get(int cellsOffset)
+        public Cell Get(int offset)
         {
-            return Cell.FromIntPtr(IntPtr.Add(_value, cellsOffset*Marshal.SizeOf(typeof (Cell))));
+            return Cell.FromIntPtr(IntPtr.Add(_value, offset*Marshal.SizeOf(typeof (Cell))));
         }
         public void Set(int value)
         {
@@ -52,6 +52,16 @@ namespace AMXWrapper
         public void Set(Cell value)
         {
             Set(value.AsInt32());
+        }
+
+        public static CellPtr operator +(CellPtr cellPtr, int offset)
+        {
+            return new CellPtr(IntPtr.Add(cellPtr.Value, offset*Marshal.SizeOf(typeof (Cell))));
+        }
+
+        public static implicit operator CellPtr(Cell cell)
+        {
+            return cell.AsCellPtr();
         }
     }
 }

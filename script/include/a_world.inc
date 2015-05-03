@@ -49,3 +49,30 @@ native CreateGraph(const name[]);
 \** ************************************************************************ **/
 native FillGraph(const name[], Float:minX, Float:minY, Float:maxX,
     Float:maxY, Float:offset);
+
+/** ************************************************************************ **\
+<summary>Gets the number of existing graphs.</summary>
+<returns>The number of existing graphs.</returns>
+\** ************************************************************************ **/
+native GetGraphCount();
+
+/** ************************************************************************ **\
+<summary>Gets the name of the graph at the specified index.</summary>
+<returns>
+    True if successful; False otherwise (e.g. index out of bounds).
+</returns>
+\** ************************************************************************ **/
+native GetGraphName(index, name[], len = sizeof name);
+
+/** ************************************************************************ **\
+<summary>Toggles drawing of all graphs.</summary>
+<param name="toggle">If true graphs will be drawn.</param>
+<returns>This function does not return a specific value.</returns>
+\** ************************************************************************ **/
+native SetDrawGraphs(toggle);
+
+/** ************************************************************************ **\
+<summary>Gets whether graphs are being drawn.</summary>
+<returns>If true graphs will be drawn; False otherwise.</returns>
+\** ************************************************************************ **/
+native GetDrawGraphs();

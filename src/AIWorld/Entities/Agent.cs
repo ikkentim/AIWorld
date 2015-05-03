@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using AIWorld.Core;
 using AIWorld.Helpers;
 using AIWorld.Scripting;
 using AIWorld.Services;
@@ -24,15 +25,19 @@ using AIWorld.Steering;
 using AMXWrapper;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace AIWorld.Entities
 {
     public class Agent : Entity, IMovingEntity, IScripted
     {
+        private readonly BasicEffect _basicEffect;
         private readonly ICameraService _cameraService;
         private readonly IGameWorldService _gameWorldService;
         private readonly AMXPublic _onUpdate;
-        private readonly Stack<Vector3> _path = new Stack<Vector3>();
+        private readonly AMXPublic _onMouseClick;
+        private readonly AMXPublic _onKeyStateChanged;
+        private readonly Stack<Node> _path = new Stack<Node>();
 
         private readonly Dictionary<string, WeightedSteeringBehavior> _steeringBehaviors =
             new Dictionary<string, WeightedSteeringBehavior>();
@@ -42,10 +47,15 @@ namespace AIWorld.Entities
         private float _targetRangeSquared;
         private Matrix[] _transforms;
 
-        public Agent(Game game, string scriptname, Vector3 position)
+        public Agent(Simulation game, string scriptname, Vector3 position)
             : base(game)
         {
             if (scriptname == null) throw new ArgumentNullException("scriptname");
+
+            _basicEffect = new BasicEffect(GraphicsDevice);
+
+            game.KeyStateChanged += game_KeyStateChanged;
+            game.MouseClick += game_MouseClick;
             Position = position;
 
             _cameraService = game.Services.GetService<ICameraService>();
@@ -55,12 +65,50 @@ namespace AIWorld.Entities
             Script.Register(this, _gameWorldService, game.Services.GetService<IConsoleService>());
 
             _onUpdate = Script.FindPublic("OnUpdate");
+            _onMouseClick = Script.FindPublic("OnMouseClick");
+            _onKeyStateChanged = Script.FindPublic("OnKeyStateChanged");
 
             Script.ExecuteMain();
         }
 
+        private void game_MouseClick(object sender, MouseClickEventArgs e)
+        {
+            if (_onMouseClick == null) return;
+            Script.Push(e.Position.Z);
+            Script.Push(e.Position.X);
+            Script.Push(e.Button);
+            _onMouseClick.Execute();
+        }
+
+        private void game_KeyStateChanged(object sender, KeyStateEventArgs e)
+        {
+            if (_onKeyStateChanged == null) return;
+
+            var newKeys = Script.Allot(e.NewKeys.Length + 1);
+            var oldKeys = Script.Allot(e.NewKeys.Length + 1);
+
+            for (var i = 0; i < e.NewKeys.Length; i++)
+                (newKeys + i).Set((int)e.NewKeys[i]);
+
+            for (var i = 0; i < e.OldKeys.Length; i++)
+                (oldKeys + i).Set((int)e.OldKeys[i]);
+
+            (newKeys + e.NewKeys.Length).Set((int)Keys.None);
+            (oldKeys + e.OldKeys.Length).Set((int)Keys.None);
+
+            Script.Push(oldKeys);
+            Script.Push(newKeys);
+            _onKeyStateChanged.Execute();
+
+            Script.Release(newKeys);
+            Script.Release(oldKeys);
+        }
+
         [ScriptingFunction]
         public override int Id { get; set; }
+
+        [ScriptingFunction]
+        public bool DrawPath { get; set; }
 
         [ScriptingFunction]
         public float TargetRange
@@ -96,15 +144,15 @@ namespace AIWorld.Entities
 
             var node = _path.Pop();
 
-            x = node.X;
-            y = node.Z;
+            x = node.Position.X;
+            y = node.Position.Z;
             return true;
         }
 
         [ScriptingFunction]
         public void PushPathNode(float x, float y)
         {
-            _path.Push(new Vector3(x, 0, y));
+            _path.Push(new Node(new Vector3(x, 0, y)));
         }
 
         [ScriptingFunction]
@@ -119,8 +167,8 @@ namespace AIWorld.Entities
 
             var node = _path.Peek();
 
-            x = node.X;
-            y = node.Z;
+            x = node.Position.X;
+            y = node.Position.Z;
             return true;
         }
 
@@ -231,18 +279,10 @@ namespace AIWorld.Entities
             }
         }
 
-        private void UpdateTarget()
+        private void Line(Vector3 a, Vector3 b, Color c, Color d)
         {
-            if (_path == null || !_path.Any()) return;
-            if (_path.Count == 1)
-            {
-                if (Velocity.LengthSquared() < 0.001)
-                {
-                    Velocity = Vector3.Zero;
-                    _path.Pop();
-                }
-            }
-            else if ((Position - _path.Peek()).LengthSquared() < 0.9f) _path.Pop();
+            var vertices = new[] { new VertexPositionColor(a, c), new VertexPositionColor(b, d) };
+            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
 
         #region Overrides of GameComponent
@@ -255,7 +295,6 @@ namespace AIWorld.Entities
             }
 
             UpdatePosition(gameTime);
-            UpdateTarget();
 
             base.Update(gameTime);
         }
@@ -279,6 +318,27 @@ namespace AIWorld.Entities
                         effect.EnableDefaultLighting();
                     }
                     mesh.Draw();
+                }
+            }
+
+            if (DrawPath)
+            {
+                _basicEffect.VertexColorEnabled = true;
+                _basicEffect.World = Matrix.Identity;
+                _basicEffect.View = _cameraService.View;
+                _basicEffect.Projection = _cameraService.Projection;
+
+                _basicEffect.CurrentTechnique.Passes[0].Apply();
+
+                var height = new Vector3(0, 0.5f, 0);
+                foreach (var node in _path)
+                {
+                    if (node.Previous == null) continue;
+
+                    foreach (var edge in node.Where(e => e.Target.Previous == node))
+                        Line(edge.Target.Position + height, node.Position + height, Color.Red, Color.Red);
+
+                    Line(node.Previous.Position + height, node.Position + height, Color.Blue, Color.Blue);
                 }
             }
             base.Draw(gameTime);

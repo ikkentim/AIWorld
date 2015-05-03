@@ -34,5 +34,10 @@ namespace AIWorld.Helpers
         {
             return point.LengthSquared() > limit*limit ? Vector3.Normalize(point)*limit : point;
         }
+
+        public static float ManhattanLength(this Vector3 point)
+        {
+            return Math.Abs(point.X) + Math.Abs(point.Y) + Math.Abs(point.Z);
+        }
     }
 }

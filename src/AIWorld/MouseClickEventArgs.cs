@@ -13,30 +13,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#region Using Statements
-
 using System;
 using Microsoft.Xna.Framework;
 
-#endregion
-
 namespace AIWorld
 {
-#if WINDOWS || LINUX
-    /// <summary>
-    ///     The main class.
-    /// </summary>
-    public static class Program
+    public class MouseClickEventArgs : EventArgs
     {
         /// <summary>
-        ///     The main entry point for the application.
+        ///     Initializes a new instance of the <see cref="MouseClickEventArgs" /> class.
         /// </summary>
-        [STAThread]
-        private static void Main(string[] args)
+        /// <param name="button">The button.</param>
+        /// <param name="position">The position</param>
+        public MouseClickEventArgs(int button, Vector3 position)
         {
-            using (var game = new Simulation(args != null && args.Length > 0 ? args[0] : "main"))
-                game.Run();
+            Button = button;
+            Position = position;
         }
+
+        /// <summary>
+        ///     Gets the button.
+        /// </summary>
+        public int Button { get; private set; }
+
+        /// <summary>
+        ///     Gets or sets the position.
+        /// </summary>
+        public Vector3 Position { get; set; }
     }
-#endif
 }

@@ -50,7 +50,7 @@ namespace AIWorld
 
         public void FixPositions()
         {
-            foreach (var entity in Parts.SelectMany(part => part.RemoveEntitiesOutsideBoundaries(this)))
+            foreach (var entity in Parts.SelectMany(part => part.RemoveEntitiesOutsideBoundaries(this).ToArray()).ToArray())
             {
                 Add(entity);
             }

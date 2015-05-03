@@ -1,4 +1,5 @@
 #include <a_agent>
+#include <keys>
 
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of this agent.</summary>
@@ -21,17 +22,17 @@ main()
         Float:startx,
         Float:starty;
 
-    targetx = frandom(-5, 5);
-    targety = frandom(-5, 5);
+    targetx = 5;// frandom(-5, 5);
+    targety = 5;//frandom(-5, 5);
 
     // Find nodes closest to my position and my target's.
     GetPosition(startx,starty);
-    GetClosestNode("road", startx, starty, startx, starty);
-    GetClosestNode("road", targetx, targety, targetnodex, targetnodey);
+    GetClosestNode("ground", startx, starty, startx, starty);
+    GetClosestNode("ground", targetx, targety, targetnodex, targetnodey);
 
     // Push a path towards my target by road to the stack.
     PushPathNode(targetx,targety);
-    PushPath("road",startx,starty,targetnodex,targetnodey);
+    PushPath("ground",startx,starty,targetnodex,targetnodey);
 
     // The road generated above is currently not used...
 
@@ -45,3 +46,22 @@ main()
 {
     logprintf(COLOR_WHITE, "[car] Updated");
 }*/
+
+forward OnKeyStateChanged(newKeys[], oldKeys[]);
+public OnKeyStateChanged(newKeys[], oldKeys[])
+{
+    if(IsKeyDown(newKeys, KEY_F8) != GetDrawPath())
+        SetDrawPath(IsKeyDown(newKeys, KEY_F8));
+}
+
+forward OnMouseClick(button, Float:x, Float:y);
+public OnMouseClick(button, Float:x, Float:y)
+{
+    if(button == 1)
+    {
+        logprintf(COLOR_WHITE, "[car] left clicked at %f %f", x, y);
+
+        RemoveSteeringBehavior("target");
+        AddSteeringBehavior("target", BEHAVIOR_ARRIVE, 0.78, x, y);
+    }
+}

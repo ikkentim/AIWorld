@@ -1,4 +1,5 @@
 #include <a_main>
+#include <keys>
 
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of the simulation.</summary>
@@ -12,6 +13,19 @@ main()
     CreateAgents();
 }
 
+forward OnKeyStateChanged(newKeys[], oldKeys[]);
+public OnKeyStateChanged(newKeys[], oldKeys[])
+{
+    if(IsKeyDown(newKeys, KEY_A) && !IsKeyDown(oldKeys, KEY_A))
+    {
+        logprintf(COLOR_WHITE, "Spawned an agent!");
+        AddAgent("doll", frandom(-5,5), frandom(-5,5));
+    }
+
+    if(IsKeyDown(newKeys, KEY_F9) != GetDrawGraphs())
+        SetDrawGraphs(IsKeyDown(newKeys, KEY_F9));
+}
+
 CreatePlanes()
 {
     // Create the floor.
@@ -23,17 +37,22 @@ CreatePlanes()
 CreateObjects()
 {
     // Add a few house models objects.
-    AddGameObject("models/house02", 0.35, 3.9, 2.5, DEG2RAD(-90));
+    /*AddGameObject("models/house02", 0.35, 3.9, 2.5, DEG2RAD(-90));
     AddGameObject("models/house02", 0.35, 3.9, 3.5, DEG2RAD(-90));
     AddGameObject("models/house02", 0.35, 3.9, 4.5, DEG2RAD(-90));
-    AddGameObject("models/house02", 0.35, 3.9, 5.5, DEG2RAD(-90));
+    AddGameObject("models/house02", 0.35, 3.9, 5.5, DEG2RAD(-90));*/
+
+    AddGameObject("models/house02", 0.5, 3.9, 2.5, DEG2RAD(-90));
+    AddGameObject("models/house02", 0.5, 3.9, 3.5, DEG2RAD(-90));
+    AddGameObject("models/house02", 0.5, 3.9, 4.5, DEG2RAD(-90));
+    AddGameObject("models/house02", 0.5, 3.9, 5.5, DEG2RAD(-90));
 }
 
 CreateGroundGraph()
 {
     // Create and fill a 'ground' graph and fill it automatically
     CreateGraph("ground");
-    FillGraph("ground", -5, -5, 5, 5, 1);
+    FillGraph("ground", -2, -2, 6, 6, 0.5);
 }
 
 CreateRoads()
@@ -79,8 +98,6 @@ CreateRoads()
 
 CreateAgents()
 {
-    for(new i=0;i<10;i++)
-        AddAgent("doll", frandom(-5,5), frandom(-5,5));
-
-    AddAgent("car", frandom(-5,5), frandom(-5,5));
+    //AddAgent("car", frandom(-5,5), frandom(-5,5));
+    AddAgent("car",0,0);
 }

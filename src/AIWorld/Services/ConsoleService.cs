@@ -57,13 +57,22 @@ namespace AIWorld.Services
             Debug.Listeners.Add(_traceListener = new ConsoleTraceListener(this));
         }
 
-        public void WriteLine(Color color, string message)
+        ~ConsoleService()
         {
-            if (message == null) throw new ArgumentNullException("message");
+            Debug.Listeners.Remove(_traceListener);
 
+            _backgroundTexture.Dispose();
+            _spriteBatch.Dispose();
+        }
+
+        public void WriteLine(Color color, string format, params object[] args)
+        {
+            if (format == null) throw new ArgumentNullException("format");
+
+            var message = string.Format(format, args);
             var item = new ConsoleMessage(color, message)
             {
-                Size = _font.MeasureString(message)*FontScale
+                Size = _font.MeasureString(message) * FontScale
             };
 
             _messages.Enqueue(item);
@@ -72,9 +81,18 @@ namespace AIWorld.Services
                 _messages.Dequeue();
         }
 
-        ~ConsoleService()
+   
+
+        public void WriteLine(Color color, Exception exception)
         {
-            Debug.Listeners.Remove(_traceListener);
+            var tabs = string.Empty;
+            while (exception != null)
+            {
+                WriteLine(color, "{0}[{2}] Exception: {1} @ {3}", tabs, exception.Message, exception.Source, exception.TargetSite);
+
+                tabs += "\t";
+                exception = exception.InnerException;
+            }
         }
 
         [ScriptingFunction("logprintf")]
