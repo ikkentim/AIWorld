@@ -7,6 +7,7 @@ new isShiftDown = false;
 \**--------------------------------------------------------------------------**/
 main()
 {
+    SetBackgroundColor(0xff555555);
     CreatePlanes();
     CreateObjects();
     CreateGroundGraph();

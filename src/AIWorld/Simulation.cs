@@ -15,11 +15,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using AIWorld.Entities;
-using AIWorld.Helpers;
 using AIWorld.Scripting;
 using AIWorld.Services;
 using AMXWrapper;
@@ -35,9 +33,11 @@ namespace AIWorld
     /// </summary>
     public class Simulation : Game, IScripted
     {
-        private const float ScrollMaxSpeed = 1f;
-        private const float ScrollMultiplier = 0.1f;
+        private const float ScrollMaxSpeed = 0.3f;
+        private const float ScrollMultiplier = 0.01f;
+        private const float ScrollMinDelta = 0.05f;
         private const float ScrollModifier = 2.5f;
+        private const float MouseRotationModifier = 0.005f;
         private readonly GraphicsDeviceManager _graphics;
         private readonly string _scriptName;
         private SoundEffect _ambientEffect;
@@ -52,17 +52,16 @@ namespace AIWorld
         private AMXPublic _onMouseClick;
         private float _scrollVelocity;
         private float _unprocessedScrollDelta;
-        private Vector3 cameraVelocity = Vector3.Zero;
-    
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Simulation" /> class.
         /// </summary>
         public Simulation(string scriptName)
         {
-            if (scriptName == null) throw new ArgumentNullException("scriptName");
-            _scriptName = scriptName;
-
+            // Store the script we want to start for later use.
+            if ((_scriptName = scriptName) == null)
+                throw new ArgumentNullException("scriptName");
+   
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
@@ -74,8 +73,10 @@ namespace AIWorld
 
         private void LoadSimulation()
         {
+            // Reset background color to a default value.
             _backgroundColor = Color.CornflowerBlue;
 
+            // Register various services.
             Services.AddService(typeof (IConsoleService), _consoleService = new ConsoleService(this));
             Services.AddService(typeof (ICameraService), _cameraService = new CameraService(this));
             Services.AddService(typeof (IGameWorldService), _gameWorldService = new GameWorldService(this));
@@ -84,6 +85,7 @@ namespace AIWorld
             Components.Add(_cameraService);
             Components.Add(_gameWorldService);
 
+            // Set up the script and let it handle further setup.
             try
             {
                 Script = new ScriptBox("main", _scriptName);
@@ -103,6 +105,7 @@ namespace AIWorld
 
         private void UnloadSimulation()
         {
+            // Unload all compolents and services.
             Components.Clear();
 
             Services.RemoveService(typeof (IConsoleService));
@@ -115,6 +118,8 @@ namespace AIWorld
         /// </summary>
         protected override void LoadContent()
         {
+            // Start the ambient sound.
+            // TODO: Let the script do this.
             _ambientEffect = Content.Load<SoundEffect>(@"sounds/ambient");
             var ambient = _ambientEffect.CreateInstance();
             ambient.IsLooped = true;
@@ -140,6 +145,7 @@ namespace AIWorld
             var keyboardState = Keyboard.GetState();
             var mouseState = Mouse.GetState();
 
+            // First things first: if F5 is pressed reboot the simulation.
             if (IsActive && keyboardState.IsKeyDown(Keys.F5) && !_lastKeyboardState.IsKeyDown(Keys.F5))
             {
                 _lastMouseState = mouseState;
@@ -150,52 +156,71 @@ namespace AIWorld
                 return;
             }
 
-            // Prevent keyboard input while not in focus
-            if (!IsActive || Script == null) return;
+            // Prevent user input while not in focus or no script is running.
+            if (!IsActive || Script == null)
+            {
+                _lastMouseState = mouseState;
+                _lastKeyboardState = keyboardState;
+                return;
+            }
 
-            #region Update camera
+            #region Process camera manipulation input
 
             float deltaCameraRotation = 0;
             float deltaCameraZoom = 0;
 
+            // If middle or right button is pressed, hide the mouse button and track the x-axis (rotation) movements
             if (mouseState.MiddleButton == ButtonState.Pressed || mouseState.RightButton == ButtonState.Pressed)
             {
+                // If this is the first update in which the button is pressed, recenter the mouse and
+                // wait for the next update, in which we actually update the mouse rotation
                 if (_lastMouseState.MiddleButton == ButtonState.Pressed ||
                     _lastMouseState.RightButton == ButtonState.Pressed)
                 {
-                    deltaCameraRotation += (mouseState.X - Window.ClientBounds.Width/2)/100f;
+                    // Add rotation delta based on mouse movement
+                    deltaCameraRotation += (mouseState.X - Window.ClientBounds.Width/2)*MouseRotationModifier;
 
+                    // Recenter mouse.
                     Mouse.SetPosition(
                         Window.ClientBounds.Width/2,
                         Window.ClientBounds.Height/2);
                 }
                 else
                 {
+                    // Hide and center mouse.
                     IsMouseVisible = false;
                     Mouse.SetPosition(
                         Window.ClientBounds.Width/2,
                         Window.ClientBounds.Height/2);
+
+                    // TODO: It might be better only to recenter the mouse when you start dragging and when you stop relocate the mouse to were you started.
                 }
             }
             else if (_lastMouseState.MiddleButton == ButtonState.Pressed ||
                      _lastMouseState.RightButton == ButtonState.Pressed)
             {
+                // Button is released; show mouse again.
                 IsMouseVisible = true;
             }
 
+            // Calculate the delta scroll value.
             var scroll = mouseState.ScrollWheelValue;
             var deltaScroll = scroll - _lastScroll;
             _lastScroll = scroll;
 
-            _unprocessedScrollDelta -= deltaScroll*0.01f;
+            // Add the delta scroll to the unprocessed scroll value. 
+            _unprocessedScrollDelta -= deltaScroll;
 
-            if (Math.Abs(_unprocessedScrollDelta) > 0.5)
+            // If there is some reasonable amount of unprocessed scroll, handle it.
+            if (Math.Abs(_unprocessedScrollDelta) > ScrollMinDelta)
             {
-                _scrollVelocity = Math.Min(_unprocessedScrollDelta*ScrollMultiplier, ScrollMaxSpeed);
-                _unprocessedScrollDelta -= _scrollVelocity;
+                _scrollVelocity = MathHelper.Clamp(_unprocessedScrollDelta*ScrollMultiplier, -ScrollMaxSpeed,
+                    ScrollMaxSpeed);
+           
+                _unprocessedScrollDelta -= _scrollVelocity/ScrollMultiplier;
 
-                deltaCameraZoom += _scrollVelocity*_cameraService.Zoom/
-                                   (CameraService.MaxZoom - CameraService.MinZoom + 1)*ScrollModifier;
+                deltaCameraZoom += (_scrollVelocity*_cameraService.Zoom/
+                                   (CameraService.MaxZoom - CameraService.MinZoom + 1))*ScrollModifier;
             }
 
             Vector3 acceleration = Vector3.Zero;
@@ -204,12 +229,12 @@ namespace AIWorld
             if (keyboardState.IsKeyDown(Keys.Up)) acceleration += Vector3.Left;
             if (keyboardState.IsKeyDown(Keys.Down)) acceleration += Vector3.Right;
 
-            _cameraService.AddVelocity(acceleration * (float)gameTime.ElapsedGameTime.TotalSeconds);
+            _cameraService.AddVelocity(acceleration*(float) gameTime.ElapsedGameTime.TotalSeconds);
             _cameraService.Move(deltaCameraRotation, deltaCameraZoom);
 
             #endregion
 
-            #region Keyboard keys
+            #region Handle keyboard state
 
             if (keyboardState != _lastKeyboardState)
                 OnKeyStateChanged(new KeyStateEventArgs(keyboardState.GetPressedKeys(),
@@ -217,7 +242,7 @@ namespace AIWorld
 
             #endregion
 
-            #region Mouse buttons
+            #region Handle clicking
 
             // Check which buttons were pressed.
             var leftMouseButtonPressed = mouseState.LeftButton == ButtonState.Pressed &&
@@ -230,6 +255,7 @@ namespace AIWorld
             // If any button was pressed, calculate click position.
             if (leftMouseButtonPressed || middleMouseButtonPressed || rightMouseButtonPressed)
             {
+                // Create a ray based on the clicked position.
                 var nearPoint = GraphicsDevice.Viewport.Unproject(new Vector3(mouseState.Position.ToVector2(), 0),
                     _cameraService.Projection, _cameraService.View, Matrix.Identity);
 
@@ -238,15 +264,20 @@ namespace AIWorld
 
                 var ray = new Ray(nearPoint, Vector3.Normalize(farPoint - nearPoint));
 
+                // Test where the ray hits the ground.
                 var groundDistance = ray.Intersects(new Plane(Vector3.Up, 0));
                 if (groundDistance != null)
                 {
+                    // If the ray hits the ground, look for nearby entities and find which one was clicked.
+
                     Vector3 clickPostion = nearPoint + ray.Direction*groundDistance.Value;
 
                     var clickedEntity =
                         _gameWorldService.Entities.Query(new AABB(clickPostion, Vector3.One*(Entity.MaxSize/2)))
                             .FirstOrDefault(e => ray.Intersects(new BoundingSphere(e.Position, e.Size)) != null);
 
+                    // Fire click events for every pressed button. If an entity is clicked and it handles the call,
+                    // don't call the general OnMouseClick event.
                     if (leftMouseButtonPressed)
                     {
                         var args = new MouseClickEventArgs(1, clickPostion);
@@ -277,6 +308,7 @@ namespace AIWorld
 
         protected override void Draw(GameTime gameTime)
         {
+            // Clear the background with the specified color.
             _graphics.GraphicsDevice.Clear(_backgroundColor);
 
             base.Draw(gameTime);
@@ -285,6 +317,7 @@ namespace AIWorld
         [ScriptingFunction]
         public void AddQuadPlane(float x, float y, float z, float size, int rotation, string texture)
         {
+            // Create the quad plane.
             _gameWorldService.Add(new QuadPlane(this, new Vector3(x, y, z), size, (PlaneRotation) rotation,
                 Content.Load<Texture2D>(texture)));
         }
@@ -292,6 +325,7 @@ namespace AIWorld
         [ScriptingFunction]
         public int AddAgent(string scriptname, float x, float y)
         {
+            // Create the entity and return the id.
             Agent agent = new Agent(this, scriptname, new Vector3(x, 0, y));
             _gameWorldService.Add(agent);
             agent.Initialize();
@@ -302,6 +336,7 @@ namespace AIWorld
         [ScriptingFunction]
         public int AddGameObject(string name, float size, float x, float y, float angle)
         {
+            // Create the entity and return the id.
             var obj = new WorldObject(this, name, size, new Vector3(x, 0, y), angle, false);
             _gameWorldService.Add(obj);
 
@@ -311,9 +346,11 @@ namespace AIWorld
         [ScriptingFunction]
         public bool AddRoad(string key, IntPtr arrayPointer, int count)
         {
+            // Verify argument count.
             if (count%2 != 0) count--;
             if (count < 4) return false;
 
+            // Build a nodes list from the arguments.
             var nodes = new List<Vector3>();
             for (var i = 0; i < count/2; i++)
             {
@@ -323,9 +360,23 @@ namespace AIWorld
                 nodes.Add(new Vector3(x.AsFloat(), 0, y.AsFloat()));
             }
 
+            // Generate the road and add the nodes to the specified graph.
             Road.GenerateRoad(this, _gameWorldService[key], nodes.ToArray());
 
             return true;
+        }
+
+        [ScriptingFunction]
+        public void SetBackgroundColor(int colorCode)
+        {
+            var a = (colorCode >> 8*3) & 0xFF;
+            var r = (colorCode >> 8*2) & 0xFF;
+            var g = (colorCode >> 8*1) & 0xFF;
+            var b = (colorCode >> 8*0) & 0xFF;
+
+            _backgroundColor =
+                new Color(new Vector4((float) r/byte.MaxValue, (float) g/byte.MaxValue, (float) b/byte.MaxValue,
+                    (float) a/byte.MaxValue));
         }
 
         /// <summary>
@@ -336,11 +387,13 @@ namespace AIWorld
         {
             if (_onMouseClick != null)
             {
+                // Push the arguments and call the callback.
                 Script.Push(e.Position.Z);
                 Script.Push(e.Position.X);
                 Script.Push(e.Button);
 
                 if (_onMouseClick.Execute() == 1) return;
+                // If main handled the click, don't call the MouseClick event.
             }
 
             if (MouseClick != null)
@@ -355,9 +408,11 @@ namespace AIWorld
         {
             if (_onKeyStateChanged != null)
             {
+                // Allocate an array for new keys and old keys in the abstract machine.
                 var newKeys = Script.Allot(e.NewKeys.Length + 1);
-                var oldKeys = Script.Allot(e.NewKeys.Length + 1);
+                var oldKeys = Script.Allot(e.OldKeys.Length + 1);
 
+                // Copy the keys to the machine.
                 for (var i = 0; i < e.NewKeys.Length; i++)
                     (newKeys + i).Set((int) e.NewKeys[i]);
 
@@ -367,11 +422,13 @@ namespace AIWorld
                 (newKeys + e.NewKeys.Length).Set((int) Keys.None);
                 (oldKeys + e.OldKeys.Length).Set((int) Keys.None);
 
+                // Push the arguments and call the callback.
                 Script.Push(oldKeys);
                 Script.Push(newKeys);
 
                 var result = _onKeyStateChanged.Execute();
 
+                // Release the arrays.
                 Script.Release(newKeys);
                 Script.Release(oldKeys);
 

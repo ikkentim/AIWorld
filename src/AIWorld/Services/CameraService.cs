@@ -129,11 +129,10 @@ namespace AIWorld.Services
 
         public void Move(float deltaRotation, float deltaZoom)
         {
-            
             _zoom += deltaZoom;
             Rotation += deltaRotation;
 
-            _zoom = Math.Max(MinZoom, Math.Min(_zoom, MaxZoom));
+            _zoom = MathHelper.Clamp(_zoom + deltaZoom, MinZoom, MaxZoom);
         }
 
         private void CalculateView()

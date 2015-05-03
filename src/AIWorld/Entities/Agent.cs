@@ -80,9 +80,12 @@ namespace AIWorld.Entities
         private void game_MouseClick(object sender, MouseClickEventArgs e)
         {
             if (_onMouseClick == null) return;
+
+            // Push the arguments and call the callback.
             Script.Push(e.Position.Z);
             Script.Push(e.Position.X);
             Script.Push(e.Button);
+
             _onMouseClick.Execute();
         }
 
@@ -90,9 +93,11 @@ namespace AIWorld.Entities
         {
             if (_onKeyStateChanged == null) return;
 
+            // Allocate an array for new keys and old keys in the abstract machine.
             var newKeys = Script.Allot(e.NewKeys.Length + 1);
-            var oldKeys = Script.Allot(e.NewKeys.Length + 1);
+            var oldKeys = Script.Allot(e.OldKeys.Length + 1);
 
+            // Copy the keys to the machine.
             for (var i = 0; i < e.NewKeys.Length; i++)
                 (newKeys + i).Set((int)e.NewKeys[i]);
 
@@ -102,10 +107,13 @@ namespace AIWorld.Entities
             (newKeys + e.NewKeys.Length).Set((int)Keys.None);
             (oldKeys + e.OldKeys.Length).Set((int)Keys.None);
 
+            // Push the arguments and call the callback.
             Script.Push(oldKeys);
             Script.Push(newKeys);
+
             _onKeyStateChanged.Execute();
 
+            // Release the arrays.
             Script.Release(newKeys);
             Script.Release(oldKeys);
         }
@@ -113,6 +121,8 @@ namespace AIWorld.Entities
         public override bool OnClicked(MouseClickEventArgs e)
         {
             if (_onClicked == null) return false;
+
+            // Push the arguments and call the callback.
             Script.Push(e.Position.Z);
             Script.Push(e.Position.X);
             Script.Push(e.Button);

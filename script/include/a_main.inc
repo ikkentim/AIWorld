@@ -59,3 +59,11 @@ native AddAgent(const scriptname[], Float:x, Float:y);
 \** ************************************************************************ **/
 native AddQuadPlane(Float:x, Float:y, Float:z, Float:size, rotation,
     const texture[]);
+
+/** ************************************************************************ **\
+<summary>Sets the background color of the game.</summary>
+<param name="color">The background color of the game.</param>
+<returns>This function does not return a specific value.</returns>
+<remarks>This function can only be used within the main script.</remarks>
+\** ************************************************************************ **/
+native SetBackgroundColor(color);
