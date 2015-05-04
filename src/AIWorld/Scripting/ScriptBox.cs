@@ -83,6 +83,7 @@ namespace AIWorld.Scripting
             if (info.ParameterType.IsEnum && info.ParameterType.GetEnumUnderlyingType() == typeof (int))
                 return cell => Enum.ToObject(info.ParameterType, cell.AsInt32());
 
+            if (info.ParameterType == typeof(bool)) return cell => cell.AsInt32() != 0;
             if (info.ParameterType == typeof (string)) return cell => cell.AsString();
             if (info.ParameterType == typeof (int)) return cell => cell.AsInt32();
             if (info.ParameterType == typeof (uint)) return cell => cell.AsUInt32();

@@ -252,20 +252,90 @@ native IsInRangeOfPoint(Float:x, Float:y, Float:range);
 native IsInTargetRangeOfPoint(Float:x, Float:y);
 
 /** ************************************************************************ **\
+<summary>Gets the distance to the specified point.</summary>
+<param name="x">The x-coordinate of the point.<param>
+<param name="x">The y-coordinate of the point.<param>
+<returns>The distance to the specified point.</returns>
+<remarks>This function can only be used within an agent script.</remarks>
+\** ************************************************************************ **/
+native Float:GetDistanceToPoint(Float:x, Float:y);
+
+/** ************************************************************************ **\
 <summary>Toggles drawing of path.</summary>
 <param name="toggle">If true path will be drawn.</param>
 <returns>This function does not return a specific value.</returns>
+<remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
 native SetDrawPath(toggle);
 
 /** ************************************************************************ **\
 <summary>Gets whether path is being drawn.</summary>
 <returns>If true path will be drawn; False otherwise.</returns>
+<remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
 native GetDrawPath();
+
+/** ************************************************************************ **\
+<summary>Adds a goal to this agent.</summary>
+<param name="scriptname">
+    Name of the script within the 'goal' folder to run for the goal.
+</param>
+<param name="format">
+    The parameter names and types to be set after creation.
+</param>
+<returns>This function does not return a specific value.</returns>
+<remarks>This function can only be used within an agent script.</remarks>
+\** ************************************************************************ **/
+native AddGoal(const scriptname[], const format[]='''', {Float,_}:...);
+
+/** ************************************************************************ **\
+<summary>Counts the number of goals on the stack.</summary>
+<param name="includingSubgoals">If true include subgoals in the count.</param>
+<returns>The number of goals on the stack.</returns>
+<remarks>This function can only be used within an agent script.</remarks>
+\** ************************************************************************ **/
+native GetGoalCount(includingSubgoals=1);
 
 /** ************************************************************************ **\
 <summary>This callback is called every time this actor gets updated.</summary>
 <returns>This callback does not handle return values.</returns>
 \** ************************************************************************ **/
 forward OnUpdate();
+
+/** ************************************************************************ **\
+<summary>This callback is called when the keyboard state changes.</summary>
+<param name="newKeys">
+    An array of all the keys pressed after the change of state.
+</param>
+<param name="oldKeys">
+    An array of all the keys pressed before the change of state.
+</param>
+<returns>This callback does not handle return values.</returns>
+\** ************************************************************************ **/
+forward OnKeyStateChanged(newKeys[], oldKeys[]);
+
+/** ************************************************************************ **\
+<summary>This callback is called when the user clicks somewhere.</summary>
+<param name="button">The pressed button.</param>
+<param name="x">The x-coordinate of the clicked position.</param>
+<param name="y">The y-coordinate of the clicked position.</param>
+<returns>This callback does not handle return values.</returns>
+\** ************************************************************************ **/
+forward OnMouseClick(button, Float:x, Float:y);
+
+/** ************************************************************************ **\
+<summary>This callback is called when the user clicks this agent.</summary>
+<param name="button">The pressed button.</param>
+<param name="x">The x-coordinate of the clicked position.</param>
+<param name="y">The y-coordinate of the clicked position.</param>
+<returns>This callback does not handle return values.</returns>
+\** ************************************************************************ **/
+forward OnClicked(button, Float:x, Float:y);
+
+/** ************************************************************************ **\
+<summary>This callback is called a message was sent to this agent.</summary>
+<param name="message">The message.</param>
+<param name="contents">The message contents.</param>
+<returns>This callback does not handle return values.</returns>
+\** ************************************************************************ **/
+forward OnIncomingMessage(message, contents);

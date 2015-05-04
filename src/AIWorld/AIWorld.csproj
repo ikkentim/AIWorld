@@ -61,7 +61,10 @@
     <Compile Include="Core\BoundlessQuadTree.cs" />
     <Compile Include="Core\Edge.cs" />
     <Compile Include="Entities\Agent.cs" />
+    <Compile Include="Goal.cs" />
     <Compile Include="Helpers\LinqExtension.cs" />
+    <Compile Include="IGoal.cs" />
+    <Compile Include="IMessageHandler.cs" />
     <Compile Include="KeyStateEventArgs.cs" />
     <Compile Include="MouseClickEventArgs.cs" />
     <Compile Include="Steering\ArriveSteeringBehavior.cs" />

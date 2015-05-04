@@ -29,7 +29,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace AIWorld.Entities
 {
-    public class Agent : Entity, IMovingEntity, IScripted
+    public class Agent : Entity, IMovingEntity, IScripted, IMessageHandler
     {
         private readonly BasicEffect _basicEffect;
         private readonly ICameraService _cameraService;
@@ -38,8 +38,9 @@ namespace AIWorld.Entities
         private readonly AMXPublic _onMouseClick;
         private readonly AMXPublic _onClicked;
         private readonly AMXPublic _onKeyStateChanged;
+        private readonly AMXPublic _onIncomingMessage;
         private readonly Stack<Node> _path = new Stack<Node>();
-
+        private readonly Stack<IGoal> _goals  = new Stack<IGoal>();
         private readonly Dictionary<string, WeightedSteeringBehavior> _steeringBehaviors =
             new Dictionary<string, WeightedSteeringBehavior>();
 
@@ -69,10 +70,10 @@ namespace AIWorld.Entities
             _onClicked = Script.FindPublic("OnClicked");
             _onMouseClick = Script.FindPublic("OnMouseClick");
             _onKeyStateChanged = Script.FindPublic("OnKeyStateChanged");
-
+            _onIncomingMessage = Script.FindPublic("OnIncomingMessage");
         }
 
-        public void Initialize()
+        public void Start()
         {
             Script.ExecuteMain();
         }
@@ -214,6 +215,8 @@ namespace AIWorld.Entities
             return _path.Count > l;
         }
 
+        //TODO: Add path smoothening function
+
         [ScriptingFunction]
         public void SetModel(string modelname)
         {
@@ -258,12 +261,12 @@ namespace AIWorld.Entities
 
         public bool IsInRangeOfPoint(Vector3 point, float range)
         {
-            return (point - Position).Length() < range;
+            return Vector3.Distance(point, Position) < range;
         }
 
         public bool IsInTargetRangeOfPoint(Vector3 point)
         {
-            return (point-Position).LengthSquared() < _targetRangeSquared;
+            return Vector3.DistanceSquared(point, Position) < _targetRangeSquared;
         }
 
         [ScriptingFunction]
@@ -276,6 +279,45 @@ namespace AIWorld.Entities
         public bool IsInTargetRangeOfPoint(float x, float y)
         {
             return IsInTargetRangeOfPoint(new Vector3(x, 0, y));
+        }
+
+        [ScriptingFunction]
+        public float GetDistanceToPoint(float x, float y)
+        {
+            return Vector3.Distance(Position, new Vector3(x, 0, y));
+        }
+
+        [ScriptingFunction]
+        public void AddGoal(AMXArgumentList arguments)
+        {
+            if (arguments.Length < 1) return;
+
+            var scriptname = arguments[0].AsString();
+
+            var goal = new Goal(this, scriptname);
+            _goals.Push(goal);
+            goal.Terminated += goal_Terminated;
+           
+            if (arguments.Length > 2)
+                DefaultFunctions.SetVariables(goal, arguments, 1);
+
+            goal.Activate();
+        }
+        private int GetGoalCount(IGoal goal, bool includingSubgoals)
+        {
+            return includingSubgoals ? goal.Sum(g => GetGoalCount(g, includingSubgoals)) : 1;
+        }
+
+        [ScriptingFunction]
+        public int GetGoalCount(bool includingSubgoals)
+        {
+            return _goals.Sum(g => GetGoalCount(g, includingSubgoals));
+        }
+
+        void goal_Terminated(object sender, EventArgs e)
+        {
+            if (_goals.Count == 0)
+            _goals.Pop();
         }
 
         private Vector3 CalculateSteeringForce()
@@ -317,6 +359,11 @@ namespace AIWorld.Entities
             if (_onUpdate != null)
             {
                 _onUpdate.Execute();
+            }
+
+            if (_goals.Count > 0)
+            {
+                _goals.Peek().Process();
             }
 
             UpdatePosition(gameTime);
@@ -398,6 +445,25 @@ namespace AIWorld.Entities
 
         [ScriptingFunction]
         public override float Size { get; set; }
+
+        #endregion
+
+        #region Implementation of IMessageHandler
+
+        public void HandleMessage(int message, int contents)
+        {
+            if (_onIncomingMessage != null)
+            {
+                Script.Push(contents);
+                Script.Push(message);
+                _onIncomingMessage.Execute();
+            }
+
+            if (_goals.Count > 0)
+            {
+                _goals.Peek().HandleMessage(message, contents);
+            }
+        }
 
         #endregion
     }

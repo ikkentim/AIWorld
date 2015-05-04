@@ -56,6 +56,10 @@ native GetGraphCount();
 
 /** ************************************************************************ **\
 <summary>Gets the name of the graph at the specified index.</summary>
+<param name="name">
+    An array variable in which to store the name of the graph.
+</param>
+<param name="len">The length of the name array.</param>
 <returns>
     True if successful; False otherwise (e.g. index out of bounds).
 </returns>
@@ -89,3 +93,28 @@ native SetTarget(Float:x, Float:y);
 <returns>This function does not return a specific value.</returns>
 \** ************************************************************************ **/
 native SetTargetEntity(id);
+
+/** ************************************************************************ **\
+<summary>
+    Sents the specified message to the specified agent and it's goals.
+</summary>
+<param name="receiverid">
+    The id of the agent which should receive this message.
+</param>
+<param name="message">The message to sent.</param>
+<param name="contents">The contents of the message to sent.</param>
+<returns>
+    True if the message was successfully received; False otherwise.
+</returns>
+\** ************************************************************************ **/
+native SendMessage(receiverid, message, contents=0);
+
+/** ************************************************************************ **\
+<summary>
+    Sents the specified message to the every agent and their goals.
+</summary>
+<param name="message">The message to sent.</param>
+<param name="contents">The contents of the message to sent.</param>
+<returns>The number of recipients.</returns>
+\** ************************************************************************ **/
+native SendMessageToAll(message, contents=0);

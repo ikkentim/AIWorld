@@ -45,6 +45,55 @@ namespace AIWorld.Scripting
             }
         }
 
+        public static void SetVariables(IScripted scripted, AMXArgumentList arguments, int formatIndex = 0)
+        {
+            if (scripted == null) throw new ArgumentNullException("scripted");
+            var format = arguments[formatIndex].AsString();
+            var i = formatIndex + 1;
+
+            // Format eg: 'xpos:f,ypos,f;count;d'
+
+            var formatSeperated = format.Split(',', '.', ' ', ';', ':', '-');
+            var formatTypes = "difcb".ToCharArray();
+
+            for (var j = 0; j < formatSeperated.Length; j++)
+            {
+                var name = formatSeperated[j];
+                var type = formatSeperated.Length > j + 1
+                    ? (
+                        formatSeperated[j + 1].Trim().Length == 1
+                            ? (
+                                formatTypes.Contains(formatSeperated[j + 1].Trim().First())
+                                    ? formatSeperated[++j].Trim().First()
+                                    : 'd' // Default if unknown type.
+                                )
+                            : 'd' // Default if type has no length.
+                        )
+                    : 'd'; // Default if last in format.
+
+                switch (type)
+                {
+                    case 'd':
+                    case 'i':
+                    case 'c':
+                    case 'b':
+                        var iValue = arguments[i++].AsCellPtr().Get().AsInt32();
+
+                        CellPtr iCell;
+                        if (scripted.Script.PublicVars.TryGetValue(name, out iCell))
+                            iCell.Set(iValue);
+                        break;
+                    case 'f':
+                        var fValue = arguments[i++].AsCellPtr().Get().AsFloat();
+                        
+                        CellPtr fCell;
+                        if (scripted.Script.PublicVars.TryGetValue(name, out fCell))
+                            fCell.Set(Cell.FromFloat(fValue));
+                        break;
+                }
+            }
+        }
+
         public static string FormatString(AMXArgumentList arguments, int formatIndex = 0)
         {
             var format = arguments[formatIndex].AsString();

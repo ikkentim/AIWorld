@@ -7,6 +7,10 @@ new isShiftDown = false;
 \**--------------------------------------------------------------------------**/
 main()
 {
+    logprintf(COLOR_WHITE, "Testing123 123 test test test. Testing123 123 test test test. Testing123 123 test test test.Testing123 123 test test test.");
+
+    chatprintf(COLOR_WHITE, "Some Chat Message Here.");
+
     SetBackgroundColor(0xff555555);
     CreatePlanes();
     CreateObjects();
@@ -15,7 +19,6 @@ main()
     CreateAgents();
 }
 
-forward OnKeyStateChanged(newKeys[], oldKeys[]);
 public OnKeyStateChanged(newKeys[], oldKeys[])
 {
     isShiftDown = IsKeyDown(newKeys, KEY_LEFTSHIFT);
@@ -30,7 +33,6 @@ public OnKeyStateChanged(newKeys[], oldKeys[])
         SetDrawGraphs(IsKeyDown(newKeys, KEY_F9));
 }
 
-forward OnMouseClick(button, Float:x, Float:y);
 public OnMouseClick(button, Float:x, Float:y)
 {
     if(button == 1 && isShiftDown)
@@ -115,5 +117,5 @@ CreateRoads()
 CreateAgents()
 {
     //AddAgent("car", frandom(-5,5), frandom(-5,5));
-    SetTargetEntity(AddAgent("car",0,0));
+    SetTargetEntity(AddAgent("car",0,0, "test:f", 123.1237));
 }

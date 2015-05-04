@@ -22,3 +22,11 @@ native Float:frand();
 \**--------------------------------------------------------------------------**/
 stock Float:frandom(Float:min, Float:max)
     return frand() * (max-min) + min;
+
+    /**--------------------------------------------------------------------------**\
+    <summary>Gets the absolute value of the specified value.</summary>
+    <param name="value">The value.</param>
+    <returns>The absolute value.</returns>
+    \**--------------------------------------------------------------------------**/
+stock Float:fabs(Float:value)
+    return value < 0 ? -value : value;

@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using AIWorld.Entities;
@@ -79,7 +80,7 @@ namespace AIWorld
             // Register various services.
             Services.AddService(typeof (IConsoleService), _consoleService = new ConsoleService(this));
             Services.AddService(typeof (ICameraService), _cameraService = new CameraService(this));
-            Services.AddService(typeof (IGameWorldService), _gameWorldService = new GameWorldService(this));
+            Services.AddService(typeof (IGameWorldService), _gameWorldService = new GameWorldService(this, _cameraService));
 
             Components.Add(_consoleService);
             Components.Add(_cameraService);
@@ -323,12 +324,23 @@ namespace AIWorld
         }
 
         [ScriptingFunction]
-        public int AddAgent(string scriptname, float x, float y)
+        public int AddAgent(AMXArgumentList arguments)
         {
+            if (arguments.Length < 3) return -1;
+
+            var scriptname = arguments[0].AsString();
+            var x = arguments[1].AsFloat();
+            var y = arguments[2].AsFloat();
+
             // Create the entity and return the id.
             Agent agent = new Agent(this, scriptname, new Vector3(x, 0, y));
+
             _gameWorldService.Add(agent);
-            agent.Initialize();
+
+            if (arguments.Length > 4)
+                DefaultFunctions.SetVariables(agent, arguments, 3);
+
+            agent.Start();
 
             return agent.Id;
         }

@@ -43,10 +43,14 @@ native AddRoad(const key[], Float:pointsxy[], count = sizeof pointsxy);
 </param>
 <param name="x">The x-coordinate at which to spawn the agent.</param>
 <param name="y">The y-coordinate at which to spawn the agent.</param>
+<param name="y">The y-coordinate at which to spawn the agent.</param>
+<param name="format">
+    The parameter names and types to be set after creation.
+</param>
 <returns>The id of the added agent.</returns>
 <remarks>This function can only be used within the main script.</remarks>
 \** ************************************************************************ **/
-native AddAgent(const scriptname[], Float:x, Float:y);
+native AddAgent(const scriptname[], Float:x, Float:y, const format[]='''', {Float,_}:...);
 
 /** ************************************************************************ **\
 <summary>Adds a textured plane to the game world.</summary>
@@ -67,3 +71,24 @@ native AddQuadPlane(Float:x, Float:y, Float:z, Float:size, rotation,
 <remarks>This function can only be used within the main script.</remarks>
 \** ************************************************************************ **/
 native SetBackgroundColor(color);
+
+/** ************************************************************************ **\
+<summary>This callback is called when the keyboard state changes.</summary>
+<param name="newKeys">
+    An array of all the keys pressed after the change of state.
+</param>
+<param name="oldKeys">
+    An array of all the keys pressed before the change of state.
+</param>
+<returns>This callback does not handle return values.</returns>
+\** ************************************************************************ **/
+forward OnKeyStateChanged(newKeys[], oldKeys[]);
+
+/** ************************************************************************ **\
+<summary>This callback is called when the user clicks somewhere.</summary>
+<param name="button">The pressed button.</param>
+<param name="x">The x-coordinate of the clicked position.</param>
+<param name="y">The y-coordinate of the clicked position.</param>
+<returns>This callback does not handle return values.</returns>
+\** ************************************************************************ **/
+forward OnMouseClick(button, Float:x, Float:y);

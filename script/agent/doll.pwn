@@ -6,6 +6,9 @@
 \**--------------------------------------------------------------------------**/
 main()
 {
+    // Send a welcome message
+    chatprintf(COLOR_WHITE, "DOLL: Hi! I'm new here.");
+
     // Set agent properties
     SetModel("models/doll");
     SetSize(0.1);

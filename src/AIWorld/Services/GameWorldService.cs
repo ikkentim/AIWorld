@@ -34,10 +34,12 @@ namespace AIWorld.Services
         private readonly Dictionary<string, Graph> _graphsByName = new Dictionary<string, Graph>();
         private int _agentId;
 
-        public GameWorldService(Game game) : base(game)
+        public GameWorldService(Game game, ICameraService cameraService) : base(game)
         {
+            if (cameraService == null) throw new ArgumentNullException("cameraService");
+
+            _cameraService = cameraService;
             _basicEffect = new BasicEffect(GraphicsDevice);
-            _cameraService = game.Services.GetService<ICameraService>();
         }
 
         [ScriptingFunction]
@@ -88,6 +90,31 @@ namespace AIWorld.Services
         {
             var entity = _entities.FirstOrDefault(a => a.Id == id);
             _cameraService.SetTarget(entity);
+        }
+
+        [ScriptingFunction]
+        public bool SendMessage(int id, int message, int contents)
+        {
+            var entity = _entities.FirstOrDefault(a => a.Id == id);
+            var messageHandler = entity as IMessageHandler;
+
+            if (messageHandler == null) return false;
+
+            messageHandler.HandleMessage(message, contents);
+            return true;
+        }
+
+        [ScriptingFunction]
+        public int SendMessageToAll(int message, int contents)
+        {
+            var messageHandlers = _entities.OfType<IMessageHandler>();
+
+            var enumerable = messageHandlers as IMessageHandler[] ?? messageHandlers.ToArray();
+
+            foreach (var messageHandler in enumerable)
+                messageHandler.HandleMessage(message, contents);
+
+            return enumerable.Count();
         }
 
         #region Overrides of GameComponent
