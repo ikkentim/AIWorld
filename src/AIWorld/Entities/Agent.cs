@@ -286,22 +286,8 @@ namespace AIWorld.Entities
             }
         }
 
-        private bool _isPitchBoundToSpeed = false;
-        private float _pitchSpeedMultiplier = 1;
-
         [ScriptingFunction]
-        public void BindPitchToSpeed(float multiplier)
-        {
-            if (multiplier < 0)
-            {
-                _isPitchBoundToSpeed = false;
-                return;
-            }
-            _isPitchBoundToSpeed = true;
-            _pitchSpeedMultiplier = multiplier;
-        }
-        [ScriptingFunction]
-        public bool SetSoundEffect(string sound, bool isLooped, float volume, float pitch, float pan)
+        public bool SetSoundEffect(string sound, bool isLooped, float volume)
         {
             try
             {
@@ -317,8 +303,6 @@ namespace AIWorld.Entities
                 _soundEffectInstance = _soundEffect.CreateInstance();
                 _soundEffectInstance.IsLooped = isLooped;
                 _soundEffectInstance.Volume = volume;
-                _soundEffectInstance.Pitch = pitch;
-                _soundEffectInstance.Pan = pan;
                 _soundEffectInstance.Apply3D(_cameraService.AudioListener, _audioEmitter);
                 _soundEffectInstance.Play();
                 return true;
@@ -461,11 +445,6 @@ namespace AIWorld.Entities
 
             if (_audioEmitter != null && _soundEffectInstance != null)
             {
-                if (_isPitchBoundToSpeed)
-                    _soundEffectInstance.Pitch = MathHelper.Clamp(Velocity.Length()*_pitchSpeedMultiplier, 0, 1);
-                else if (_soundEffectInstance.Pitch != 0)
-                    _soundEffectInstance.Pitch = 0;
-
                 _audioEmitter.Position = Position;
                 _audioEmitter.Forward = Heading;
                 _audioEmitter.Velocity = Velocity;

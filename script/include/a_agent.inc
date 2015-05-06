@@ -301,16 +301,13 @@ native GetGoalCount(includingSubgoals=1);
 <param name="sound">Path to the sound effect.</param>
 <param name="isLooped">Whether to loop the sound effect.</param>
 <param name="volume">The volume of the sound effect.</param>
-<param name="pitch">The pitch of the sound effect.</param>
-<param name="pan">The pan of the sound effect.</param>
 <returns>
     True if sound effect is successfully added; False otherwise (i.e. the
     specified sound does not exist).
 </returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native SetSoundEffect(const sound[], isLooped=false, Float:volume=1.0,
-    Float:pitch=0.0, Float:pan=0.0);
+native SetSoundEffect(const sound[], isLooped=false, Float:volume=1.0);
 
 /** ************************************************************************ **\
 <summary>Removes the set sound effect of this agent.</summary>
