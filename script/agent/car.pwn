@@ -18,7 +18,10 @@ main()
     SetMass(0.35);
     SetTargetRange(0.75);
 
+    new res = SetSoundEffect("sounds/engine", true, 1);
+    logprintf(COLOR_WHITE, "Car plays sound? %d", res);
     AddGoal("car/think");
+    BindPitchToSpeed(0.1);
 }
 
 // Currently no update logic.

@@ -2,6 +2,9 @@
 
 new isShiftDown = false;
 
+native PlayAmbience(const sound[], isLooped=false, Float:volume=1.0,
+    Float:pitch=0.0, Float:pan=0.0);
+
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of the simulation.</summary>
 \**--------------------------------------------------------------------------**/
@@ -11,6 +14,7 @@ main()
 
     chatprintf(COLOR_WHITE, "Some Chat Message Here.");
 
+    PlayAmbience("sounds/ambient", true, 0.015);
     SetBackgroundColor(0xff555555);
     CreatePlanes();
     CreateObjects();

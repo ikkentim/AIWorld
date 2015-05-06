@@ -13,11 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Entities
 {
-    public interface IEntity : IGameComponent
+    public interface IEntity : IGameComponent, IDisposable
     {
         Vector3 Position { get; }
         float Size { get; }

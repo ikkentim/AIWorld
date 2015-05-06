@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using AIWorld.Core;
 using AIWorld.Entities;
 using AIWorld.Scripting;
@@ -20,7 +21,7 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
 {
-    public interface IGameWorldService : IGameComponent, IScriptingNatives
+    public interface IGameWorldService : IGameComponent, IScriptingNatives, IDisposable
     {
         QuadTree Entities { get; }
         Graph this[string key] { get; }

@@ -189,6 +189,20 @@ namespace AIWorld
             }
         }
 
+        public virtual void Clear()
+        {
+            for (var i = 0; i < _count; i++)
+                _entities[i] = null;
+
+            if (Parts == null) return;
+            foreach (var p in Parts)
+            {
+                p.Clear();
+            }
+
+            _parts = null;
+        }
+
         #region Overrides of Object
 
         /// <summary>

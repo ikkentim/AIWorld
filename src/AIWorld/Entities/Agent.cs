@@ -24,6 +24,7 @@ using AIWorld.Services;
 using AIWorld.Steering;
 using AMXWrapper;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -33,6 +34,7 @@ namespace AIWorld.Entities
     {
         private readonly BasicEffect _basicEffect;
         private readonly ICameraService _cameraService;
+        private readonly IConsoleService _consoleService;
         private readonly IGameWorldService _gameWorldService;
         private readonly AMXPublic _onUpdate;
         private readonly AMXPublic _onMouseClick;
@@ -48,7 +50,9 @@ namespace AIWorld.Entities
         private float _targetRange;
         private float _targetRangeSquared;
         private Matrix[] _transforms;
-
+        private SoundEffect _soundEffect;
+        private SoundEffectInstance _soundEffectInstance;
+        private AudioEmitter _audioEmitter;
         public Agent(Simulation game, string scriptname, Vector3 position)
             : base(game)
         {
@@ -62,9 +66,10 @@ namespace AIWorld.Entities
 
             _cameraService = game.Services.GetService<ICameraService>();
             _gameWorldService = game.Services.GetService<IGameWorldService>();
+            _consoleService = game.Services.GetService<IConsoleService>();
 
             Script = new ScriptBox("agent", scriptname);
-            Script.Register(this, _gameWorldService, game.Services.GetService<IConsoleService>());
+            Script.Register(this, _gameWorldService, _consoleService);
 
             _onUpdate = Script.FindPublic("OnUpdate");
             _onClicked = Script.FindPublic("OnClicked");
@@ -73,6 +78,34 @@ namespace AIWorld.Entities
             _onIncomingMessage = Script.FindPublic("OnIncomingMessage");
         }
 
+        #region Overrides of GameComponent
+
+        /// <summary>
+        /// Shuts down the component.
+        /// </summary>
+        protected override void Dispose(bool disposing)
+        {
+            Debug.WriteLine("Dispose Agent");
+
+            if (_soundEffectInstance != null)
+                _soundEffectInstance.Stop(true);
+
+            if (Script != null)
+                Script.Dispose();
+            Script = null;
+
+            foreach (var g in _goals.OfType<IDisposable>())
+            {
+                g.Dispose();
+            }
+            if (_soundEffectInstance != null)
+                _soundEffectInstance.Dispose();
+
+            base.Dispose(disposing);
+        }
+
+        #endregion
+
         public void Start()
         {
             Script.ExecuteMain();
@@ -80,7 +113,7 @@ namespace AIWorld.Entities
 
         private void game_MouseClick(object sender, MouseClickEventArgs e)
         {
-            if (_onMouseClick == null) return;
+            if (_onMouseClick == null || Script == null) return;
 
             // Push the arguments and call the callback.
             Script.Push(e.Position.Z);
@@ -92,7 +125,7 @@ namespace AIWorld.Entities
 
         private void game_KeyStateChanged(object sender, KeyStateEventArgs e)
         {
-            if (_onKeyStateChanged == null) return;
+            if (_onKeyStateChanged == null || Script == null) return;
 
             // Allocate an array for new keys and old keys in the abstract machine.
             var newKeys = Script.Allot(e.NewKeys.Length + 1);
@@ -253,6 +286,64 @@ namespace AIWorld.Entities
             }
         }
 
+        private bool _isPitchBoundToSpeed = false;
+        private float _pitchSpeedMultiplier = 1;
+
+        [ScriptingFunction]
+        public void BindPitchToSpeed(float multiplier)
+        {
+            if (multiplier < 0)
+            {
+                _isPitchBoundToSpeed = false;
+                return;
+            }
+            _isPitchBoundToSpeed = true;
+            _pitchSpeedMultiplier = multiplier;
+        }
+        [ScriptingFunction]
+        public bool SetSoundEffect(string sound, bool isLooped, float volume, float pitch, float pan)
+        {
+            try
+            {
+                _audioEmitter = new AudioEmitter
+                {
+                    Position = Position,
+                    Forward = Heading,
+                    Up = Vector3.Up,
+                    Velocity = Velocity
+                };
+
+                _soundEffect = Game.Content.Load<SoundEffect>(sound);
+                _soundEffectInstance = _soundEffect.CreateInstance();
+                _soundEffectInstance.IsLooped = isLooped;
+                _soundEffectInstance.Volume = volume;
+                _soundEffectInstance.Pitch = pitch;
+                _soundEffectInstance.Pan = pan;
+                _soundEffectInstance.Apply3D(_cameraService.AudioListener, _audioEmitter);
+                _soundEffectInstance.Play();
+                return true;
+            }
+            catch (Exception e)
+            {
+                _consoleService.WriteLine(Color.Red, e);
+                return false;
+            }
+        }
+
+        [ScriptingFunction]
+        public void RemoveSoundEffect()
+        {
+            if (_soundEffectInstance != null)
+                _soundEffectInstance.Dispose();
+            _soundEffectInstance = null;
+
+            if(_soundEffect != null)
+                _soundEffect.Dispose();
+            _soundEffect = null;
+
+            _audioEmitter = null;
+        }
+
         [ScriptingFunction]
         public bool RemoveSteeringBehavior(string key)
         {
@@ -367,6 +458,20 @@ namespace AIWorld.Entities
             }
 
             UpdatePosition(gameTime);
+
+            if (_audioEmitter != null && _soundEffectInstance != null)
+            {
+                if (_isPitchBoundToSpeed)
+                    _soundEffectInstance.Pitch = MathHelper.Clamp(Velocity.Length()*_pitchSpeedMultiplier, 0, 1);
+                else if (_soundEffectInstance.Pitch != 0)
+                    _soundEffectInstance.Pitch = 0;
+
+                _audioEmitter.Position = Position;
+                _audioEmitter.Forward = Heading;
+                _audioEmitter.Velocity = Velocity;
+         
+                _soundEffectInstance.Apply3D(_cameraService.AudioListener, _audioEmitter);
+            }
 
             base.Update(gameTime);
         }

@@ -42,6 +42,27 @@ namespace AIWorld.Services
             _basicEffect = new BasicEffect(GraphicsDevice);
         }
 
+        #region Overrides of GameComponent
+
+        /// <summary>
+        /// Shuts down the component.
+        /// </summary>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Debug.WriteLine("Dispose GameWorldService");
+                _basicEffect.Dispose();
+
+                _graphsByName.Clear();
+                _entities.Clear();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        #endregion
+
         [ScriptingFunction]
         public bool DrawGraphs { get; set; }
 

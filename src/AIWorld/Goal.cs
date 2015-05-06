@@ -22,7 +22,7 @@ using AMXWrapper;
 
 namespace AIWorld
 {
-    public class Goal : Stack<IGoal>, IGoal, IScripted
+    public class Goal : Stack<IGoal>, IGoal, IScripted, IDisposable
     {
         private readonly AMXPublic _onUpdate;
         private readonly AMXPublic _onEnter;
@@ -180,6 +180,20 @@ namespace AIWorld
                 Script.Push(message);
                 _onIncomingMessage.Execute();
             }
+        }
+
+        #endregion
+
+        #region Implementation of IDisposable
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            if(Script != null)
+                Script.Dispose();
+            Script = null;
         }
 
         #endregion

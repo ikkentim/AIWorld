@@ -222,6 +222,7 @@ namespace AMXWrapper
         /// <param name="disposing">Whether managed resources should be disposed.</param>
         protected override void Dispose(bool disposing)
         {
+            _natives.Clear();
             Marshal.Release(_code);
         }
 

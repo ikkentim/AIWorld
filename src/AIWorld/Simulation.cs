@@ -14,7 +14,9 @@
 // limitations under the License.
 
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -41,7 +43,6 @@ namespace AIWorld
         private const float MouseRotationModifier = 0.005f;
         private readonly GraphicsDeviceManager _graphics;
         private readonly string _scriptName;
-        private SoundEffect _ambientEffect;
         private Color _backgroundColor;
         private ICameraService _cameraService;
         private IConsoleService _consoleService;
@@ -53,7 +54,8 @@ namespace AIWorld
         private AMXPublic _onMouseClick;
         private float _scrollVelocity;
         private float _unprocessedScrollDelta;
-
+        private readonly List<SoundEffectInstance> _soundEffectInstances = new List<SoundEffectInstance>(); 
+        private readonly List<SoundEffect> _soundEffects = new List<SoundEffect>(); 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Simulation" /> class.
         /// </summary>
@@ -106,12 +108,35 @@ namespace AIWorld
 
         private void UnloadSimulation()
         {
+            Debug.WriteLine("UnloadSimulation");
+
+            if (Script != null)
+                Script.Dispose();
+            Script = null;
+
             // Unload all compolents and services.
+            foreach(var c in Components.OfType<IDisposable>())
+                c.Dispose();
             Components.Clear();
+
+            foreach (var instance in _soundEffectInstances)
+            {
+                instance.Stop();
+                instance.Dispose();
+            }
+
+            _soundEffects.Clear();
+            _soundEffectInstances.Clear();
+      
+            _gameWorldService = null;
+            _cameraService = null;
+            _consoleService = null;
 
             Services.RemoveService(typeof (IConsoleService));
             Services.RemoveService(typeof (ICameraService));
             Services.RemoveService(typeof (IGameWorldService));
+
+            GC.Collect();
         }
 
         /// <summary>
@@ -119,14 +144,6 @@ namespace AIWorld
         /// </summary>
         protected override void LoadContent()
         {
-            // Start the ambient sound.
-            // TODO: Let the script do this.
-            _ambientEffect = Content.Load<SoundEffect>(@"sounds/ambient");
-            var ambient = _ambientEffect.CreateInstance();
-            ambient.IsLooped = true;
-            ambient.Volume = 0.015f;
-            ambient.Play();
-
             LoadSimulation();
         }
 
@@ -179,7 +196,7 @@ namespace AIWorld
                     _lastMouseState.RightButton == ButtonState.Pressed)
                 {
                     // Add rotation delta based on mouse movement
-                    deltaCameraRotation += (mouseState.X - Window.ClientBounds.Width/2)*MouseRotationModifier;
+                    deltaCameraRotation += ((float)mouseState.X - Window.ClientBounds.Width/2)*MouseRotationModifier;
 
                     // Recenter mouse.
                     Mouse.SetPosition(
@@ -391,13 +408,28 @@ namespace AIWorld
                     (float) a/byte.MaxValue));
         }
 
+        [ScriptingFunction]
+        public void PlayAmbience(string sound, bool isLooped, float volume, float pitch, float pan)
+        {
+            var ambientEffect = Content.Load<SoundEffect>(sound);//@"sounds/ambient"0.015f
+            var ambient = ambientEffect.CreateInstance();
+            ambient.IsLooped = isLooped;
+            ambient.Volume = volume;
+            ambient.Pitch = pitch;
+            ambient.Pan = pan;
+            ambient.Play();
+
+            _soundEffects.Add(ambientEffect);
+            _soundEffectInstances.Add(ambient);
+        }
+
         /// <summary>
         ///     Raises the <see cref="E:MouseClick" /> event.
         /// </summary>
         /// <param name="e">The <see cref="MouseClickEventArgs" /> instance containing the event data.</param>
         protected virtual void OnMouseClick(MouseClickEventArgs e)
         {
-            if (_onMouseClick != null)
+            if (_onMouseClick != null && Script != null)
             {
                 // Push the arguments and call the callback.
                 Script.Push(e.Position.Z);
@@ -418,7 +450,7 @@ namespace AIWorld
         /// <param name="e">The <see cref="KeyStateEventArgs" /> instance containing the event data.</param>
         protected virtual void OnKeyStateChanged(KeyStateEventArgs e)
         {
-            if (_onKeyStateChanged != null)
+            if (_onKeyStateChanged != null && Script != null)
             {
                 // Allocate an array for new keys and old keys in the abstract machine.
                 var newKeys = Script.Allot(e.NewKeys.Length + 1);

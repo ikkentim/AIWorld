@@ -73,13 +73,20 @@ namespace AIWorld.Services
             Debug.Listeners.Add(_traceListener = new ConsoleTraceListener(this));
         }
 
-        ~ConsoleService()
+        #region Overrides of GameComponent
+
+        /// <summary>
+        /// Shuts down the component.
+        /// </summary>
+        protected override void Dispose(bool disposing)
         {
             Debug.Listeners.Remove(_traceListener);
-
+            Debug.WriteLine("Dispose ConsoleService");
             _backgroundTexture.Dispose();
             _spriteBatch.Dispose();
         }
+
+        #endregion
 
         #region WriteLine methods
 

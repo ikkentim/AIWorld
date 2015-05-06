@@ -297,6 +297,40 @@ native AddGoal(const scriptname[], const format[]='''', {Float,_}:...);
 native GetGoalCount(includingSubgoals=1);
 
 /** ************************************************************************ **\
+<summary>Sets the sound effect played at the position of this agent.</summary>
+<param name="sound">Path to the sound effect.</param>
+<param name="isLooped">Whether to loop the sound effect.</param>
+<param name="volume">The volume of the sound effect.</param>
+<param name="pitch">The pitch of the sound effect.</param>
+<param name="pan">The pan of the sound effect.</param>
+<returns>
+    True if sound effect is successfully added; False otherwise (i.e. the
+    specified sound does not exist).
+</returns>
+<remarks>This function can only be used within an agent script.</remarks>
+\** ************************************************************************ **/
+native SetSoundEffect(const sound[], isLooped=false, Float:volume=1.0,
+    Float:pitch=0.0, Float:pan=0.0);
+
+/** ************************************************************************ **\
+<summary>Removes the set sound effect of this agent.</summary>
+<returns>This function does not return a specific value.</returns>
+<remarks>This function can only be used within an agent script.</remarks>
+\** ************************************************************************ **/
+native RemoveSoundEffect();
+
+/** ************************************************************************ **\
+<summary>
+    Binds the pitch of the sound effect of this agent to the speed of this
+    agent.
+</summary>
+<param name="multiplier">The multiplier of the speed.</param>
+<returns>This function does not return a specific value.</returns>
+<remarks>This function can only be used within an agent script.</remarks>
+\** ************************************************************************ **/
+native BindPitchToSpeed(Float:multiplier);
+
+/** ************************************************************************ **\
 <summary>This callback is called every time this actor gets updated.</summary>
 <returns>This callback does not handle return values.</returns>
 \** ************************************************************************ **/

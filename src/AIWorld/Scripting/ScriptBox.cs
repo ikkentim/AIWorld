@@ -16,6 +16,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using AMXWrapper;
@@ -56,6 +57,20 @@ namespace AIWorld.Scripting
                 _publics[publicname] = new AMXPublic(this, i);
             }
         }
+
+        #region Overrides of AMX
+
+        /// <summary>
+        ///     Performs tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        /// <param name="disposing">Whether managed resources should be disposed.</param>
+        protected override void Dispose(bool disposing)
+        {
+            Debug.WriteLine("Disposing ScriptBox");
+            base.Dispose(disposing);
+        }
+
+        #endregion
 
         public IDictionary<string, AMXPublic> Publics
         {

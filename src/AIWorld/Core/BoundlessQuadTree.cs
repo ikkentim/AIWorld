@@ -58,6 +58,12 @@ namespace AIWorld
 
         #region Overrides of QuadTree
 
+        public override void Clear()
+        {
+            base.Clear();
+            _parts.Clear();
+        }
+
         protected override IEnumerable<QuadTree> Parts
         {
             get { return _parts; }

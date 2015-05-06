@@ -18,6 +18,7 @@ using System.Diagnostics;
 using AIWorld.Entities;
 using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 
 namespace AIWorld.Services
 {
@@ -35,11 +36,15 @@ namespace AIWorld.Services
         private Vector3 _velocity;
         private Vector3 _undirectedVelocity;
         private float _zoom = DefaultZoom;
+        private AudioListener _audioListener;
 
         public CameraService(Game game) : base(game)
         {
-            View = Matrix.CreateLookAt(Vector3.Up, Vector3.Zero, Vector3.Up);
+            View = Matrix.CreateLookAt(Vector3.Zero, Vector3.Right, Vector3.Up);
+
             Projection = Matrix.Identity;
+            _audioListener = new AudioListener {Up = Vector3.Up};
+
         }
 
         public Vector3 Position { get; set; }
@@ -47,6 +52,11 @@ namespace AIWorld.Services
         public float Zoom
         {
             get { return _zoom; }
+        }
+
+        public AudioListener AudioListener 
+        { 
+            get  { return _audioListener; } 
         }
 
         public float Rotation { get; private set; }
@@ -143,6 +153,10 @@ namespace AIWorld.Services
                                      _zoom/3 - MinZoom + CameraTargetOffset + CameraHeightOffset,
                                      (float) Math.Sin(Rotation))*_zoom;
 
+            // Also update listener data
+            _audioListener.Position = cameraPosition;
+            _audioListener.Forward = Vector3.Normalize(realCameraTarget - cameraPosition);
+      
             View = Matrix.CreateLookAt(cameraPosition, realCameraTarget, Vector3.Up);
         }
     }

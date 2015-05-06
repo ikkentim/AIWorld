@@ -19,7 +19,7 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
 {
-    public interface IConsoleService : IScriptingNatives, IGameComponent
+    public interface IConsoleService : IScriptingNatives, IGameComponent, IDisposable
     {
         void WriteLine(Color color, string message);
         void WriteLine(Color color, Exception exception);
