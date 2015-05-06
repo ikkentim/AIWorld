@@ -10,10 +10,13 @@
 <param name="scriptname">
     Name of the script within the 'goal' folder to run for the subgoal.
 </param>
+<param name="format">
+    The parameter names and types to be set after creation.
+</param>
 <returns>This function does not return a specific value.</returns>
 <remarks>This function can only be used within a goal script.</remarks>
 \** ************************************************************************ **/
-native AddSubgoal(const scriptname[]);
+native AddSubgoal(const scriptname[], const format[]='''', {Float,_}:...);
 
 /** ************************************************************************ **\
 <summary>Terminates this goal.</summary>

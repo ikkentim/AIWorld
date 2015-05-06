@@ -92,7 +92,7 @@ native PeekPathNode(&Float:x, &Float:y);
 /** ************************************************************************ **\
 <summary>
     Calculates the path from the start coordinates to the end coordinates using
-    the Dijkstra's algorithm.
+    the A* algorithm.
 </summary>
 <param name="name">The graph in which to calculate the path.</param>
 <param name="xstart">The x-coordinate to start from.</param>
@@ -106,6 +106,13 @@ native PeekPathNode(&Float:x, &Float:y);
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
 native PushPath(const name[], Float:xstart, Float:ystart, Float:xend, Float:yend);
+
+/** ************************************************************************ **\
+<summary>Gets the number of nodes in the path stack.</summary>
+<returns>The number of nodes in the path stack.</returns>
+<remarks>This function can only be used within an agent script.</remarks>
+\** ************************************************************************ **/
+native GetPathStackSize();
 
 /** ************************************************************************ **\
 <summary>Sets the model drawn at the position of this agent.</summary>
@@ -315,17 +322,6 @@ native SetSoundEffect(const sound[], isLooped=false, Float:volume=1.0);
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
 native RemoveSoundEffect();
-
-/** ************************************************************************ **\
-<summary>
-    Binds the pitch of the sound effect of this agent to the speed of this
-    agent.
-</summary>
-<param name="multiplier">The multiplier of the speed.</param>
-<returns>This function does not return a specific value.</returns>
-<remarks>This function can only be used within an agent script.</remarks>
-\** ************************************************************************ **/
-native BindPitchToSpeed(Float:multiplier);
 
 /** ************************************************************************ **\
 <summary>This callback is called every time this actor gets updated.</summary>

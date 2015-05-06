@@ -2,33 +2,29 @@
 
 new isCtrlDown = false;
 
-public test = -1;
-
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of this agent.</summary>
 \**--------------------------------------------------------------------------**/
 main()
-{
-    logprintf(COLOR_WHITE, "[car] Test is %f", test);
-    // Set agent properties
+{    // Set agent properties
     SetModel("models/car");
-    SetSize(0.3);
+    SetSoundEffect("sounds/engine", true, 0.15);
+    SetSize(0.30);
     SetMaxForce(15);
-    SetMaxSpeed(1.2);
-    SetMass(0.35);
-    SetTargetRange(0.75);
+    SetMaxSpeed(1.50);
+    SetMass(0.25);
+    SetTargetRange(0.95);
 
-    new res = SetSoundEffect("sounds/engine", true, 0.15);
-    logprintf(COLOR_WHITE, "Car plays sound? %d", res);
+    AddSteeringBehavior("obstacleavoidance", BEHAVIOR_OBSTACLE_AVOIDANCE, 0.9);
+
     AddGoal("car/think");
-    //BindPitchToSpeed(0);
 }
 
-// Currently no update logic.
-/*public OnUpdate()
+public OnUpdate()
 {
-    logprintf(COLOR_WHITE, "[car] Updated");
-}*/
+    //
+    // TODO: Check for direct threats. React to these. (e.g. enemy nearby)
+}
 
 public OnKeyStateChanged(newKeys[], oldKeys[])
 {
@@ -45,8 +41,7 @@ public OnMouseClick(button, Float:x, Float:y)
         logprintf(COLOR_WHITE, "[car] left clicked at %f %f", x, y);
         chatprintf(COLOR_WHITE, "CAR: OK! I'll go there.");
 
-        RemoveSteeringBehavior("target");
-        AddSteeringBehavior("target", BEHAVIOR_ARRIVE, 0.78, x, y);
+        AddGoal("common/seek", "x:f,y:f", x, y);
     }
 }
 

@@ -10,6 +10,7 @@ namespace AIWorld
         string CurrentName { get; }
         void Activate();
         void Process();
+        void Pause();
         void Terminate();
         void AddSubgoal(IGoal goal);
         event EventHandler Terminated;

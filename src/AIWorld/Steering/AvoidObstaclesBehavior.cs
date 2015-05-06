@@ -24,9 +24,10 @@ namespace AIWorld.Steering
 {
     public class AvoidObstaclesBehavior : ISteeringBehavior
     {
-        private const float MinimumDetectionBoxLength = 0.75f;
-        private const float AproxMaxObjectSize = 1.0f;
-        private const float BreakingWeight = 0.005f;
+        //private const float MinimumDetectionBoxLength = 0.75f;
+        private const float MinimumDetectionBoxLengthSizeMultiplier = 1.9f;
+        //private const float AproxMaxObjectSize = 1.0f;
+        private const float BreakingWeight = 0.005f * 0.001f;
         private readonly Agent _agent;
         private readonly IGameWorldService _gameWorldService;
 
@@ -40,7 +41,8 @@ namespace AIWorld.Steering
         {
             get
             {
-                return MinimumDetectionBoxLength + (_agent.Velocity.Length()/_agent.MaxSpeed)*MinimumDetectionBoxLength;
+                return _agent.Size*MinimumDetectionBoxLengthSizeMultiplier +
+                       (_agent.Velocity.Length()/_agent.MaxSpeed)*_agent.Size*MinimumDetectionBoxLengthSizeMultiplier;
             }
         }
 
@@ -51,7 +53,7 @@ namespace AIWorld.Steering
             var bLength = DetectionBoxLength;
 
             var entities =
-                _gameWorldService.Entities.Query(new AABB(_agent.Position, new Vector3(bLength + AproxMaxObjectSize)))
+                _gameWorldService.Entities.Query(new AABB(_agent.Position, new Vector3(bLength + Entity.MaxSize)))
                     .Where(e => e != _agent && (e.Position - _agent.Position).Length() < e.Size + bLength);
 
             IEntity closest = null;

@@ -163,6 +163,8 @@ namespace AIWorld.Entities
             return _onClicked.Execute() == 1;
         }
 
+        #region Agent API
+
         [ScriptingFunction]
         public override int Id { get; set; }
 
@@ -229,6 +231,12 @@ namespace AIWorld.Entities
             x = node.Position.X;
             y = node.Position.Z;
             return true;
+        }
+
+        [ScriptingFunction]
+        public int GetPathStackSize()
+        {
+            return _path.Count;
         }
 
         [ScriptingFunction]
@@ -369,6 +377,11 @@ namespace AIWorld.Entities
 
             var scriptname = arguments[0].AsString();
 
+            if (_goals.Count > 0)
+            {
+                _goals.Peek().Pause();
+            }
+
             var goal = new Goal(this, scriptname);
             _goals.Push(goal);
             goal.Terminated += goal_Terminated;
@@ -378,6 +391,7 @@ namespace AIWorld.Entities
 
             goal.Activate();
         }
+
         private int GetGoalCount(IGoal goal, bool includingSubgoals)
         {
             return includingSubgoals ? goal.Sum(g => GetGoalCount(g, includingSubgoals)) : 1;
@@ -389,10 +403,12 @@ namespace AIWorld.Entities
             return _goals.Sum(g => GetGoalCount(g, includingSubgoals));
         }
 
+        #endregion
+
         void goal_Terminated(object sender, EventArgs e)
         {
-            if (_goals.Count == 0)
-            _goals.Pop();
+            if (_goals.Count != 0)
+                _goals.Pop();
         }
 
         private Vector3 CalculateSteeringForce()
@@ -486,7 +502,7 @@ namespace AIWorld.Entities
 
                 _basicEffect.CurrentTechnique.Passes[0].Apply();
 
-                var height = new Vector3(0, 0.5f, 0);
+                var height = new Vector3(0, 0.1f, 0);
                 foreach (var node in _path)
                 {
                     if (node.Previous == null) continue;

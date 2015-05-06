@@ -388,7 +388,7 @@ namespace AIWorld.Services
                 _spriteBatch.Draw(_backgroundTexture, _scrollBarPosition, _scrollBarSize, Color.White);
 
                 var consoleSizeSoFar = (ConsoleMaxMessages - _consoleMessages.Count)*ConsoleDefaultLineHeight + _scrollPosition;
-                foreach (var msg in _consoleMessages)
+                foreach (var msg in _consoleMessages.ToArray())
                 {
                     var y = -_scrollableHeight + consoleSizeSoFar;
 

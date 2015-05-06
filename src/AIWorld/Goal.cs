@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using AIWorld.Entities;
 using AIWorld.Scripting;
 using AIWorld.Services;
@@ -97,6 +98,24 @@ namespace AIWorld
         }
 
         #region Implementation of IGoal
+
+        public void Pause()
+        {
+            if (_isActive)
+            {
+                _isActive = false;
+
+                if (_onExit != null)
+                    _onExit.Execute();
+            }
+            else
+            {
+                if (Count > 0)
+                {
+                    Peek().Pause();
+                }
+            }
+        }
 
         public void Process()
         {
@@ -194,6 +213,21 @@ namespace AIWorld
             if(Script != null)
                 Script.Dispose();
             Script = null;
+        }
+
+        #endregion
+
+        #region Overrides of Object
+
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>
+        /// A string that represents the current object.
+        /// </returns>
+        public override string ToString()
+        {
+            return base.ToString() + "{" + Name + "}";
         }
 
         #endregion

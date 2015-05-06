@@ -1,4 +1,5 @@
 #include <a_goal>
+#include <time>
 
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of the goal.</summary>
@@ -20,8 +21,27 @@ public OnUpdate()
     logprintf(COLOR_WHITE, "Think.OnUpdate");
 
     //TODO: Add some state checking...
-    chatprintf(COLOR_WHITE, "CAR: I think I should explore this area...");
-    AddSubgoal("car/explore");
+    //chatprintf(COLOR_WHITE, "CAR: I think I should explore this area...");
+    //AddSubgoal("car/explore");
+
+    // Calculate a target position
+    new Float:tx = frandom(-2,6);
+    new Float:ty = frandom(-2,6);
+    new Float:x, Float:y, Float:nodes[4];
+
+    // Get the current position
+    GetPosition(x,y);
+
+    // Get nodes closest to current position and target position
+    GetClosestNode("ground", x, y, nodes[0], nodes[1]);
+    GetClosestNode("ground", tx, ty, nodes[2], nodes[3]);
+
+    // Calcualte a path in the 'ground' graph
+    PushPath("ground", nodes[0], nodes[1], nodes[2], nodes[3]);
+
+    // Add path following to goals list
+    chatprintf(COLOR_WHITE, "I've found myself a new target.");
+    AddSubgoal("common/followpath", "weight", 0.7);
 }
 
 public OnExit()

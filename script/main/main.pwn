@@ -60,12 +60,22 @@ CreateObjects()
     AddGameObject("models/house02", 0.35, 3.9, 4.5, DEG2RAD(-90));
     AddGameObject("models/house02", 0.35, 3.9, 5.5, DEG2RAD(-90));*/
 
-    AddGameObject("models/house02", 0.5, 3.9, 2.5, DEG2RAD(-90));
-    AddGameObject("models/house02", 0.5, 3.9, 3.5, DEG2RAD(-90));
-    AddGameObject("models/house02", 0.5, 3.9, 4.5, DEG2RAD(-90));
-    AddGameObject("models/house02", 0.5, 3.9, 5.5, DEG2RAD(-90));
+    #define HOUSE_SIZE 0.5
 
-    AddGameObject("models/house02", 0.5, 10.0, 10.0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 2.5, DEG2RAD(-90));
+    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 3.8, DEG2RAD(-90));
+    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 4.5, DEG2RAD(-90));
+    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 6.5, DEG2RAD(-90));
+
+    AddGameObject("models/house02", HOUSE_SIZE, 10.0, 10.0, DEG2RAD(90));
+
+    AddGameObject("models/house02", HOUSE_SIZE, -1, 3.8, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, -1, 2.0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, -1, 0.0, DEG2RAD(90));
+
+    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 3.8, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 2.0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 0.0, DEG2RAD(90));
 }
 
 CreateGroundGraph()
