@@ -1,9 +1,7 @@
+#include <string>
 #include <a_main>
 
 new isShiftDown = false;
-
-native PlayAmbience(const sound[], isLooped=false, Float:volume=1.0,
-    Float:pitch=0.0, Float:pan=0.0);
 
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of the simulation.</summary>
@@ -52,30 +50,48 @@ CreatePlanes()
           AddQuadPlane(x*4, -0.01, y*4, 4, ROTATION_NONE, "textures/grass");
 }
 
+RandomTree(Float:x, Float:y)
+{
+    new mesh[10];
+    new meshidx = random(7);
+
+    switch(meshidx)
+    {
+        case 0: strcopy(mesh, "tree");
+        case 1: strcopy(mesh, "tree.001");
+        case 2: strcopy(mesh, "tree.003");
+        case 3: strcopy(mesh, "tree.008");
+        case 4: strcopy(mesh, "tree.004");
+        case 5: strcopy(mesh, "tree.006");
+        case 6: strcopy(mesh, "tree.007");
+    }
+
+    return AddGameObject("models/trees", 0.25, x, y, 0.1, 0.1, 0.1,
+    frandom(-PI/180*10, PI/180*10), frandom(-PI, PI),
+    frandom(-PI/180*10, PI/180*10), -meshidx * 5, 0, 0, mesh, false);
+}
+
 CreateObjects()
 {
-    // Add a few house models objects.
-    /*AddGameObject("models/house02", 0.35, 3.9, 2.5, DEG2RAD(-90));
-    AddGameObject("models/house02", 0.35, 3.9, 3.5, DEG2RAD(-90));
-    AddGameObject("models/house02", 0.35, 3.9, 4.5, DEG2RAD(-90));
-    AddGameObject("models/house02", 0.35, 3.9, 5.5, DEG2RAD(-90));*/
+    #define HOUSE_SIZE 0.45
 
-    #define HOUSE_SIZE 0.5
+    RandomTree(1,1);
 
-    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 2.5, DEG2RAD(-90));
-    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 3.8, DEG2RAD(-90));
-    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 4.5, DEG2RAD(-90));
-    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 6.5, DEG2RAD(-90));
+    #define DEFAULT_SCALE 1, 1, 1
+    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 2.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
+    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 3.8, DEFAULT_SCALE, 0, DEG2RAD(-90));
+    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 4.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
+    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 6.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
 
-    AddGameObject("models/house02", HOUSE_SIZE, 10.0, 10.0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, 10.0, 10.0, DEFAULT_SCALE, 0, DEG2RAD(90));
 
-    AddGameObject("models/house02", HOUSE_SIZE, -1, 3.8, DEG2RAD(90));
-    AddGameObject("models/house02", HOUSE_SIZE, -1, 2.0, DEG2RAD(90));
-    AddGameObject("models/house02", HOUSE_SIZE, -1, 0.0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, -1, 3.8, DEFAULT_SCALE, 0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, -1, 2.0, DEFAULT_SCALE, 0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, -1, 0.0, DEFAULT_SCALE, 0, DEG2RAD(90));
 
-    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 3.8, DEG2RAD(90));
-    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 2.0, DEG2RAD(90));
-    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 0.0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 3.8, DEFAULT_SCALE, 0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 2.0, DEFAULT_SCALE, 0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 0.0, DEFAULT_SCALE, 0, DEG2RAD(90));
 }
 
 CreateGroundGraph()

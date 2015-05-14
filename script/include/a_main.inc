@@ -16,12 +16,32 @@ The path to the model to draw at the objects position.
 <param name="size">The radius of the model in coordinate points.</param>
 <param name="x">The x-coordinate at which to draw the model.</param>
 <param name="y">The y-coordinate at which to draw the model.</param>
-<param name="angle">The angle at which to draw the model.</param>
+<param name="sx">The scale of the x-axis.</param>
+<param name="sy">The scale of the y-axis.</param>
+<param name="sz">The scale of the z-axis.</param>
+<param name="rx">The rotation on the x-axis.</param>
+<param name="ry">The rotation on the y-axis.</param>
+<param name="rz">The rotation on the z-axis.</param>
+<param name="tx">
+    The translation on the x-axis before scaling and rotating.
+</param>
+<param name="ty">
+    The translation on the y-axis before scaling and rotating.
+</param>
+<param name="tz">
+    The translation on the z-axis before scaling and rotating.
+</param>
+<param name="meshes">
+    The names of the visible meshes, seperated by a ','. If no meshes are
+    specified all meshes will be displayed.
+</param>
 <returns>The id of the added game object.</returns>
 <remarks>This function can only be used within the main script.</remarks>
 \** ************************************************************************ **/
 native AddGameObject(const modelname[], Float:size, Float:x, Float:y,
-    Float:angle=0.0);
+    Float:sx=1.0, Float:sy=1.0, Float:sz=1.0, Float:rx=0.0, Float:ry=0.0,
+    Float:rz=0.0, Float:tx=0.0, Float:ty=0.0, Float:tz=0.0, const meshes[]='''',
+    debug=false);
 
 /** ************************************************************************ **\
 <summary>Adds a road to the game world.</summary>
@@ -71,6 +91,32 @@ native AddQuadPlane(Float:x, Float:y, Float:z, Float:size, rotation,
 <remarks>This function can only be used within the main script.</remarks>
 \** ************************************************************************ **/
 native SetBackgroundColor(color);
+
+/** ************************************************************************ **\
+<summary>
+    Plays the specified ambience sound with te specified volume, pitch and pan.
+</summary>
+<param name="sound">The path to the sound file.</param>
+<param name="isLooped">
+    If true, the sound will start over once it has ended.
+</param>>
+<param name="volume">The volume of the ambience sound.</param>
+<param name="pitch">The pitch of the ambience sound.</param>
+<param name="pan">The pan of the ambience sound.</param>
+<returns>This function does not return a specific value.</returns>
+<remarks>This function can only be used within the main script.</remarks>
+\** ************************************************************************ **/
+native PlayAmbience(const sound[], isLooped=false, Float:volume=1.0,
+    Float:pitch=0.0, Float:pan=0.0);
+
+/** ************************************************************************ **\
+<summary>
+    Stops all ambience sounds.
+</summary>
+<returns>The number of stopped sounds.</returns>
+<remarks>This function can only be used within the main script.</remarks>
+\** ************************************************************************ **/
+native StopAmbience();
 
 /** ************************************************************************ **\
 <summary>This callback is called when the keyboard state changes.</summary>

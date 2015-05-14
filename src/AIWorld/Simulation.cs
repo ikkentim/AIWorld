@@ -296,24 +296,14 @@ namespace AIWorld
 
                     // Fire click events for every pressed button. If an entity is clicked and it handles the call,
                     // don't call the general OnMouseClick event.
-                    if (leftMouseButtonPressed)
-                    {
-                        var args = new MouseClickEventArgs(1, clickPostion);
-                        if (clickedEntity == null || clickedEntity.OnClicked(args) == false)
-                            OnMouseClick(args);
-                    }
-                    if (middleMouseButtonPressed)
-                    {
-                        var args = new MouseClickEventArgs(2, clickPostion);
-                        if (clickedEntity == null || clickedEntity.OnClicked(args) == false)
-                            OnMouseClick(args);
-                    }
-                    if (rightMouseButtonPressed)
-                    {
-                        var args = new MouseClickEventArgs(3, clickPostion);
-                        if (clickedEntity == null || clickedEntity.OnClicked(args) == false)
-                            OnMouseClick(args);
-                    }
+                    foreach (var args in Enumerable.Range(1, 3)
+                        .Where(
+                            n =>
+                                (n == 1 && leftMouseButtonPressed) || (n == 2 && middleMouseButtonPressed) ||
+                                (n == 3 && rightMouseButtonPressed))
+                        .Select(button => new MouseClickEventArgs(button, clickPostion))
+                        .Where(args => clickedEntity == null || clickedEntity.OnClicked(args) == false))
+                        OnMouseClick(args);
                 }
             }
 
@@ -363,10 +353,13 @@ namespace AIWorld
         }
 
         [ScriptingFunction]
-        public int AddGameObject(string name, float size, float x, float y, float angle)
+        public int AddGameObject(string name, float size, float x, float y, float sx, float sy, float sz,float rx, float ry, float rz, float tx, float ty, float tz,  string meshes, bool debug)
         {
             // Create the entity and return the id.
-            var obj = new WorldObject(this, name, size, new Vector3(x, 0, y), angle, false);
+            var obj = new WorldObject(this, name, size, new Vector3(x, 0, y), new Vector3(rx, ry, rz),
+                new Vector3(tx, ty, tz), new Vector3(sx, sy, sz),
+                meshes.Split(',').Select(v => v.Trim()).Where(v => v.Length > 0), debug);
+
             _gameWorldService.Add(obj);
 
             return obj.Id;
@@ -398,10 +391,10 @@ namespace AIWorld
         [ScriptingFunction]
         public void SetBackgroundColor(int colorCode)
         {
-            var a = (colorCode >> 8*3) & 0xFF;
-            var r = (colorCode >> 8*2) & 0xFF;
-            var g = (colorCode >> 8*1) & 0xFF;
-            var b = (colorCode >> 8*0) & 0xFF;
+            var a = (colorCode >> 8*0) & 0xFF;
+            var r = (colorCode >> 8*3) & 0xFF;
+            var g = (colorCode >> 8*2) & 0xFF;
+            var b = (colorCode >> 8*1) & 0xFF;
 
             _backgroundColor =
                 new Color(new Vector4((float) r/byte.MaxValue, (float) g/byte.MaxValue, (float) b/byte.MaxValue,
@@ -411,7 +404,13 @@ namespace AIWorld
         [ScriptingFunction]
         public void PlayAmbience(string sound, bool isLooped, float volume, float pitch, float pan)
         {
-            var ambientEffect = Content.Load<SoundEffect>(sound);//@"sounds/ambient"0.015f
+            var ambientEffect = _soundEffects.FirstOrDefault(e => e.Name == sound);
+            if (ambientEffect == null)
+            {
+                ambientEffect = Content.Load<SoundEffect>(sound);
+                _soundEffects.Add(ambientEffect);
+            }
+
             var ambient = ambientEffect.CreateInstance();
             ambient.IsLooped = isLooped;
             ambient.Volume = volume;
@@ -419,8 +418,22 @@ namespace AIWorld
             ambient.Pan = pan;
             ambient.Play();
 
-            _soundEffects.Add(ambientEffect);
             _soundEffectInstances.Add(ambient);
+        }
+
+        [ScriptingFunction]
+        public int StopAmbience()
+        {
+            foreach (var instance in _soundEffectInstances)
+            {
+                instance.Stop(true);
+                instance.Dispose();
+            }
+
+            var result = _soundEffectInstances.Count;
+            _soundEffectInstances.Clear();
+
+            return result;
         }
 
         /// <summary>

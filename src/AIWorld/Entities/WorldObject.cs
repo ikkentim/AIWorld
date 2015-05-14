@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using AIWorld.Services;
 using Microsoft.Xna.Framework;
@@ -22,21 +24,29 @@ namespace AIWorld.Entities
 {
     public class WorldObject : Entity
     {
-        private readonly float _angle;
         private readonly BasicEffect _basicEffect;
         private readonly ICameraService _cameraService;
         private readonly Model _model;
+        private readonly Vector3 _rotation;
+        private readonly Vector3 _translation;
+        private readonly Vector3 _scale;
         private readonly bool _showDebugLines;
-        private readonly Matrix[] _transforms;
-
-        public WorldObject(Game game, string model, float size, Vector3 position, float angle, bool showDebugLines)
+        private ModelMesh[] _meshes;
+        private Matrix[] _transforms;
+        
+        public WorldObject(Game game, string model, float size, Vector3 position, Vector3 rotation, Vector3 translation, Vector3 scale, IEnumerable<string> meshes, bool showDebugLines)
             : base(game)
         {
             Position = position;
             _model = game.Content.Load<Model>(model);
-            _angle = angle;
+            _rotation = rotation;
+            _translation = translation;
+            _scale = scale;
             _showDebugLines = showDebugLines;
             Size = size;
+            _meshes = meshes.Any()
+                ? _model.Meshes.Where(n => meshes.Contains(n.Name)).ToArray()
+                : _model.Meshes.ToArray();
 
             _transforms = new Matrix[_model.Bones.Count];
             _model.CopyAbsoluteBoneTransformsTo(_transforms);
@@ -57,13 +67,18 @@ namespace AIWorld.Entities
 
         public override void Draw(GameTime gameTime)
         {
-            foreach (var mesh in _model.Meshes)
+            foreach (var mesh in _meshes)
             {
                 foreach (var effect in mesh.Effects.Cast<BasicEffect>())
                 {
-                    effect.World = _transforms[mesh.ParentBone.Index]*
-                                   Matrix.CreateRotationY(_angle)*
-                                   Matrix.CreateTranslation(Position);
+                    effect.World =
+                        _transforms[mesh.ParentBone.Index]*
+                        (Matrix.CreateTranslation(_translation)*
+                        Matrix.CreateScale(_scale))*
+                        (Matrix.CreateRotationX(_rotation.X)*
+                        Matrix.CreateRotationY(_rotation.Y)*
+                        Matrix.CreateRotationZ(_rotation.Z))*
+                        Matrix.CreateTranslation(Position);
                     effect.View = _cameraService.View;
                     effect.Projection = _cameraService.Projection;
                     effect.EnableDefaultLighting();

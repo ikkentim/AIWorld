@@ -240,10 +240,10 @@ namespace AIWorld.Services
 
         private static Color UInt32ToColor(UInt32 colorCode)
         {
-            var a = (colorCode >> 8 * 3) & 0xFF;
-            var r = (colorCode >> 8 * 2) & 0xFF;
-            var g = (colorCode >> 8 * 1) & 0xFF;
-            var b = (colorCode >> 8 * 0) & 0xFF;
+            var a = (colorCode >> 8 * 0) & 0xFF;
+            var r = (colorCode >> 8 * 3) & 0xFF;
+            var g = (colorCode >> 8 * 2) & 0xFF;
+            var b = (colorCode >> 8 * 1) & 0xFF;
 
             return new Color(new Vector4((float) r/byte.MaxValue, (float) g/byte.MaxValue, (float) b/byte.MaxValue,
                 (float) a/byte.MaxValue));
