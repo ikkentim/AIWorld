@@ -24,6 +24,7 @@ namespace AIWorld.Entities
 {
     public class WorldObject : Entity
     {
+        public string Model { get; private set; }
         private readonly BasicEffect _basicEffect;
         private readonly ICameraService _cameraService;
         private readonly Model _model;
@@ -37,6 +38,7 @@ namespace AIWorld.Entities
         public WorldObject(Game game, string model, float size, Vector3 position, Vector3 rotation, Vector3 translation, Vector3 scale, IEnumerable<string> meshes, bool showDebugLines)
             : base(game)
         {
+            Model = model;
             Position = position;
             _model = game.Content.Load<Model>(model);
             _rotation = rotation;

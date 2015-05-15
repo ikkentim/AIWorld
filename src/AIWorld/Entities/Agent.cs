@@ -53,22 +53,23 @@ namespace AIWorld.Entities
         private SoundEffect _soundEffect;
         private SoundEffectInstance _soundEffectInstance;
         private AudioEmitter _audioEmitter;
-        public Agent(Simulation game, string scriptname, Vector3 position)
+        public Agent(Simulation game, string scriptName, Vector3 position)
             : base(game)
         {
-            if (scriptname == null) throw new ArgumentNullException("scriptname");
+            if (scriptName == null) throw new ArgumentNullException("scriptName");
 
             _basicEffect = new BasicEffect(GraphicsDevice);
 
             game.KeyStateChanged += game_KeyStateChanged;
             game.MouseClick += game_MouseClick;
+            ScriptName = scriptName;
             Position = position;
 
             _cameraService = game.Services.GetService<ICameraService>();
             _gameWorldService = game.Services.GetService<IGameWorldService>();
             _consoleService = game.Services.GetService<IConsoleService>();
 
-            Script = new ScriptBox("agent", scriptname);
+            Script = new ScriptBox("agent", scriptName);
             Script.Register(this, _gameWorldService, _consoleService);
 
             _onUpdate = Script.FindPublic("OnUpdate");
@@ -539,6 +540,8 @@ namespace AIWorld.Entities
         #endregion
 
         #region Overrides of Entity
+
+        public string ScriptName { get; private set; }
 
         [ScriptingFunction]
         public override Vector3 Position { get; set; }

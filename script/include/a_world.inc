@@ -95,6 +95,43 @@ native SetTarget(Float:x, Float:y);
 native SetTargetEntity(id);
 
 /** ************************************************************************ **\
+<summary>Gets the position of the entity with the specified id.</summary>
+<param name="x">
+    A float variable in which to store the x-coordinate in, passed by reference.
+</param>
+<param name="y">
+    A float variable in which to store the y-coordinate in, passed by reference.
+</param>
+<returns>This function does not return a specific value.</returns>
+\** ************************************************************************ **/
+native GetEntityPosition(id, &Float:x, &Float:y);
+
+/** ************************************************************************ **\
+<summary>
+    Finds the id of the nearest world object with the specified model name.
+</summary>
+<param name="x">The x-coordinate of where to look.</param>
+<param name="y">The y-coordinate of where to look.</param>
+<param name="model">
+    The name of the model for which to look. If none is specified, any model
+    passes.
+</param>
+<returns>The id of the found entity. -1 if none was found.</returns>
+\** ************************************************************************ **/
+native FindNearestWorldObject(Float:x, Float:y, const model[] = '''');
+
+/** ************************************************************************ **\
+<summary>
+    Finds the id of the nearest world object with the specified script name.
+</summary>
+<param name="x">The x-coordinate of where to look.</param>
+<param name="y">The y-coordinate of where to look.</param>
+<param name="scriptname">The name of the script for which to look.</param>
+<returns>The id of the found entity. -1 if none was found.</returns>
+\** ************************************************************************ **/
+native FindNearestAgent(Float:x, Float:y, const scriptname[]);
+
+/** ************************************************************************ **\
 <summary>
     Sents the specified message to the specified agent and it's goals.
 </summary>

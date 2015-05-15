@@ -20,14 +20,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-#if !DEBUG
-using System;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-#endif
-
 namespace AMXWrapper
 {
     internal static class UnmanagedLibrariesLoader

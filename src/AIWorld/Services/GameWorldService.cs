@@ -32,7 +32,7 @@ namespace AIWorld.Services
         private readonly ICameraService _cameraService;
         private readonly BoundlessQuadTree _entities = new BoundlessQuadTree();
         private readonly Dictionary<string, Graph> _graphsByName = new Dictionary<string, Graph>();
-        private int _agentId;
+        private int _entityId;
 
         public GameWorldService(Game game, ICameraService cameraService) : base(game)
         {
@@ -80,7 +80,7 @@ namespace AIWorld.Services
         {
             if (entity == null) throw new ArgumentNullException("entity");
 
-            entity.Id = _agentId++;
+            entity.Id = _entityId++;
             Game.Components.Add(entity);
             Entities.Add(entity);
         }
@@ -111,6 +111,45 @@ namespace AIWorld.Services
         {
             var entity = _entities.FirstOrDefault(a => a.Id == id);
             _cameraService.SetTarget(entity);
+        }
+
+        [ScriptingFunction]
+        public bool GetEntityPosition(int id, out float x, out float y)
+        {
+            var entity = _entities.FirstOrDefault(a => a.Id == id);
+
+            if (entity == null)
+            {
+                x = 0;
+                y = 0;
+                return false;
+            }
+
+            x = entity.Position.X;
+            y = entity.Position.Z;
+            return true;
+        }
+
+        [ScriptingFunction]
+        public int FindNearestWorldObject(float x, float y, string model)
+        {
+            var result = _entities.OfType<WorldObject>()
+                .Where(w => model.Length == 0 || w.Model == model)
+                .OrderBy(w => Vector3.DistanceSquared(w.Position, new Vector3(x, 0, y)))
+                .FirstOrDefault();
+
+            return result == null ? -1 : result.Id;
+        }
+
+        [ScriptingFunction]
+        public int FindNearestAgent(float x, float y, string scriptName)
+        {
+            var result = _entities.OfType<Agent>()
+                .Where(a => a.ScriptName == scriptName)
+                .OrderBy(a => Vector3.DistanceSquared(a.Position, new Vector3(x, 0, y)))
+                .FirstOrDefault();
+
+            return result == null ? -1 : result.Id;
         }
 
         [ScriptingFunction]

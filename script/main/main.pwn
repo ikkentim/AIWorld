@@ -66,7 +66,7 @@ RandomTree(Float:x, Float:y)
         case 6: strcopy(mesh, "tree.007");
     }
 
-    return AddGameObject("models/trees", 0.25, x, y, 0.1, 0.1, 0.1,
+    return AddGameObject("models/trees", 0.25, x, y, 0.2, 0.2, 0.2,
     frandom(-PI/180*10, PI/180*10), frandom(-PI, PI),
     frandom(-PI/180*10, PI/180*10), -meshidx * 5, 0, 0, mesh, false);
 }
@@ -79,7 +79,7 @@ CreateObjects()
 
     #define DEFAULT_SCALE 1, 1, 1
     AddGameObject("models/house02", HOUSE_SIZE, 3.9, 2.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
-    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 3.8, DEFAULT_SCALE, 0, DEG2RAD(-90));
+    AddGameObject("models/house01", HOUSE_SIZE, 3.9, 3.8, 0.25,0.25,0.25, 0, DEG2RAD(-90));
     AddGameObject("models/house02", HOUSE_SIZE, 3.9, 4.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
     AddGameObject("models/house02", HOUSE_SIZE, 3.9, 6.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
 
@@ -91,7 +91,7 @@ CreateObjects()
 
     AddGameObject("models/house02", HOUSE_SIZE, 1.5, 3.8, DEFAULT_SCALE, 0, DEG2RAD(90));
     AddGameObject("models/house02", HOUSE_SIZE, 1.5, 2.0, DEFAULT_SCALE, 0, DEG2RAD(90));
-    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 0.0, DEFAULT_SCALE, 0, DEG2RAD(90));
+    AddGameObject("models/supermarket", HOUSE_SIZE, 1.5, 0.0, 0.5, 0.5, 0.5, 0, DEG2RAD(90));
 }
 
 CreateGroundGraph()
