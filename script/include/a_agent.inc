@@ -7,6 +7,7 @@
 #define BEHAVIOR_ARRIVE                 2
 #define BEHAVIOR_OBSTACLE_AVOIDANCE     3
 #define BEHAVIOR_EXPLORE                4
+#define BEHAVIOR_WANDER                 5
 
 /** ************************************************************************ **\
 <summary>Gets the id of this agent.</summary>
@@ -210,13 +211,14 @@ native Float:GetTargetRange();
 </param>
 <param name="type">The type of the steering behavior.</param>
 <param name="weight">The weight of the steering behavior.</param>
-<param name="x">The targeted x-coordinate of the steering behaviour.</param>
-<param name="y">The targeted y-coordinate of the steering behaviour.</param>
+<param name="a">Behavior specific parameter A.</param>
+<param name="b">Behavior specific parameter B.</param>
+<param name="c">Behavior specific parameter C.</param>
 <returns>True if successful; False otherwise (i.e. key was not found).</returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native AddSteeringBehavior(const key[], type, Float:weight, Float:x=0.0,
-    Float:y=0.0);
+native AddSteeringBehavior(const key[], type, Float:weight, Float:a=0.0,
+    Float:b=0.0, Float:c=0.0);
 
 /** ************************************************************************ **\
 <summary>

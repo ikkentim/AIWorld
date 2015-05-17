@@ -21,5 +21,6 @@ namespace AIWorld.Steering
         Arrive = 2,
         ObstacleAvoidance = 3,
         Explore = 4,
+        Wander = 5,
     }
 }

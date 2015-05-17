@@ -33,9 +33,9 @@ namespace AIWorld.Steering
         public ISteeringBehavior Behavior { get; set; }
         public float Weight { get; set; }
 
-        public Vector3 Calculate()
+        public Vector3 Calculate(GameTime gameTime)
         {
-            return Behavior.Calculate()*Weight;
+            return Behavior.Calculate(gameTime)*Weight;
         }
     }
 }

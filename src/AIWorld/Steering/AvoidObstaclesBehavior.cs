@@ -48,7 +48,7 @@ namespace AIWorld.Steering
 
         #region Implementation of ISteeringBehavior
 
-        public Vector3 Calculate()
+        public Vector3 Calculate(GameTime gameTime)
         {
             var bLength = DetectionBoxLength;
 

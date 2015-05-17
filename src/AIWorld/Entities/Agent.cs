@@ -64,7 +64,9 @@ namespace AIWorld.Entities
             game.MouseClick += game_MouseClick;
             ScriptName = scriptName;
             Position = position;
-
+            Heading = Vector3.Right;
+            Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
+            
             _cameraService = game.Services.GetService<ICameraService>();
             _gameWorldService = game.Services.GetService<IGameWorldService>();
             _consoleService = game.Services.GetService<IConsoleService>();
@@ -269,7 +271,7 @@ namespace AIWorld.Entities
         }
 
         [ScriptingFunction]
-        public void AddSteeringBehavior(string key, SteeringBehaviorType type, float weight, float x, float y)
+        public void AddSteeringBehavior(string key, SteeringBehaviorType type, float weight, float x, float y, float z)
         {
             if (key == null) throw new ArgumentNullException("key");
 
@@ -289,6 +291,10 @@ namespace AIWorld.Entities
                 case SteeringBehaviorType.Explore:
                     _steeringBehaviors[key] =
                         new WeightedSteeringBehavior(new ExploreSteeringBehavior(this, new Vector3(x, 0, y)), weight);
+                    break;
+                    case SteeringBehaviorType.Wander:
+                    _steeringBehaviors[key] = new WeightedSteeringBehavior(new WanderSteeringBehavior(this, x, y, z),
+                        weight);
                     break;
                 default:
                     throw new Exception("Invalid steering behaviour");
@@ -412,17 +418,17 @@ namespace AIWorld.Entities
                 _goals.Pop();
         }
 
-        private Vector3 CalculateSteeringForce()
+        private Vector3 CalculateSteeringForce(GameTime gameTime)
         {
-            return
-                _steeringBehaviors.Values.Aggregate(Vector3.Zero,
-                    (current, behavior) => current + behavior.Behavior.Calculate()*behavior.Weight).Truncate(MaxForce);
+            var forces = _steeringBehaviors.Values.Aggregate(Vector3.Zero,
+                (current, behavior) => current + behavior.Calculate(gameTime));
+            return forces.Truncate(MaxForce);
         }
 
         private void UpdatePosition(GameTime gameTime)
         {
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
-            var steeringForce = CalculateSteeringForce();
+            var steeringForce = CalculateSteeringForce(gameTime);
 
             var acceleration = steeringForce/Mass;
             Velocity += acceleration*deltaTime;

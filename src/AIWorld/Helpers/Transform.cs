@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Helpers
@@ -35,6 +36,16 @@ namespace AIWorld.Helpers
                 Matrix.Identity*
                 new Matrix(heading.X, up.X, side.X, 0, heading.Y, up.Y, side.Y, 0, heading.Z, up.Z, side.Z, 0, 0, 0, 0,
                     0));
+        }
+
+        public static Vector3 PointToWorldSpace(Vector3 position, Vector3 heading, Vector3 up, Vector3 side,
+            Vector3 point)
+        {
+            var m1 = new Matrix(heading.X, heading.Y, heading.Z, 0, up.X, up.Y, up.Z, 0, side.X, side.Y, side.Z, 0,
+                0, 0, 0, 1);
+            var m2 = new Matrix(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, position.X, position.Y, position.Z, 1);
+            var m3 = m1*m2;
+            return Vector3.Transform(point, m3);
         }
     }
 }

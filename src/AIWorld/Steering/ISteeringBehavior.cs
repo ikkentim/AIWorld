@@ -19,6 +19,6 @@ namespace AIWorld.Steering
 {
     public interface ISteeringBehavior
     {
-        Vector3 Calculate();
+        Vector3 Calculate(GameTime gameTime);
     }
 }

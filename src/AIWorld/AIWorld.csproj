@@ -74,6 +74,7 @@
     <Compile Include="Steering\ITargetedSteeringBehavior.cs" />
     <Compile Include="Steering\SeekSteeringBehavior.cs" />
     <Compile Include="Steering\SteeringBehaviorType.cs" />
+    <Compile Include="Steering\WanderSteeringBehavior.cs" />
     <Compile Include="Steering\WeightedSteeringBehavior.cs" />
     <Compile Include="Helpers\Transform.cs" />
     <Compile Include="Entities\WorldObject.cs" />

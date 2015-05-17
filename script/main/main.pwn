@@ -147,5 +147,5 @@ CreateRoads()
 CreateAgents()
 {
     //AddAgent("car", frandom(-5,5), frandom(-5,5));
-    SetTargetEntity(AddAgent("car",0,0, "test:f", 123.1237));
+    SetTargetEntity(AddAgent("car",0,0));
 }

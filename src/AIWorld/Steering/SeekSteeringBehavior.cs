@@ -32,7 +32,7 @@ namespace AIWorld.Steering
 
         #region Implementation of ISteeringBehavior
 
-        public Vector3 Calculate()
+        public Vector3 Calculate(GameTime gameTime)
         {
             return (Target - Agent.Position).Truncate(Agent.MaxSpeed) - Agent.Velocity;
         }

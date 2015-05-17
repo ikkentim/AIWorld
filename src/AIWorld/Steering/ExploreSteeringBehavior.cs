@@ -38,11 +38,11 @@ namespace AIWorld.Steering
 
         #region Implementation of ISteeringBehavior
 
-        public Vector3 Calculate()
+        public Vector3 Calculate(GameTime gameTime)
         {
             var target = _isTargetBottom ? new Vector3(_topLeft.X, 0, _bottomRight.Z) : _topLeft;
 
-            if (_behavior is ArriveSteeringBehavior) return _behavior.Calculate();
+            if (_behavior is ArriveSteeringBehavior) return _behavior.Calculate(gameTime);
             
             if (Agent.IsInTargetRangeOfPoint(target))
             {
@@ -52,13 +52,13 @@ namespace AIWorld.Steering
                 target = _isTargetBottom ? new Vector3(_topLeft.X, 0, _bottomRight.Z) : _topLeft;
             }
 
-            if (_behavior != null) return _behavior.Calculate();
+            if (_behavior != null) return _behavior.Calculate(gameTime);
 
             _behavior = ((Math.Abs(_bottomRight.X - _topLeft.X) < Math.Max(1, Agent.TargetRange*2))
                 ? (ITargetedSteeringBehavior) new ArriveSteeringBehavior(Agent, target)
                 : new SeekSteeringBehavior(Agent, target));
 
-            return _behavior.Calculate();
+            return _behavior.Calculate(gameTime);
         }
 
         #endregion
