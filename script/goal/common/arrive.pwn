@@ -22,7 +22,7 @@ public OnEnter()
     Float:x, Float:y);
 }
 
-public OnUpdate()
+public OnUpdate(Float:elapsed)
 {
     if(IsInTargetRangeOfPoint(Float:x, Float:y))
     {

@@ -25,17 +25,16 @@ namespace AIWorld.Entities
     public class WorldObject : Entity
     {
         public string Model { get; private set; }
-        private readonly BasicEffect _basicEffect;
         private readonly ICameraService _cameraService;
         private readonly Model _model;
         private readonly Vector3 _rotation;
         private readonly Vector3 _translation;
         private readonly Vector3 _scale;
-        private readonly bool _showDebugLines;
         private ModelMesh[] _meshes;
         private Matrix[] _transforms;
-        
-        public WorldObject(Game game, string model, float size, Vector3 position, Vector3 rotation, Vector3 translation, Vector3 scale, IEnumerable<string> meshes, bool showDebugLines)
+
+        public WorldObject(Game game, string model, float size, Vector3 position, Vector3 rotation, Vector3 translation,
+            Vector3 scale, IEnumerable<string> meshes)
             : base(game)
         {
             Model = model;
@@ -44,7 +43,6 @@ namespace AIWorld.Entities
             _rotation = rotation;
             _translation = translation;
             _scale = scale;
-            _showDebugLines = showDebugLines;
             Size = size;
             _meshes = meshes.Any()
                 ? _model.Meshes.Where(n => meshes.Contains(n.Name)).ToArray()
@@ -54,15 +52,6 @@ namespace AIWorld.Entities
             _model.CopyAbsoluteBoneTransformsTo(_transforms);
 
             _cameraService = game.Services.GetService<ICameraService>();
-
-            if (showDebugLines)
-                _basicEffect = new BasicEffect(game.GraphicsDevice);
-        }
-
-        private void Line(Vector3 a, Vector3 b, Color c)
-        {
-            var vertices = new[] {new VertexPositionColor(a, c), new VertexPositionColor(b, c)};
-            Game.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
 
         #region Overrides of DrawableGameComponent
@@ -86,23 +75,6 @@ namespace AIWorld.Entities
                     effect.EnableDefaultLighting();
                 }
                 mesh.Draw();
-            }
-
-            if (_showDebugLines)
-            {
-                _basicEffect.VertexColorEnabled = true;
-                _basicEffect.World = Matrix.Identity;
-                _basicEffect.View = _cameraService.View;
-                _basicEffect.Projection = _cameraService.Projection;
-
-                _basicEffect.CurrentTechnique.Passes[0].Apply();
-
-                var szx = new Vector3(Size, 0, 0);
-                var szz = new Vector3(0, 0, Size);
-                Line(Position + szx, Position + szx + Vector3.Up, Color.Blue);
-                Line(Position - szx, Position - szx + Vector3.Up, Color.Blue);
-                Line(Position + szz, Position + szz + Vector3.Up, Color.Blue);
-                Line(Position - szz, Position - szz + Vector3.Up, Color.Blue);
             }
 
             base.Draw(gameTime);

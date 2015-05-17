@@ -22,7 +22,7 @@ public OnEnter()
     targetY += 3.0;
 }
 
-public OnUpdate()
+public OnUpdate(Float:elapsed)
 {
     //logprintf(COLOR_WHITE, "Explore.Update %f", GetDistanceToPoint(targetX, targetY));
 

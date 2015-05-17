@@ -58,20 +58,6 @@ namespace AIWorld.Scripting
             }
         }
 
-        #region Overrides of AMX
-
-        /// <summary>
-        ///     Performs tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        /// <param name="disposing">Whether managed resources should be disposed.</param>
-        protected override void Dispose(bool disposing)
-        {
-            Debug.WriteLine("Disposing ScriptBox");
-            base.Dispose(disposing);
-        }
-
-        #endregion
-
         public IDictionary<string, AMXPublic> Publics
         {
             get { return _publics; }

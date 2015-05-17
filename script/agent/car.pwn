@@ -20,10 +20,9 @@ main()
     AddGoal("car/think");
 }
 
-public OnUpdate()
+public OnUpdate(Float:elapsed)
 {
     //
-    // TODO: Check for direct threats. React to these. (e.g. enemy nearby)
 }
 
 public OnKeyStateChanged(newKeys[], oldKeys[])

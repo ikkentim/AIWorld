@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AIWorld.Scripting;
+using Microsoft.Xna.Framework;
 
 namespace AIWorld
 {
@@ -9,7 +10,7 @@ namespace AIWorld
         string Name { get; }
         string CurrentName { get; }
         void Activate();
-        void Process();
+        void Process(GameTime gameTime);
         void Pause();
         void Terminate();
         void AddSubgoal(IGoal goal);

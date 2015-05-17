@@ -20,6 +20,7 @@ using AIWorld.Entities;
 using AIWorld.Scripting;
 using AIWorld.Services;
 using AMXWrapper;
+using Microsoft.Xna.Framework;
 
 namespace AIWorld
 {
@@ -117,7 +118,7 @@ namespace AIWorld
             }
         }
 
-        public void Process()
+        public void Process(GameTime gameTime)
         {
             // If this goal has subgoals, process the next.
             if (Count > 0)
@@ -129,7 +130,7 @@ namespace AIWorld
                 }
                 else
                 {
-                    Peek().Process();
+                    Peek().Process(gameTime);
                 }
             }
             else if (_onUpdate != null)
@@ -141,6 +142,7 @@ namespace AIWorld
                 }
                 else
                 {
+                    Script.Push((float) gameTime.ElapsedGameTime.TotalSeconds);
                     _onUpdate.Execute();
                 }
             }

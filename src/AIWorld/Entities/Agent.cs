@@ -36,6 +36,7 @@ namespace AIWorld.Entities
         private readonly ICameraService _cameraService;
         private readonly IConsoleService _consoleService;
         private readonly IGameWorldService _gameWorldService;
+        private readonly IDrawingService _drawingService;
         private readonly AMXPublic _onUpdate;
         private readonly AMXPublic _onMouseClick;
         private readonly AMXPublic _onClicked;
@@ -70,9 +71,10 @@ namespace AIWorld.Entities
             _cameraService = game.Services.GetService<ICameraService>();
             _gameWorldService = game.Services.GetService<IGameWorldService>();
             _consoleService = game.Services.GetService<IConsoleService>();
+            _drawingService = game.Services.GetService<IDrawingService>();
 
             Script = new ScriptBox("agent", scriptName);
-            Script.Register(this, _gameWorldService, _consoleService);
+            Script.Register(this, _gameWorldService, _consoleService, _drawingService);
 
             _onUpdate = Script.FindPublic("OnUpdate");
             _onClicked = Script.FindPublic("OnClicked");
@@ -456,12 +458,13 @@ namespace AIWorld.Entities
         {
             if (_onUpdate != null)
             {
+                Script.Push((float)gameTime.ElapsedGameTime.TotalSeconds);
                 _onUpdate.Execute();
             }
 
             if (_goals.Count > 0)
             {
-                _goals.Peek().Process();
+                _goals.Peek().Process(gameTime);
             }
 
             UpdatePosition(gameTime);

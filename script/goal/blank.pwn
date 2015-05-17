@@ -13,7 +13,7 @@ public OnEnter()
     //
 }
 
-public OnUpdate()
+public OnUpdate(Float:elapsed)
 {
     //
 }

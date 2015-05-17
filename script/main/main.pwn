@@ -1,8 +1,11 @@
 #include <string>
 #include <a_main>
+#include <a_drawable>
 
 new isShiftDown = false;
 
+new Drawable:text2D;
+new Drawable:sphere;
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of the simulation.</summary>
 \**--------------------------------------------------------------------------**/
@@ -12,18 +15,30 @@ main()
 
     chatprintf(COLOR_WHITE, "Some Chat Message Here.");
 
-    PlayAmbience("sounds/ambient", true, 0.015);
+    //PlayAmbience("sounds/ambient", true, 0.015);
     SetBackgroundColor(0xff555555);
     CreatePlanes();
     CreateObjects();
     CreateGroundGraph();
     CreateRoads();
     CreateAgents();
+
+    text2D = CreateDrawableText3D(5, 0, 5, COLOR_WHITE, "fonts/consolas", "Hello, World!");
+    sphere = CreateDrawableLineShere(0, 0.5, 0, 0.5, COLOR_RED, COLOR_BLUE);
+    ShowDrawable(sphere);
+    ShowDrawable(text2D);
 }
 
 public OnKeyStateChanged(newKeys[], oldKeys[])
 {
     isShiftDown = IsKeyDown(newKeys, KEY_LEFTSHIFT);
+
+
+    if(IsKeyDown(newKeys, KEY_T) && !IsKeyDown(oldKeys, KEY_T))
+    {
+        SetDrawableColor(sphere, random(0xFFFFFFFF));
+        SetDrawableColor2(sphere, random(0xFFFFFFFF));
+    }
 
     if(IsKeyDown(newKeys, KEY_A) && !IsKeyDown(oldKeys, KEY_A))
     {
@@ -39,7 +54,6 @@ public OnMouseClick(button, Float:x, Float:y)
 {
     if(button == 1 && isShiftDown)
         SetTarget(x,y);
-
 }
 
 CreatePlanes()
@@ -67,8 +81,7 @@ RandomTree(Float:x, Float:y)
     }
 
     return AddGameObject("models/trees", 0.25, x, y, 0.2, 0.2, 0.2,
-    frandom(-PI/180*10, PI/180*10), frandom(-PI, PI),
-    frandom(-PI/180*10, PI/180*10), -meshidx * 5, 0, 0, mesh, false);
+    0, frandom(-PI, PI), 0, -meshidx * 5, 0, 0, mesh);
 }
 
 CreateObjects()
@@ -83,7 +96,7 @@ CreateObjects()
     AddGameObject("models/house02", HOUSE_SIZE, 3.9, 4.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
     AddGameObject("models/house02", HOUSE_SIZE, 3.9, 6.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
 
-    AddGameObject("models/house02", HOUSE_SIZE, 10.0, 10.0, DEFAULT_SCALE, 0, DEG2RAD(90));
+    AddGameObject("models/house02", HOUSE_SIZE, 10.0, 0.0, DEFAULT_SCALE, 0, DEG2RAD(90));
 
     AddGameObject("models/house02", HOUSE_SIZE, -1, 3.8, DEFAULT_SCALE, 0, DEG2RAD(90));
     AddGameObject("models/house02", HOUSE_SIZE, -1, 2.0, DEFAULT_SCALE, 0, DEG2RAD(90));
@@ -147,5 +160,5 @@ CreateRoads()
 CreateAgents()
 {
     //AddAgent("car", frandom(-5,5), frandom(-5,5));
-    SetTargetEntity(AddAgent("car",0,0));
+    AddAgent("car",0,0);
 }

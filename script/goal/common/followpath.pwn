@@ -15,7 +15,7 @@ public OnEnter()
     logprintf(COLOR_WHITE, "FollowPath.OnEnter");
 }
 
-public OnUpdate()
+public OnUpdate(Float:elapsed)
 {
     new Float:nextx, Float:nexty;
 
@@ -32,7 +32,7 @@ public OnUpdate()
                 AddSubgoal("common/seek", "x:f,y:f,weight:d", nextx, nexty,
                 weight);
             else
-                AddSubgoal("common/arrive", "x:f,y:f,weight:d", nextx, nexty, 
+                AddSubgoal("common/arrive", "x:f,y:f,weight:d", nextx, nexty,
                 weight);
         }
     }

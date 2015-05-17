@@ -47,6 +47,7 @@ namespace AIWorld
         private ICameraService _cameraService;
         private IConsoleService _consoleService;
         private IGameWorldService _gameWorldService;
+        private IDrawingService _drawingService;
         private KeyboardState _lastKeyboardState;
         private MouseState _lastMouseState;
         private int _lastScroll;
@@ -82,17 +83,19 @@ namespace AIWorld
             // Register various services.
             Services.AddService(typeof (IConsoleService), _consoleService = new ConsoleService(this));
             Services.AddService(typeof (ICameraService), _cameraService = new CameraService(this));
-            Services.AddService(typeof (IGameWorldService), _gameWorldService = new GameWorldService(this, _cameraService));
+            Services.AddService(typeof(IGameWorldService), _gameWorldService = new GameWorldService(this, _cameraService));
+            Services.AddService(typeof(IDrawingService), _drawingService = new DrawingService(this, _cameraService));
 
             Components.Add(_consoleService);
             Components.Add(_cameraService);
             Components.Add(_gameWorldService);
+            Components.Add(_drawingService);
 
             // Set up the script and let it handle further setup.
             try
             {
                 Script = new ScriptBox("main", _scriptName);
-                Script.Register(this, _gameWorldService, _consoleService);
+                Script.Register(this, _gameWorldService, _consoleService, _drawingService);
 
                 _onMouseClick = Script.FindPublic("OnMouseClick");
                 _onKeyStateChanged = Script.FindPublic("OnKeyStateChanged");
@@ -135,6 +138,7 @@ namespace AIWorld
             Services.RemoveService(typeof (IConsoleService));
             Services.RemoveService(typeof (ICameraService));
             Services.RemoveService(typeof (IGameWorldService));
+            Services.RemoveService(typeof (IDrawingService));
 
             GC.Collect();
         }
@@ -353,12 +357,12 @@ namespace AIWorld
         }
 
         [ScriptingFunction]
-        public int AddGameObject(string name, float size, float x, float y, float sx, float sy, float sz,float rx, float ry, float rz, float tx, float ty, float tz,  string meshes, bool debug)
+        public int AddGameObject(string name, float size, float x, float y, float sx, float sy, float sz,float rx, float ry, float rz, float tx, float ty, float tz,  string meshes)
         {
             // Create the entity and return the id.
             var obj = new WorldObject(this, name, size, new Vector3(x, 0, y), new Vector3(rx, ry, rz),
                 new Vector3(tx, ty, tz), new Vector3(sx, sy, sz),
-                meshes.Split(',').Select(v => v.Trim()).Where(v => v.Length > 0), debug);
+                meshes.Split(',').Select(v => v.Trim()).Where(v => v.Length > 0));
 
             _gameWorldService.Add(obj);
 
