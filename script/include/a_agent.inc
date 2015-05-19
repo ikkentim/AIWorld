@@ -327,9 +327,10 @@ native RemoveSoundEffect();
 
 /** ************************************************************************ **\
 <summary>This callback is called every time this actor gets updated.</summary>
+<param name="elapsed">Elapsed seconds since last update.</param>
 <returns>This callback does not handle return values.</returns>
 \** ************************************************************************ **/
-forward OnUpdate();
+forward OnUpdate(Float:elapsed);
 
 /** ************************************************************************ **\
 <summary>This callback is called when the keyboard state changes.</summary>

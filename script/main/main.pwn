@@ -16,7 +16,7 @@ main()
     chatprintf(COLOR_WHITE, "Some Chat Message Here.");
 
     //PlayAmbience("sounds/ambient", true, 0.015);
-    SetBackgroundColor(0xff555555);
+    SetBackgroundColor(0x00000000);
     CreatePlanes();
     CreateObjects();
     CreateGroundGraph();
@@ -24,7 +24,7 @@ main()
     CreateAgents();
 
     text2D = CreateDrawableText3D(5, 0, 5, COLOR_WHITE, "fonts/consolas", "Hello, World!");
-    sphere = CreateDrawableLineShere(0, 0.5, 0, 0.5, COLOR_RED, COLOR_BLUE);
+    sphere = CreateDrawableLineCone(0, 0.5, 0, 0, 1,0, 1, 0.5, COLOR_RED, COLOR_BLUE);
     ShowDrawable(sphere);
     ShowDrawable(text2D);
 }
@@ -111,7 +111,7 @@ CreateGroundGraph()
 {
     // Create and fill a 'ground' graph and fill it automatically
     CreateGraph("ground");
-    new nodes = FillGraph("ground", -2, -2, 6, 6, 0.5);
+    new nodes = FillGraph("ground", -2, -2, 6, 6, 0.3);
 
     logprintf(COLOR_MAGENTA, "Filled graph 'ground' with %d nodes.", nodes);
 }

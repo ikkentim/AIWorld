@@ -25,19 +25,19 @@ public OnUpdate(Float:elapsed)
     //AddSubgoal("car/explore");
 
     // Calculate a target position
-    new Float:tx = frandom(-2,6);
-    new Float:ty = frandom(-2,6);
+    new Float:tx = frandom(-10,10);
+    new Float:ty = frandom(-10,10);
     new Float:x, Float:y, Float:nodes[4];
 
     // Get the current position
     GetPosition(x,y);
 
     // Get nodes closest to current position and target position
-    GetClosestNode("ground", x, y, nodes[0], nodes[1]);
-    GetClosestNode("ground", tx, ty, nodes[2], nodes[3]);
+    GetClosestNode("road", x, y, nodes[0], nodes[1]);
+    GetClosestNode("road", tx, ty, nodes[2], nodes[3]);
 
     // Calcualte a path in the 'ground' graph
-    PushPath("ground", nodes[0], nodes[1], nodes[2], nodes[3]);
+    PushPath("road", nodes[0], nodes[1], nodes[2], nodes[3]);
 
     // Add path following to goals list
     chatprintf(COLOR_WHITE, "I've found myself a new target.");

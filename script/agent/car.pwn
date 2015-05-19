@@ -1,7 +1,8 @@
 #include <a_agent>
+#include <a_drawable>
 
 new isCtrlDown = false;
-
+new Drawable:text;
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of this agent.</summary>
 \**--------------------------------------------------------------------------**/
@@ -17,12 +18,18 @@ main()
 
     AddSteeringBehavior("obstacleavoidance", BEHAVIOR_OBSTACLE_AVOIDANCE, 0.9);
 
+    text = CreateDrawableText3D(0, 0, 0, COLOR_WHITE,
+        "fonts/consolas", "Hoi!");
+        ShowDrawable(text);
     AddGoal("car/think");
 }
 
 public OnUpdate(Float:elapsed)
 {
     //
+    new Float:x, Float:y;
+    GetPosition(x, y);
+    SetDrawablePosition(text, x, 1, y);
 }
 
 public OnKeyStateChanged(newKeys[], oldKeys[])
