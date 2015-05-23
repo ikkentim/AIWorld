@@ -105,6 +105,9 @@ CreateObjects()
     AddGameObject("models/house02", HOUSE_SIZE, 1.5, 3.8, DEFAULT_SCALE, 0, DEG2RAD(90));
     AddGameObject("models/house02", HOUSE_SIZE, 1.5, 2.0, DEFAULT_SCALE, 0, DEG2RAD(90));
     AddGameObject("models/supermarket", HOUSE_SIZE, 1.5, 0.0, 0.5, 0.5, 0.5, 0, DEG2RAD(90));
+
+
+    AddGameObject("models/tank", 0.0001, 0, 0, 0.1,0.1,0.1, 0, DEG2RAD(-90));
 }
 
 CreateGroundGraph()
