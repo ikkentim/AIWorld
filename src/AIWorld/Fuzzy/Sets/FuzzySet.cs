@@ -14,9 +14,9 @@
 // limitations under the License.
 
 using System;
-using FuzzyLogic.Fuzzy.Terms;
+using AIWorld.Fuzzy.Terms;
 
-namespace FuzzyLogic.Fuzzy.Sets
+namespace AIWorld.Fuzzy.Sets
 {
     public abstract class FuzzySet : FuzzyTerm
     {

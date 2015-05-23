@@ -11,15 +11,11 @@ main()
 
 public OnEnter()
 {
-    logprintf(COLOR_WHITE, "Think.OnEnter");
-
     //
 }
 
 public OnUpdate(Float:elapsed)
 {
-    logprintf(COLOR_WHITE, "Think.OnUpdate");
-
     //TODO: Add some state checking...
     //chatprintf(COLOR_WHITE, "CAR: I think I should explore this area...");
     //AddSubgoal("car/explore");
@@ -46,8 +42,6 @@ public OnUpdate(Float:elapsed)
 
 public OnExit()
 {
-    logprintf(COLOR_WHITE, "Think.OnExit");
-
     //
 }
 

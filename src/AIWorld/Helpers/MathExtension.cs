@@ -18,26 +18,52 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Helpers
 {
-    public static class Vector2Extension
+    /// <summary>
+    ///     Adds some methods to the <see cref="Vector3" /> class.
+    /// </summary>
+    public static class Vector3Extension
     {
+        /// <summary>
+        ///     Rotates the specified <paramref name="point" /> about the specified <paramref name="origin" /> on the y-axis.
+        /// </summary>
+        /// <param name="point">The vector.</param>
+        /// <param name="origin">The origin.</param>
+        /// <param name="rotation">The rotation.</param>
+        /// <returns></returns>
         public static Vector3 RotateAboutOriginY(this Vector3 point, Vector3 origin, float rotation)
         {
             return Vector3.Transform(point - origin, Matrix.CreateRotationY(rotation)) + origin;
         }
 
+        /// <summary>
+        ///     Gets the y-angle of the specified <paramref name="point" />.
+        /// </summary>
+        /// <param name="point">The vector.</param>
+        /// <returns>The y-angle</returns>
         public static float GetYAngle(this Vector3 point)
         {
             return (float) Math.Atan2(point.X, point.Z);
         }
 
-        public static Vector3 Truncate(this Vector3 point, float limit)
+        /// <summary>
+        ///     Truncates the <paramref name="vector" />.
+        /// </summary>
+        /// <param name="vector">The vector.</param>
+        /// <param name="limit">The limit.</param>
+        /// <returns>The truncated vector.</returns>
+        public static Vector3 Truncate(this Vector3 vector, float limit)
         {
-            return point.LengthSquared() > limit*limit ? Vector3.Normalize(point)*limit : point;
+            return vector.LengthSquared() > limit*limit ? Vector3.Normalize(vector)*limit : vector;
         }
 
-        public static float ManhattanLength(this Vector3 point)
+        /// <summary>
+        ///     Gets the manhattan length of the specified <paramref name="vector" />.
+        /// </summary>
+        /// <param name="vector">The vector.</param>
+        /// <returns></returns>
+        public static float ManhattanLength(this Vector3 vector)
         {
-            return Math.Abs(point.X) + Math.Abs(point.Y) + Math.Abs(point.Z);
+            return Math.Abs(vector.X) + Math.Abs(vector.Y) + Math.Abs(vector.Z);
         }
     }
 }

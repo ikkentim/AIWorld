@@ -17,6 +17,9 @@ using System;
 
 namespace AIWorld.Scripting
 {
+    /// <summary>
+    ///     Indicates that a method or property should be registered by a <see cref="ScriptBox" />.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property)]
     public class ScriptingFunctionAttribute : Attribute
     {

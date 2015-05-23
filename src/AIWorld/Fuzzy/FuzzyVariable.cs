@@ -16,9 +16,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using FuzzyLogic.Fuzzy.Sets;
+using AIWorld.Fuzzy.Sets;
 
-namespace FuzzyLogic.Fuzzy
+namespace AIWorld.Fuzzy
 {
     public class FuzzyVariable
     {

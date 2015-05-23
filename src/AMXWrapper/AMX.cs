@@ -222,7 +222,6 @@ namespace AMXWrapper
             _natives.Clear();
             AMXCall.Cleanup(ref _amx);
             Marshal.FreeHGlobal(_code);
-            //Marshal.Release(_code);
         }
 
         private delegate int LibraryLoader(ref AMXStruct amx);

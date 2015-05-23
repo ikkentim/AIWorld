@@ -15,7 +15,7 @@
 
 using System;
 
-namespace FuzzyLogic.Fuzzy.Terms
+namespace AIWorld.Fuzzy.Terms
 {
     public class FuzzyVery : FuzzyTerm
     {

@@ -134,7 +134,7 @@ namespace AIWorld.Services
         public int FindNearestWorldObject(float x, float y, string model)
         {
             var result = _entities.OfType<WorldObject>()
-                .Where(w => model.Length == 0 || w.Model == model)
+                .Where(w => model.Length == 0 || w.ModelName == model)
                 .OrderBy(w => Vector3.DistanceSquared(w.Position, new Vector3(x, 0, y)))
                 .FirstOrDefault();
 

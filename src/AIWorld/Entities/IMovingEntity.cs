@@ -19,11 +19,34 @@ namespace AIWorld.Entities
 {
     public interface IMovingEntity : IEntity
     {
+        /// <summary>
+        ///     Gets the velocity.
+        /// </summary>
         Vector3 Velocity { get; }
+
+        /// <summary>
+        ///     Gets the mass.
+        /// </summary>
         float Mass { get; }
+
+        /// <summary>
+        ///     Gets the heading.
+        /// </summary>
         Vector3 Heading { get; }
+
+        /// <summary>
+        ///     Gets the side.
+        /// </summary>
         Vector3 Side { get; }
+
+        /// <summary>
+        ///     Gets the maximum speed.
+        /// </summary>
         float MaxSpeed { get; }
+
+        /// <summary>
+        ///     Gets the maximum force.
+        /// </summary>
         float MaxForce { get; }
     }
 }

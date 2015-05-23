@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace FuzzyLogic.Fuzzy.Sets
+namespace AIWorld.Fuzzy.Sets
 {
     public class FuzzyRightShoulder : FuzzySet
     {

@@ -14,9 +14,9 @@
 // limitations under the License.
 
 using System;
-using FuzzyLogic.Fuzzy.Terms;
+using AIWorld.Fuzzy.Terms;
 
-namespace FuzzyLogic.Fuzzy
+namespace AIWorld.Fuzzy
 {
     public class FuzzyRule
     {

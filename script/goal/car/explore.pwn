@@ -13,8 +13,6 @@ main()
 
 public OnEnter()
 {
-    logprintf(COLOR_WHITE, "Explore.OnEnter");
-
     AddSteeringBehavior("exploring", BEHAVIOR_EXPLORE, 0.78, 3.0, 3.0);
 
     GetPosition(targetX, targetY);
@@ -37,8 +35,6 @@ public OnUpdate(Float:elapsed)
 
 public OnExit()
 {
-    logprintf(COLOR_WHITE, "Explore.OnExit");
-
     RemoveSteeringBehavior("exploring");
 }
 

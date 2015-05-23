@@ -27,7 +27,7 @@ namespace AIWorld.Scripting
     [SuppressMessage("ReSharper", "UnusedMember.Local")]
     public class DefaultFunctions : IScriptingNatives
     {
-        public readonly Random Random = new Random();
+        private readonly Random _random = new Random();
 
         private static string StringPrintFormatted(string input, object[] inpVars)
         {
@@ -51,49 +51,25 @@ namespace AIWorld.Scripting
             var format = arguments[formatIndex].AsString();
             var i = formatIndex + 1;
 
-            // Format eg: 'xpos:f,ypos,f;count;d'
-
+            // Format eg: 'xpos,ypos;count'
             var formatSeperated = format.Split(',', '.', ' ', ';', ':', '-');
-            var formatTypes = "difcb".ToCharArray();
-
-            for (var j = 0; j < formatSeperated.Length; j++)
+            for (var j = 0; j < Math.Min(formatSeperated.Length, arguments.Length - formatIndex - 1); j++)
             {
                 var name = formatSeperated[j];
-                var type = formatSeperated.Length > j + 1
-                    ? (
-                        formatSeperated[j + 1].Trim().Length == 1
-                            ? (
-                                formatTypes.Contains(formatSeperated[j + 1].Trim().First())
-                                    ? formatSeperated[++j].Trim().First()
-                                    : 'd' // Default if unknown type.
-                                )
-                            : 'd' // Default if type has no length.
-                        )
-                    : 'd'; // Default if last in format.
+                var value = arguments[i++].AsCellPtr().Get();
 
-                switch (type)
-                {
-                    case 'd':
-                    case 'i':
-                    case 'c':
-                    case 'b':
-                        var iValue = arguments[i++].AsCellPtr().Get().AsInt32();
-
-                        CellPtr iCell;
-                        if (scripted.Script.PublicVars.TryGetValue(name, out iCell))
-                            iCell.Set(iValue);
-                        break;
-                    case 'f':
-                        var fValue = arguments[i++].AsCellPtr().Get().AsFloat();
-                        
-                        CellPtr fCell;
-                        if (scripted.Script.PublicVars.TryGetValue(name, out fCell))
-                            fCell.Set(Cell.FromFloat(fValue));
-                        break;
-                }
+                CellPtr cellPtr;
+                if (scripted.Script.PublicVars.TryGetValue(name, out cellPtr))
+                    cellPtr.Set(value);
             }
         }
 
+        /// <summary>
+        /// Formats a string.
+        /// </summary>
+        /// <param name="arguments">The arguments.</param>
+        /// <param name="formatIndex">Index of the format.</param>
+        /// <returns>Formatted string.</returns>
         public static string FormatString(AMXArgumentList arguments, int formatIndex = 0)
         {
             var format = arguments[formatIndex].AsString();
@@ -126,18 +102,38 @@ namespace AIWorld.Scripting
             return StringPrintFormatted(format, parms);
         }
 
+        /// <summary>
+        /// Gets a random floating point value.
+        /// </summary>
+        /// <returns>Random floating point value.</returns>
         [ScriptingFunction("frand")]
         public float FloatRandom()
         {
-            return (float) Random.NextDouble();
+            return (float) _random.NextDouble();
         }
 
+        /// <summary>
+        /// Gets the distance between the specified points..
+        /// </summary>
+        /// <param name="x1">The x1.</param>
+        /// <param name="y1">The y1.</param>
+        /// <param name="x2">The x2.</param>
+        /// <param name="y2">The y2.</param>
+        /// <returns>The distance</returns>
         [ScriptingFunction("distance")]
         public float Distance(float x1, float y1, float x2, float y2)
         {
             return (new Vector2(x1, y1) - new Vector2(x2, y2)).Length();
         }
 
+        /// <summary>
+        /// Gets the squared distance between the specified points.
+        /// </summary>
+        /// <param name="x1">The x1.</param>
+        /// <param name="y1">The y1.</param>
+        /// <param name="x2">The x2.</param>
+        /// <param name="y2">The y2.</param>
+        /// <returns>The squared distance.</returns>
         [ScriptingFunction("distancesquared")]
         public float DistanceSquared(float x1, float y1, float x2, float y2)
         {

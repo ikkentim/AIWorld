@@ -14,7 +14,6 @@
 // limitations under the License.
 
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using AIWorld.Services;
 using Microsoft.Xna.Framework;
@@ -22,40 +21,62 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld.Entities
 {
+    /// <summary>
+    ///     Represents a world object.
+    /// </summary>
     public class WorldObject : Entity
     {
-        public string Model { get; private set; }
         private readonly ICameraService _cameraService;
-        private readonly Model _model;
+        private readonly ModelMesh[] _meshes;
         private readonly Vector3 _rotation;
-        private readonly Vector3 _translation;
         private readonly Vector3 _scale;
-        private ModelMesh[] _meshes;
-        private Matrix[] _transforms;
+        private readonly Matrix[] _transforms;
+        private readonly Vector3 _translation;
 
-        public WorldObject(Game game, string model, float size, Vector3 position, Vector3 rotation, Vector3 translation,
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="WorldObject" /> class.
+        /// </summary>
+        /// <param name="game">The game.</param>
+        /// <param name="modelName">The modelName.</param>
+        /// <param name="size">The size.</param>
+        /// <param name="position">The position.</param>
+        /// <param name="rotation">The rotation.</param>
+        /// <param name="translation">The translation.</param>
+        /// <param name="scale">The scale.</param>
+        /// <param name="meshes">The meshes.</param>
+        public WorldObject(Game game, string modelName, float size, Vector3 position, Vector3 rotation,
+            Vector3 translation,
             Vector3 scale, IEnumerable<string> meshes)
             : base(game)
         {
-            Model = model;
+            ModelName = modelName;
             Position = position;
-            _model = game.Content.Load<Model>(model);
+            var model = game.Content.Load<Model>(modelName);
             _rotation = rotation;
             _translation = translation;
             _scale = scale;
             Size = size;
             _meshes = meshes.Any()
-                ? _model.Meshes.Where(n => meshes.Contains(n.Name)).ToArray()
-                : _model.Meshes.ToArray();
+                ? model.Meshes.Where(n => meshes.Contains(n.Name)).ToArray()
+                : model.Meshes.ToArray();
 
-            _transforms = new Matrix[_model.Bones.Count];
-            _model.CopyAbsoluteBoneTransformsTo(_transforms);
+            _transforms = new Matrix[model.Bones.Count];
+            model.CopyAbsoluteBoneTransformsTo(_transforms);
 
             _cameraService = game.Services.GetService<ICameraService>();
         }
 
+        /// <summary>
+        ///     Gets the model name.
+        /// </summary>
+        public string ModelName { get; private set; }
+
         #region Overrides of DrawableGameComponent
 
+        /// <summary>
+        ///     Draws this instance.
+        /// </summary>
+        /// <param name="gameTime">The game time.</param>
         public override void Draw(GameTime gameTime)
         {
             foreach (var mesh in _meshes)
@@ -64,12 +85,12 @@ namespace AIWorld.Entities
                 {
                     effect.World =
                         _transforms[mesh.ParentBone.Index]*
-                        (Matrix.CreateTranslation(_translation)*
-                        Matrix.CreateScale(_scale))*
+                        (Matrix.CreateTranslation(_translation)* // Translation of the mesh
+                         Matrix.CreateScale(_scale))*
                         (Matrix.CreateRotationX(_rotation.X)*
-                        Matrix.CreateRotationY(_rotation.Y)*
-                        Matrix.CreateRotationZ(_rotation.Z))*
-                        Matrix.CreateTranslation(Position);
+                         Matrix.CreateRotationY(_rotation.Y)*
+                         Matrix.CreateRotationZ(_rotation.Z))*
+                        Matrix.CreateTranslation(Position); // Translation of the model in the world space
                     effect.View = _cameraService.View;
                     effect.Projection = _cameraService.Projection;
                     effect.EnableDefaultLighting();
@@ -84,6 +105,13 @@ namespace AIWorld.Entities
 
         #region Overrides of Entity
 
+        /// <summary>
+        ///     Is called when the user has clicked on this instance.
+        /// </summary>
+        /// <param name="e">The <see cref="MouseClickEventArgs" /> instance containing the event data.</param>
+        /// <returns>
+        ///     True if this instance has handled the input; False otherwise.
+        /// </returns>
         public override bool OnClicked(MouseClickEventArgs e)
         {
             return false;

@@ -18,12 +18,31 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Entities
 {
+    /// <summary>
+    ///     Contains methods for an entity.
+    /// </summary>
     public interface IEntity : IGameComponent, IDisposable
     {
+        /// <summary>
+        ///     Gets the position.
+        /// </summary>
         Vector3 Position { get; }
+
+        /// <summary>
+        ///     Gets the size.
+        /// </summary>
         float Size { get; }
+
+        /// <summary>
+        ///     Gets or sets the identifier.
+        /// </summary>
         int Id { get; set; }
 
+        /// <summary>
+        ///     Is called when the user has clicked on this instance.
+        /// </summary>
+        /// <param name="e">The <see cref="MouseClickEventArgs" /> instance containing the event data.</param>
+        /// <returns>True if this instance has handled the input; False otherwise.</returns>
         bool OnClicked(MouseClickEventArgs e);
     }
 }

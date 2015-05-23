@@ -18,8 +18,20 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Helpers
 {
+    /// <summary>
+    /// Contains various transformation methods.
+    /// </summary>
     public static class Transform
     {
+        /// <summary>
+        /// Converts point to local space.
+        /// </summary>
+        /// <param name="position">The position.</param>
+        /// <param name="heading">The heading.</param>
+        /// <param name="up">Up.</param>
+        /// <param name="side">The side.</param>
+        /// <param name="point">The point.</param>
+        /// <returns>Local point.</returns>
         public static Vector3 ToLocalSpace(Vector3 position, Vector3 heading, Vector3 up, Vector3 side, Vector3 point)
         {
             var tx = -Vector3.Dot(position, heading);
@@ -30,14 +42,31 @@ namespace AIWorld.Helpers
                 new Matrix(heading.X, 0, side.X, 0, heading.Y, 1, side.Y, 0, heading.Z, 0, side.Z, 0, tx, ty, tz, 0));
         }
 
-        public static Vector3 VectorToWorldSpace(Vector3 heading, Vector3 up, Vector3 side, Vector3 vec)
+        /// <summary>
+        /// Converts vector to world space.
+        /// </summary>
+        /// <param name="heading">The heading.</param>
+        /// <param name="up">Up.</param>
+        /// <param name="side">The side.</param>
+        /// <param name="vector">The vector.</param>
+        /// <returns>Vector in world space.</returns>
+        public static Vector3 VectorToWorldSpace(Vector3 heading, Vector3 up, Vector3 side, Vector3 vector)
         {
-            return Vector3.Transform(vec,
+            return Vector3.Transform(vector,
                 Matrix.Identity*
                 new Matrix(heading.X, up.X, side.X, 0, heading.Y, up.Y, side.Y, 0, heading.Z, up.Z, side.Z, 0, 0, 0, 0,
                     0));
         }
 
+        /// <summary>
+        /// Converts point to world space.
+        /// </summary>
+        /// <param name="position">The position.</param>
+        /// <param name="heading">The heading.</param>
+        /// <param name="up">Up.</param>
+        /// <param name="side">The side.</param>
+        /// <param name="point">The point.</param>
+        /// <returns>Point in world space.</returns>
         public static Vector3 PointToWorldSpace(Vector3 position, Vector3 heading, Vector3 up, Vector3 side,
             Vector3 point)
         {

@@ -12,7 +12,7 @@ main()
 
 public OnEnter()
 {
-    logprintf(COLOR_WHITE, "FollowPath.OnEnter");
+    //
 }
 
 public OnUpdate(Float:elapsed)
@@ -29,10 +29,10 @@ public OnUpdate(Float:elapsed)
         else
         {
             if(GetPathStackSize() > 1)
-                AddSubgoal("common/seek", "x:f,y:f,weight:d", nextx, nexty,
+                AddSubgoal("common/seek", "x,y,weight", nextx, nexty,
                 weight);
             else
-                AddSubgoal("common/arrive", "x:f,y:f,weight:d", nextx, nexty,
+                AddSubgoal("common/arrive", "x,y,weight", nextx, nexty,
                 weight);
         }
     }
@@ -45,7 +45,7 @@ public OnUpdate(Float:elapsed)
 
 public OnExit()
 {
-    logprintf(COLOR_WHITE, "FollowPath.OnExit");
+    //
 }
 
 public OnIncomingMessage(message, contents)

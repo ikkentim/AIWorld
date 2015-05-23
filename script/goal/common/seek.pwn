@@ -14,8 +14,6 @@ main()
 
 public OnEnter()
 {
-
-    logprintf(COLOR_WHITE, "Seek.OnEnter");
     AddSteeringBehavior("seek", BEHAVIOR_SEEK, weight == 0
     ? 0.78
     : Float:weight,
@@ -32,7 +30,6 @@ public OnUpdate(Float:elapsed)
 
 public OnExit()
 {
-    logprintf(COLOR_WHITE, "Seek.OnExit");
     RemoveSteeringBehavior("seek");
 }
 
