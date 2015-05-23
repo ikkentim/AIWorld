@@ -62,7 +62,7 @@ namespace AIWorld
         protected void OnTerminated(EventArgs e)
         {
             if (_isActive && _onExit != null)
-                _onExit.Execute();
+                Agent.TryExecute(_onExit);
             
             if (Terminated != null)
                 Terminated(this, e);
@@ -107,7 +107,7 @@ namespace AIWorld
                 _isActive = false;
 
                 if (_onExit != null)
-                    _onExit.Execute();
+                    Agent.TryExecute(_onExit);
             }
             else
             {
@@ -126,7 +126,7 @@ namespace AIWorld
                 if (_isActive && _onExit != null)
                 {
                     _isActive = false;
-                    _onExit.Execute();
+                    Agent.TryExecute(_onExit);
                 }
                 else
                 {
@@ -138,19 +138,19 @@ namespace AIWorld
                 if (!_isActive && _onEnter != null)
                 {
                     _isActive = true;
-                    _onEnter.Execute();
+                    Agent.TryExecute(_onEnter);
                 }
                 else
                 {
-                    Script.Push((float) gameTime.ElapsedGameTime.TotalSeconds);
-                    _onUpdate.Execute();
+                    Script.Push((float)gameTime.ElapsedGameTime.TotalSeconds);
+                    Agent.TryExecute(_onUpdate);
                 }
             }
         }
 
         public void Activate()
         {
-            Script.ExecuteMain();
+            Agent.TryExecuteMain(Script);
         }
 
         [ScriptingFunction]
@@ -199,7 +199,7 @@ namespace AIWorld
                 // Call the goal's.
                 Script.Push(contents);
                 Script.Push(message);
-                _onIncomingMessage.Execute();
+                Agent.TryExecute(_onIncomingMessage);
             }
         }
 

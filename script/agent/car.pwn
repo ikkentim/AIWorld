@@ -20,7 +20,7 @@ main()
 
     text = CreateDrawableText3D(0, 0, 0, COLOR_WHITE,
         "fonts/consolas", "Hoi!");
-        ShowDrawable(text);
+    ShowDrawable(text);
     AddGoal("car/think");
 }
 

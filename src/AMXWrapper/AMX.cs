@@ -91,12 +91,9 @@ namespace AMXWrapper
             }
 
             _code = Marshal.AllocHGlobal(_codeLength = header.stackTop);
+
             FillMemory(_code, (uint) header.stackTop, 0);
             Marshal.Copy(pCode, 0, _code, header.size);
-
-            //var sb = new StringBuilder();
-            //var h = Marshal.AllocHGlobal(1);
-            //AMXCall.GetString(sb, h, 0, 0);
 
             var err = (AMXError) AMXCall.Init(ref amx, _code);
 
@@ -223,7 +220,9 @@ namespace AMXWrapper
         protected override void Dispose(bool disposing)
         {
             _natives.Clear();
-            Marshal.Release(_code);
+            AMXCall.Cleanup(ref _amx);
+            Marshal.FreeHGlobal(_code);
+            //Marshal.Release(_code);
         }
 
         private delegate int LibraryLoader(ref AMXStruct amx);

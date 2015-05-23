@@ -30,18 +30,24 @@ using Microsoft.Xna.Framework.Input;
 
 namespace AIWorld.Entities
 {
+    /// <summary>
+    ///     Represents a scriptable in-game agent.
+    /// </summary>
     public class Agent : Entity, IMovingEntity, IScripted, IMessageHandler
     {
-        private readonly BasicEffect _basicEffect;
+        private readonly BasicEffect _basicEffect; // Used for drawing path
+
+        // Various services used roughout the code
         private readonly ICameraService _cameraService;
         private readonly IConsoleService _consoleService;
         private readonly IGameWorldService _gameWorldService;
-        private readonly IDrawingService _drawingService;
+
         private readonly AMXPublic _onUpdate;
         private readonly AMXPublic _onMouseClick;
         private readonly AMXPublic _onClicked;
         private readonly AMXPublic _onKeyStateChanged;
         private readonly AMXPublic _onIncomingMessage;
+
         private readonly Stack<Node> _path = new Stack<Node>();
         private readonly Stack<IGoal> _goals  = new Stack<IGoal>();
         private readonly Dictionary<string, WeightedSteeringBehavior> _steeringBehaviors =
@@ -68,13 +74,13 @@ namespace AIWorld.Entities
             Heading = Vector3.Right;
             Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
             
+            var drawingService = game.Services.GetService<IDrawingService>();
             _cameraService = game.Services.GetService<ICameraService>();
             _gameWorldService = game.Services.GetService<IGameWorldService>();
             _consoleService = game.Services.GetService<IConsoleService>();
-            _drawingService = game.Services.GetService<IDrawingService>();
 
             Script = new ScriptBox("agent", scriptName);
-            Script.Register(this, _gameWorldService, _consoleService, _drawingService);
+            Script.Register(this, _gameWorldService, _consoleService, drawingService);
 
             _onUpdate = Script.FindPublic("OnUpdate");
             _onClicked = Script.FindPublic("OnClicked");
@@ -90,21 +96,22 @@ namespace AIWorld.Entities
         /// </summary>
         protected override void Dispose(bool disposing)
         {
-            Debug.WriteLine("Dispose Agent");
-
+            // Stop sounds
             if (_soundEffectInstance != null)
+            {
                 _soundEffectInstance.Stop(true);
+                _soundEffectInstance.Dispose();
+            }
 
+            // Dispose of the scriptbox
             if (Script != null)
                 Script.Dispose();
+
             Script = null;
 
+            // Dispose all goals
             foreach (var g in _goals.OfType<IDisposable>())
-            {
                 g.Dispose();
-            }
-            if (_soundEffectInstance != null)
-                _soundEffectInstance.Dispose();
 
             base.Dispose(disposing);
         }
@@ -113,7 +120,31 @@ namespace AIWorld.Entities
 
         public void Start()
         {
-            Script.ExecuteMain();
+            TryExecuteMain(Script);
+        }
+
+        public void TryExecute(AMXPublic amxPublic)
+        {
+            try
+            {
+                amxPublic.Execute();
+            }
+            catch (Exception e)
+            {
+                _consoleService.WriteLine(Color.Red, e);
+            }
+        }
+
+        public void TryExecuteMain(ScriptBox scriptBox)
+        {
+            try
+            {
+                scriptBox.ExecuteMain();
+            }
+            catch (Exception e)
+            {
+                _consoleService.WriteLine(Color.Red, e);
+            }
         }
 
         private void game_MouseClick(object sender, MouseClickEventArgs e)
@@ -150,7 +181,7 @@ namespace AIWorld.Entities
             Script.Push(oldKeys);
             Script.Push(newKeys);
 
-            _onKeyStateChanged.Execute();
+            TryExecute(_onKeyStateChanged);
 
             // Release the arrays.
             Script.Release(newKeys);
@@ -459,13 +490,11 @@ namespace AIWorld.Entities
             if (_onUpdate != null)
             {
                 Script.Push((float)gameTime.ElapsedGameTime.TotalSeconds);
-                _onUpdate.Execute();
+                TryExecute(_onUpdate);
             }
 
             if (_goals.Count > 0)
-            {
                 _goals.Peek().Process(gameTime);
-            }
 
             UpdatePosition(gameTime);
 
@@ -568,7 +597,7 @@ namespace AIWorld.Entities
             {
                 Script.Push(contents);
                 Script.Push(message);
-                _onIncomingMessage.Execute();
+                TryExecute(_onIncomingMessage);
             }
 
             if (_goals.Count > 0)
