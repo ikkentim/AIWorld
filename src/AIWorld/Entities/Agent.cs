@@ -34,28 +34,61 @@ namespace AIWorld.Entities
     /// </summary>
     public class Agent : Entity, IMovingEntity, IScripted, IMessageHandler
     {
-        private readonly BasicEffect _basicEffect;
+        #region Fields
+
+        #region Fields - Services
+
         private readonly ICameraService _cameraService;
         private readonly IConsoleService _consoleService;
         private readonly IGameWorldService _gameWorldService;
+
+        #endregion
+
+        #region Fields - Logic stacks and containers
+
         private readonly Stack<IGoal> _goals = new Stack<IGoal>();
+        private readonly Stack<Node> _path = new Stack<Node>();
+        private readonly Dictionary<string, WeightedSteeringBehavior> _steeringBehaviors =
+            new Dictionary<string, WeightedSteeringBehavior>();
+
+        #endregion
+
+        #region Fields - Scipting callbacks
+
         private readonly AMXPublic _onClicked;
         private readonly AMXPublic _onIncomingMessage;
         private readonly AMXPublic _onKeyStateChanged;
         private readonly AMXPublic _onMouseClick;
         private readonly AMXPublic _onUpdate;
-        private readonly Stack<Node> _path = new Stack<Node>();
 
-        private readonly Dictionary<string, WeightedSteeringBehavior> _steeringBehaviors =
-            new Dictionary<string, WeightedSteeringBehavior>();
+        #endregion
 
-        private AudioEmitter _audioEmitter;
-        private Model _model;
-        private SoundEffect _soundEffect;
-        private SoundEffectInstance _soundEffectInstance;
+        #region Fields - Scripting logic
+
         private float _targetRange;
         private float _targetRangeSquared;
+
+        #endregion
+
+        #region Fields - Rendering
+
+        private Model _model;
         private Matrix[] _transforms;
+
+        #endregion
+
+        #region Fields - Audio
+
+        private readonly BasicEffect _basicEffect;
+        private AudioEmitter _audioEmitter;
+        private SoundEffect _soundEffect;
+        private SoundEffectInstance _soundEffectInstance;
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Agent" /> class.
@@ -100,6 +133,10 @@ namespace AIWorld.Entities
             _onIncomingMessage = Script.FindPublic("OnIncomingMessage");
         }
 
+        #endregion
+
+        #region Implementations
+
         #region Implementation of IMessageHandler
 
         /// <summary>
@@ -121,23 +158,71 @@ namespace AIWorld.Entities
                 _goals.Peek().HandleMessage(message, contents);
         }
 
+        /// <summary>
+        ///     Draws a line between the specified points in the specified color.
+        /// </summary>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <param name="color1">The color1.</param>
+        /// <param name="color2">The color2.</param>
+        private void DrawLine(Vector3 point1, Vector3 point2, Color color1, Color color2)
+        {
+            var vertices = new[] { new VertexPositionColor(point1, color1), new VertexPositionColor(point2, color2) };
+            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
+        }
+
         #endregion
 
-        /// <summary>
-        ///     Is called when the user has clicked on this instance.
-        /// </summary>
-        /// <param name="e">The <see cref="MouseClickEventArgs" /> instance containing the event data.</param>
-        /// <returns>True if this instance has handled the input; False otherwise.</returns>
-        public override bool OnClicked(MouseClickEventArgs e)
-        {
-            if (_onClicked == null) return false;
+        #region Implementation of IMovingEntity
 
-            // Push the arguments and call the callback.
-            Script.Push(e.Position.Z);
-            Script.Push(e.Position.X);
-            Script.Push(e.Button);
-            return _onClicked.Execute() == 1;
-        }
+        /// <summary>
+        ///     Gets the velocity.
+        /// </summary>
+        public Vector3 Velocity { get; private set; }
+
+        /// <summary>
+        ///     Gets the mass.
+        /// </summary>
+        [ScriptingFunction]
+        public float Mass { get; set; }
+
+        /// <summary>
+        ///     Gets the heading.
+        /// </summary>
+        [ScriptingFunction]
+        public Vector3 Heading { get; private set; }
+
+        /// <summary>
+        ///     Gets the side.
+        /// </summary>
+        public Vector3 Side { get; private set; }
+
+        /// <summary>
+        ///     Gets the maximum speed.
+        /// </summary>
+        [ScriptingFunction]
+        public float MaxSpeed { get; set; }
+
+        /// <summary>
+        ///     Gets the maximum force.
+        /// </summary>
+        [ScriptingFunction]
+        public float MaxForce { get; set; }
+
+        #endregion
+
+        #region Implementation of IScripted
+
+        /// <summary>
+        ///     Gets the script.
+        /// </summary>
+        public ScriptBox Script { get; private set; }
+
+        #endregion
+
+        #endregion
+
+        #region Overrides
 
         #region Overrides of GameComponent
 
@@ -167,145 +252,6 @@ namespace AIWorld.Entities
         }
 
         #endregion
-
-        /// <summary>
-        ///     Starts the logic of this instance.
-        /// </summary>
-        public void Start()
-        {
-            TryExecuteMain(Script);
-        }
-
-        /// <summary>
-        ///     Attempts to execute the specified <paramref name="amxPublic" />. If it fails, a message will be printed to the
-        ///     in-game
-        ///     console.
-        /// </summary>
-        /// <param name="amxPublic">The AMX public.</param>
-        public void TryExecute(AMXPublic amxPublic)
-        {
-            try
-            {
-                amxPublic.Execute();
-            }
-            catch (Exception e)
-            {
-                _consoleService.WriteLine(Color.Red, e);
-            }
-        }
-
-        /// <summary>
-        ///     Attempts to execute the main function of the specified <paramref name="scriptBox" />. If it fails, a message will
-        ///     be
-        ///     printed to the in-game console.
-        /// </summary>
-        /// <param name="scriptBox">The script box.</param>
-        public void TryExecuteMain(ScriptBox scriptBox)
-        {
-            try
-            {
-                scriptBox.ExecuteMain();
-            }
-            catch (Exception e)
-            {
-                _consoleService.WriteLine(Color.Red, e);
-            }
-        }
-
-        private void game_MouseClick(object sender, MouseClickEventArgs e)
-        {
-            if (_onMouseClick == null || Script == null) return;
-
-            // Push the arguments and call the callback.
-            Script.Push(e.Position.Z);
-            Script.Push(e.Position.X);
-            Script.Push(e.Button);
-
-            _onMouseClick.Execute();
-        }
-
-        private void game_KeyStateChanged(object sender, KeyStateEventArgs e)
-        {
-            if (_onKeyStateChanged == null || Script == null) return;
-
-            // Allocate an array for new keys and old keys in the abstract machine.
-            var newKeys = Script.Allot(e.NewKeys.Length + 1);
-            var oldKeys = Script.Allot(e.OldKeys.Length + 1);
-
-            // Copy the keys to the machine.
-            for (var i = 0; i < e.NewKeys.Length; i++)
-                (newKeys + i).Set((int) e.NewKeys[i]);
-
-            for (var i = 0; i < e.OldKeys.Length; i++)
-                (oldKeys + i).Set((int) e.OldKeys[i]);
-
-            (newKeys + e.NewKeys.Length).Set((int) Keys.None);
-            (oldKeys + e.OldKeys.Length).Set((int) Keys.None);
-
-            // Push the arguments and call the callback.
-            Script.Push(oldKeys);
-            Script.Push(newKeys);
-
-            TryExecute(_onKeyStateChanged);
-
-            // Release the arrays.
-            Script.Release(newKeys);
-            Script.Release(oldKeys);
-        }
-
-        private void goal_Terminated(object sender, EventArgs e)
-        {
-            if (_goals.Count != 0)
-                _goals.Pop();
-        }
-
-        /// <summary>
-        ///     Calculates the steering force based on installed steering behaviors.
-        /// </summary>
-        /// <param name="gameTime">The game time.</param>
-        /// <returns>The summed steering force.</returns>
-        private Vector3 CalculateSteeringForce(GameTime gameTime)
-        {
-            var forces = _steeringBehaviors.Values.Aggregate(Vector3.Zero,
-                (current, behavior) => current + behavior.Calculate(gameTime));
-            return forces.Truncate(MaxForce);
-        }
-
-        /// <summary>
-        ///     Updates the position.
-        /// </summary>
-        /// <param name="gameTime">The game time.</param>
-        private void UpdatePosition(GameTime gameTime)
-        {
-            var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
-            var steeringForce = CalculateSteeringForce(gameTime);
-
-            var acceleration = steeringForce/Mass;
-            Velocity += acceleration*deltaTime;
-
-            Velocity = Velocity.Truncate(MaxSpeed);
-
-            Position += Velocity*deltaTime;
-
-            if (Velocity.LengthSquared() > 0.00001)
-            {
-                Heading = Vector3.Normalize(Velocity);
-                Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
-            }
-        }
-
-        /// <summary>
-        ///     Draws a line between the specified points in the specified color.
-        /// </summary>
-        /// <param name="point1">The point1.</param>
-        /// <param name="point2">The point2.</param>
-        /// <param name="color1">The color1.</param>
-        /// <param name="color2">The color2.</param>
-        private void DrawLine(Vector3 point1, Vector3 point2, Color color1, Color color2)
-        {
-            var vertices = new[] {new VertexPositionColor(point1, color1), new VertexPositionColor(point2, color2)};
-            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
-        }
 
         #region Overrides of GameComponent
 
@@ -390,7 +336,7 @@ namespace AIWorld.Entities
 
         #endregion
 
-        #region Agent API
+        #region Overrides of Entity
 
         /// <summary>
         ///     Gets or sets the identifier.
@@ -399,10 +345,205 @@ namespace AIWorld.Entities
         public override int Id { get; set; }
 
         /// <summary>
+        ///     Gets the name of the script.
+        /// </summary>
+        public string ScriptName { get; private set; }
+
+        /// <summary>
+        ///     Gets the position.
+        /// </summary>
+        [ScriptingFunction]
+        public override Vector3 Position { get; set; }
+
+        /// <summary>
+        ///     Gets or sets the size.
+        /// </summary>
+        [ScriptingFunction]
+        public override float Size { get; set; }
+
+        /// <summary>
+        ///     Is called when the user has clicked on this instance.
+        /// </summary>
+        /// <param name="e">The <see cref="MouseClickEventArgs" /> instance containing the event data.</param>
+        /// <returns>True if this instance has handled the input; False otherwise.</returns>
+        public override bool OnClicked(MouseClickEventArgs e)
+        {
+            if (_onClicked == null) return false;
+
+            // Push the arguments and call the callback.
+            Script.Push(e.Position.Z);
+            Script.Push(e.Position.X);
+            Script.Push(e.Button);
+            return _onClicked.Execute() == 1;
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Methods of Agent
+
+        /// <summary>
+        ///     Starts the logic of this instance.
+        /// </summary>
+        public void Start()
+        {
+            TryExecuteMain(Script);
+        }
+
+        /// <summary>
+        ///     Attempts to execute the specified <paramref name="amxPublic" />. If it fails, a message will be printed to the
+        ///     in-game
+        ///     console.
+        /// </summary>
+        /// <param name="amxPublic">The AMX public.</param>
+        public void TryExecute(AMXPublic amxPublic)
+        {
+            try
+            {
+                amxPublic.Execute();
+            }
+            catch (Exception e)
+            {
+                _consoleService.WriteLine(Color.Red, e);
+            }
+        }
+
+        /// <summary>
+        ///     Attempts to execute the main function of the specified <paramref name="scriptBox" />. If it fails, a message will
+        ///     be
+        ///     printed to the in-game console.
+        /// </summary>
+        /// <param name="scriptBox">The script box.</param>
+        public void TryExecuteMain(ScriptBox scriptBox)
+        {
+            try
+            {
+                scriptBox.ExecuteMain();
+            }
+            catch (Exception e)
+            {
+                _consoleService.WriteLine(Color.Red, e);
+            }
+        }
+
+        /// <summary>
+        ///     Calculates the steering force based on installed steering behaviors.
+        /// </summary>
+        /// <param name="gameTime">The game time.</param>
+        /// <returns>The summed steering force.</returns>
+        private Vector3 CalculateSteeringForce(GameTime gameTime)
+        {
+            var forces = _steeringBehaviors.Values.Aggregate(Vector3.Zero,
+                (current, behavior) => current + behavior.Calculate(gameTime));
+            return forces.Truncate(MaxForce);
+        }
+
+        /// <summary>
+        ///     Updates the position.
+        /// </summary>
+        /// <param name="gameTime">The game time.</param>
+        private void UpdatePosition(GameTime gameTime)
+        {
+            var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
+            var steeringForce = CalculateSteeringForce(gameTime);
+
+            var acceleration = steeringForce/Mass;
+            Velocity += acceleration*deltaTime;
+
+            Velocity = Velocity.Truncate(MaxSpeed);
+
+            Position += Velocity*deltaTime;
+
+            if (Velocity.LengthSquared() > 0.00001)
+            {
+                Heading = Vector3.Normalize(Velocity);
+                Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
+            }
+        }
+
+        #endregion
+
+        #region API - Sound Effect Instructions
+
+        /// <summary>
+        ///     Sets the sound effect.
+        /// </summary>
+        /// <param name="sound">The sound.</param>
+        /// <param name="isLooped">if set to <c>true</c> the sound is looped.</param>
+        /// <param name="volume">The volume.</param>
+        /// <returns>True on success; False otherwise.</returns>
+        [ScriptingFunction]
+        public bool SetSoundEffect(string sound, bool isLooped, float volume)
+        {
+            try
+            {
+                _audioEmitter = new AudioEmitter
+                {
+                    Position = Position,
+                    Forward = Heading,
+                    Up = Vector3.Up,
+                    Velocity = Velocity
+                };
+
+                _soundEffect = Game.Content.Load<SoundEffect>(sound);
+                _soundEffectInstance = _soundEffect.CreateInstance();
+                _soundEffectInstance.IsLooped = isLooped;
+                _soundEffectInstance.Volume = volume;
+                _soundEffectInstance.Apply3D(_cameraService.AudioListener, _audioEmitter);
+                _soundEffectInstance.Play();
+                return true;
+            }
+            catch (Exception e)
+            {
+                _consoleService.WriteLine(Color.Red, e);
+                return false;
+            }
+        }
+
+        /// <summary>
+        ///     Removes the sound effect.
+        /// </summary>
+        [ScriptingFunction]
+        public void RemoveSoundEffect()
+        {
+            if (_soundEffectInstance != null)
+                _soundEffectInstance.Dispose();
+            _soundEffectInstance = null;
+
+            if (_soundEffect != null)
+                _soundEffect.Dispose();
+            _soundEffect = null;
+
+            _audioEmitter = null;
+        }
+
+        #endregion
+
+        #region API - Drawing Instructions
+
+        /// <summary>
         ///     Gets or sets a value indicating whether to draw the path on the path stack.
         /// </summary>
         [ScriptingFunction]
         public bool DrawPath { get; set; }
+
+        /// <summary>
+        ///     Sets the model.
+        /// </summary>
+        /// <param name="modelname">The modelname.</param>
+        [ScriptingFunction]
+        public void SetModel(string modelname)
+        {
+            _model = Game.Content.Load<Model>(modelname);
+
+            _transforms = new Matrix[_model.Bones.Count];
+            _model.CopyAbsoluteBoneTransformsTo(_transforms);
+        }
+
+        #endregion
+
+        #region API - Calculations
 
         /// <summary>
         ///     Gets or sets the target range used by <see cref="IsInTargetRangeOfPoint(Vector3)" />.
@@ -419,22 +560,123 @@ namespace AIWorld.Entities
         }
 
         /// <summary>
-        ///     Gets the script.
+        ///     Determines whether this instance is in range of the specified point.
         /// </summary>
-        public ScriptBox Script { get; private set; }
+        /// <param name="point">The point.</param>
+        /// <param name="range">The range.</param>
+        /// <returns>True if within range; False otherwise.</returns>
+        public bool IsInRangeOfPoint(Vector3 point, float range)
+        {
+            return Vector3.Distance(point, Position) < range;
+        }
 
         /// <summary>
-        ///     Clears the path stack.
+        ///     Determines whether this instance is in target range of the specified point.
         /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns>True if within range; False otherwise.</returns>
+        public bool IsInTargetRangeOfPoint(Vector3 point)
+        {
+            return Vector3.DistanceSquared(point, Position) < _targetRangeSquared;
+        }
+
+        /// <summary>
+        ///     Determines whether this instance is in range of the specified point.
+        /// </summary>
+        /// <param name="x">The x-coordinate of the point.</param>
+        /// <param name="y">The y-coordinate of the point.</param>
+        /// <param name="range">The range.</param>
+        /// <returns>True if within range; False otherwise.</returns>
+        [ScriptingFunction]
+        public bool IsInRangeOfPoint(float x, float y, float range)
+        {
+            return IsInRangeOfPoint(new Vector3(x, 0, y), range);
+        }
+
+        /// <summary>
+        ///     Determines whether this instance is in target range of the specified point.
+        /// </summary>
+        /// <param name="x">The x-coordinate of the point.</param>
+        /// <param name="y">The y-coordinate of the point.</param>
+        /// <returns>True if within range; False otherwise.</returns>
+        [ScriptingFunction]
+        public bool IsInTargetRangeOfPoint(float x, float y)
+        {
+            return IsInTargetRangeOfPoint(new Vector3(x, 0, y));
+        }
+
+        /// <summary>
+        ///     Gets the distance to the specified point.
+        /// </summary>
+        /// <param name="x">The x-coordinate of the point.</param>
+        /// <param name="y">The y-coordinate of the point.</param>
+        /// <returns>The distance to the specified point.</returns>
+        [ScriptingFunction]
+        public float GetDistanceToPoint(float x, float y)
+        {
+            return Vector3.Distance(Position, new Vector3(x, 0, y));
+        }
+
+        #endregion
+
+        #region API - Steering Behaviors
+
+        /// <summary>
+        ///     Adds a steering behavior.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="type">The type.</param>
+        /// <param name="weight">The weight.</param>
+        /// <param name="a">Parameter a.</param>
+        /// <param name="b">Parameter b.</param>
+        /// <param name="c">Parameter c.</param>
+        /// <exception cref="ArgumentNullException">key</exception>
+        /// <exception cref="Exception">Invalid steering behavior</exception>
+        [ScriptingFunction]
+        public void AddSteeringBehavior(string key, SteeringBehaviorType type, float weight, float a, float b, float c)
+        {
+            if (key == null) throw new ArgumentNullException("key");
+
+            switch (type)
+            {
+                case SteeringBehaviorType.Arrive:
+                    _steeringBehaviors[key] =
+                        new WeightedSteeringBehavior(new ArriveSteeringBehavior(this, new Vector3(a, 0, b)), weight);
+                    break;
+                case SteeringBehaviorType.Seek:
+                    _steeringBehaviors[key] =
+                        new WeightedSteeringBehavior(new SeekSteeringBehavior(this, new Vector3(a, 0, b)), weight);
+                    break;
+                case SteeringBehaviorType.ObstacleAvoidance:
+                    _steeringBehaviors[key] = new WeightedSteeringBehavior(new AvoidObstaclesBehavior(this), weight);
+                    break;
+                case SteeringBehaviorType.Explore:
+                    _steeringBehaviors[key] =
+                        new WeightedSteeringBehavior(new ExploreSteeringBehavior(this, new Vector3(a, 0, b)), weight);
+                    break;
+                case SteeringBehaviorType.Wander:
+                    _steeringBehaviors[key] = new WeightedSteeringBehavior(new WanderSteeringBehavior(this, a, b, c),
+                        weight);
+                    break;
+                default:
+                    throw new Exception("Invalid steering behavior");
+            }
+        }
+
+        /// <summary>
+        ///     Removes the specified steering behavior.
+        /// </summary>
+        /// <param name="key">The key of the steering behavior.</param>
         /// <returns>True on success; False otherwise.</returns>
         [ScriptingFunction]
-        public bool ClearPathStack()
+        public bool RemoveSteeringBehavior(string key)
         {
-            if (_path.Count == 0) return false;
-
-            _path.Clear();
-            return true;
+            return _steeringBehaviors.Remove(key);
         }
+
+        #endregion
+
+        #region API - Pathing
 
         /// <summary>
         ///     Pops a node off the path stack.
@@ -533,180 +775,21 @@ namespace AIWorld.Entities
         //TODO: Add path smoothening function
 
         /// <summary>
-        ///     Sets the model.
+        ///     Clears the path stack.
         /// </summary>
-        /// <param name="modelname">The modelname.</param>
-        [ScriptingFunction]
-        public void SetModel(string modelname)
-        {
-            _model = Game.Content.Load<Model>(modelname);
-
-            _transforms = new Matrix[_model.Bones.Count];
-            _model.CopyAbsoluteBoneTransformsTo(_transforms);
-        }
-
-        /// <summary>
-        ///     Adds a steering behavior.
-        /// </summary>
-        /// <param name="key">The key.</param>
-        /// <param name="type">The type.</param>
-        /// <param name="weight">The weight.</param>
-        /// <param name="a">Parameter a.</param>
-        /// <param name="b">Parameter b.</param>
-        /// <param name="c">Parameter c.</param>
-        /// <exception cref="ArgumentNullException">key</exception>
-        /// <exception cref="Exception">Invalid steering behavior</exception>
-        [ScriptingFunction]
-        public void AddSteeringBehavior(string key, SteeringBehaviorType type, float weight, float a, float b, float c)
-        {
-            if (key == null) throw new ArgumentNullException("key");
-
-            switch (type)
-            {
-                case SteeringBehaviorType.Arrive:
-                    _steeringBehaviors[key] =
-                        new WeightedSteeringBehavior(new ArriveSteeringBehavior(this, new Vector3(a, 0, b)), weight);
-                    break;
-                case SteeringBehaviorType.Seek:
-                    _steeringBehaviors[key] =
-                        new WeightedSteeringBehavior(new SeekSteeringBehavior(this, new Vector3(a, 0, b)), weight);
-                    break;
-                case SteeringBehaviorType.ObstacleAvoidance:
-                    _steeringBehaviors[key] = new WeightedSteeringBehavior(new AvoidObstaclesBehavior(this), weight);
-                    break;
-                case SteeringBehaviorType.Explore:
-                    _steeringBehaviors[key] =
-                        new WeightedSteeringBehavior(new ExploreSteeringBehavior(this, new Vector3(a, 0, b)), weight);
-                    break;
-                case SteeringBehaviorType.Wander:
-                    _steeringBehaviors[key] = new WeightedSteeringBehavior(new WanderSteeringBehavior(this, a, b, c),
-                        weight);
-                    break;
-                default:
-                    throw new Exception("Invalid steering behavior");
-            }
-        }
-
-        /// <summary>
-        ///     Sets the sound effect.
-        /// </summary>
-        /// <param name="sound">The sound.</param>
-        /// <param name="isLooped">if set to <c>true</c> the sound is looped.</param>
-        /// <param name="volume">The volume.</param>
         /// <returns>True on success; False otherwise.</returns>
         [ScriptingFunction]
-        public bool SetSoundEffect(string sound, bool isLooped, float volume)
+        public bool ClearPathStack()
         {
-            try
-            {
-                _audioEmitter = new AudioEmitter
-                {
-                    Position = Position,
-                    Forward = Heading,
-                    Up = Vector3.Up,
-                    Velocity = Velocity
-                };
+            if (_path.Count == 0) return false;
 
-                _soundEffect = Game.Content.Load<SoundEffect>(sound);
-                _soundEffectInstance = _soundEffect.CreateInstance();
-                _soundEffectInstance.IsLooped = isLooped;
-                _soundEffectInstance.Volume = volume;
-                _soundEffectInstance.Apply3D(_cameraService.AudioListener, _audioEmitter);
-                _soundEffectInstance.Play();
-                return true;
-            }
-            catch (Exception e)
-            {
-                _consoleService.WriteLine(Color.Red, e);
-                return false;
-            }
+            _path.Clear();
+            return true;
         }
 
-        /// <summary>
-        ///     Removes the sound effect.
-        /// </summary>
-        [ScriptingFunction]
-        public void RemoveSoundEffect()
-        {
-            if (_soundEffectInstance != null)
-                _soundEffectInstance.Dispose();
-            _soundEffectInstance = null;
+        #endregion
 
-            if (_soundEffect != null)
-                _soundEffect.Dispose();
-            _soundEffect = null;
-
-            _audioEmitter = null;
-        }
-
-        /// <summary>
-        ///     Removes the specified steering behavior.
-        /// </summary>
-        /// <param name="key">The key of the steering behavior.</param>
-        /// <returns>True on success; False otherwise.</returns>
-        [ScriptingFunction]
-        public bool RemoveSteeringBehavior(string key)
-        {
-            return _steeringBehaviors.Remove(key);
-        }
-
-        /// <summary>
-        ///     Determines whether this instance is in range of the specified point.
-        /// </summary>
-        /// <param name="point">The point.</param>
-        /// <param name="range">The range.</param>
-        /// <returns>True if within range; False otherwise.</returns>
-        public bool IsInRangeOfPoint(Vector3 point, float range)
-        {
-            return Vector3.Distance(point, Position) < range;
-        }
-
-        /// <summary>
-        ///     Determines whether this instance is in target range of the specified point.
-        /// </summary>
-        /// <param name="point">The point.</param>
-        /// <returns>True if within range; False otherwise.</returns>
-        public bool IsInTargetRangeOfPoint(Vector3 point)
-        {
-            return Vector3.DistanceSquared(point, Position) < _targetRangeSquared;
-        }
-
-        /// <summary>
-        ///     Determines whether this instance is in range of the specified point.
-        /// </summary>
-        /// <param name="x">The x-coordinate of the point.</param>
-        /// <param name="y">The y-coordinate of the point.</param>
-        /// <param name="range">The range.</param>
-        /// <returns>True if within range; False otherwise.</returns>
-        [ScriptingFunction]
-        public bool IsInRangeOfPoint(float x, float y, float range)
-        {
-            return IsInRangeOfPoint(new Vector3(x, 0, y), range);
-        }
-
-        /// <summary>
-        ///     Determines whether this instance is in target range of the specified point.
-        /// </summary>
-        /// <param name="x">The x-coordinate of the point.</param>
-        /// <param name="y">The y-coordinate of the point.</param>
-        /// <returns>True if within range; False otherwise.</returns>
-        [ScriptingFunction]
-        public bool IsInTargetRangeOfPoint(float x, float y)
-        {
-            return IsInTargetRangeOfPoint(new Vector3(x, 0, y));
-        }
-
-        /// <summary>
-        ///     Gets the distance to the specified point.
-        /// </summary>
-        /// <param name="x">The x-coordinate of the point.</param>
-        /// <param name="y">The y-coordinate of the point.</param>
-        /// <returns>The distance to the specified point.</returns>
-        [ScriptingFunction]
-        public float GetDistanceToPoint(float x, float y)
-        {
-            return Vector3.Distance(Position, new Vector3(x, 0, y));
-        }
+        #region API - Goals
 
         /// <summary>
         ///     Adds the specified goal to the goal stack.
@@ -758,63 +841,56 @@ namespace AIWorld.Entities
 
         #endregion
 
-        #region Implementation of IMovingEntity
+        #region Event Listeners of Agent
 
-        /// <summary>
-        ///     Gets the velocity.
-        /// </summary>
-        public Vector3 Velocity { get; private set; }
+        private void game_MouseClick(object sender, MouseClickEventArgs e)
+        {
+            if (_onMouseClick == null || Script == null) return;
 
-        /// <summary>
-        ///     Gets the mass.
-        /// </summary>
-        [ScriptingFunction]
-        public float Mass { get; set; }
+            // Push the arguments and call the callback.
+            Script.Push(e.Position.Z);
+            Script.Push(e.Position.X);
+            Script.Push(e.Button);
 
-        /// <summary>
-        ///     Gets the heading.
-        /// </summary>
-        [ScriptingFunction]
-        public Vector3 Heading { get; private set; }
+            _onMouseClick.Execute();
+        }
 
-        /// <summary>
-        ///     Gets the side.
-        /// </summary>
-        public Vector3 Side { get; private set; }
+        private void game_KeyStateChanged(object sender, KeyStateEventArgs e)
+        {
+            if (_onKeyStateChanged == null || Script == null) return;
 
-        /// <summary>
-        ///     Gets the maximum speed.
-        /// </summary>
-        [ScriptingFunction]
-        public float MaxSpeed { get; set; }
+            // Allocate an array for new keys and old keys in the abstract machine.
+            var newKeys = Script.Allot(e.NewKeys.Length + 1);
+            var oldKeys = Script.Allot(e.OldKeys.Length + 1);
 
-        /// <summary>
-        ///     Gets the maximum force.
-        /// </summary>
-        [ScriptingFunction]
-        public float MaxForce { get; set; }
+            // Copy the keys to the machine.
+            for (var i = 0; i < e.NewKeys.Length; i++)
+                (newKeys + i).Set((int) e.NewKeys[i]);
 
-        #endregion
+            for (var i = 0; i < e.OldKeys.Length; i++)
+                (oldKeys + i).Set((int) e.OldKeys[i]);
 
-        #region Overrides of Entity
+            (newKeys + e.NewKeys.Length).Set((int) Keys.None);
+            (oldKeys + e.OldKeys.Length).Set((int) Keys.None);
 
-        /// <summary>
-        ///     Gets the name of the script.
-        /// </summary>
-        public string ScriptName { get; private set; }
+            // Push the arguments and call the callback.
+            Script.Push(oldKeys);
+            Script.Push(newKeys);
 
-        /// <summary>
-        ///     Gets the position.
-        /// </summary>
-        [ScriptingFunction]
-        public override Vector3 Position { get; set; }
+            TryExecute(_onKeyStateChanged);
 
-        /// <summary>
-        ///     Gets or sets the size.
-        /// </summary>
-        [ScriptingFunction]
-        public override float Size { get; set; }
+            // Release the arrays.
+            Script.Release(newKeys);
+            Script.Release(oldKeys);
+        }
+
+        private void goal_Terminated(object sender, EventArgs e)
+        {
+            if (_goals.Count != 0)
+                _goals.Pop();
+        }
 
         #endregion
+
     }
 }
