@@ -21,6 +21,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using AIWorld.Entities;
+using AIWorld.Events;
+using AIWorld.Planes;
 using AIWorld.Scripting;
 using AIWorld.Services;
 using AMXWrapper;

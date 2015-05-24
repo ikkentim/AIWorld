@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace AIWorld
+namespace AIWorld.Entities
 {
     /// <summary>
     ///     Contains methods for objects which can handle messages.

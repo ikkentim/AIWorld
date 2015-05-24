@@ -16,7 +16,7 @@
 using System;
 using Microsoft.Xna.Framework;
 
-namespace AIWorld
+namespace AIWorld.Events
 {
     public class MouseClickEventArgs : EventArgs
     {

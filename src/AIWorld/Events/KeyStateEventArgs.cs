@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework.Input;
 
-namespace AIWorld
+namespace AIWorld.Events
 {
     public class KeyStateEventArgs : EventArgs
     {

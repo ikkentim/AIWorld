@@ -15,8 +15,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using AIWorld.Core;
+using AIWorld.Events;
+using AIWorld.Goals;
 using AIWorld.Helpers;
 using AIWorld.Scripting;
 using AIWorld.Services;
@@ -26,13 +30,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 
 namespace AIWorld.Entities
 {
     /// <summary>
     ///     Represents a scriptable in-game agent.
     /// </summary>
-    public class Agent : Entity, IMovingEntity, IScripted, IMessageHandler
+    public class Agent : Entity, IMovingEntity, IScripted, IMessageHandler, IHitable
     {
         #region Fields
 
@@ -56,6 +61,7 @@ namespace AIWorld.Entities
         #region Fields - Scipting callbacks
 
         private readonly AMXPublic _onClicked;
+        private readonly AMXPublic _onHit;
         private readonly AMXPublic _onIncomingMessage;
         private readonly AMXPublic _onKeyStateChanged;
         private readonly AMXPublic _onMouseClick;
@@ -72,13 +78,14 @@ namespace AIWorld.Entities
 
         #region Fields - Rendering
 
+        private readonly Dictionary<ModelMesh, MeshData> _meshInfo = new Dictionary<ModelMesh, MeshData>();
         private Model _model;
         private Matrix[] _transforms;
-
         #endregion
 
         #region Fields - Audio
 
+        private readonly Dictionary<SoundEffectInstance, AudioEmitter> _sounds = new Dictionary<SoundEffectInstance, AudioEmitter>(); 
         private readonly BasicEffect _basicEffect;
         private AudioEmitter _audioEmitter;
         private SoundEffect _soundEffect;
@@ -128,6 +135,7 @@ namespace AIWorld.Entities
             // Load scripting callbacks
             _onUpdate = Script.FindPublic("OnUpdate");
             _onClicked = Script.FindPublic("OnClicked");
+            _onHit = Script.FindPublic("OnHit");
             _onMouseClick = Script.FindPublic("OnMouseClick");
             _onKeyStateChanged = Script.FindPublic("OnKeyStateChanged");
             _onIncomingMessage = Script.FindPublic("OnIncomingMessage");
@@ -220,6 +228,21 @@ namespace AIWorld.Entities
 
         #endregion
 
+        #region Implementation of Ihittable
+
+        public void Hit(Projectile projectile)
+        {
+            if (projectile == null) throw new ArgumentNullException("projectile");
+            if (_onHit != null)
+            {
+                Script.Push(projectile.Damage);
+                Script.Push(projectile.Caster.Id);
+                _onHit.Execute();
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region Overrides
@@ -251,10 +274,6 @@ namespace AIWorld.Entities
             base.Dispose(disposing);
         }
 
-        #endregion
-
-        #region Overrides of GameComponent
-
         /// <summary>
         ///     Updates this instance.
         /// </summary>
@@ -281,6 +300,12 @@ namespace AIWorld.Entities
                 _soundEffectInstance.Apply3D(_cameraService.AudioListener, _audioEmitter);
             }
 
+            foreach (var pair in _sounds.Where(p => p.Key.State == SoundState.Stopped).ToArray())
+            {
+                _sounds.Remove(pair.Key);
+                pair.Key.Dispose();
+            }
+
             base.Update(gameTime);
         }
 
@@ -296,17 +321,38 @@ namespace AIWorld.Entities
         {
             if (_model != null)
             {
-                foreach (var mesh in _model.Meshes)
+                if (_meshInfo.Count == 0)
                 {
-                    foreach (var effect in mesh.Effects.Cast<BasicEffect>())
+                    foreach (var mesh in _model.Meshes)
                     {
-                        effect.World = _transforms[mesh.ParentBone.Index]*Matrix.CreateRotationY(Heading.GetYAngle())*
-                                       Matrix.CreateTranslation(Position);
-                        effect.View = _cameraService.View;
-                        effect.Projection = _cameraService.Projection;
-                        effect.EnableDefaultLighting();
+                        foreach (var effect in mesh.Effects.Cast<BasicEffect>())
+                        {
+                            effect.World = _transforms[mesh.ParentBone.Index]*
+                                           Matrix.CreateRotationY(Heading.GetYAngle())*
+                                           Matrix.CreateTranslation(Position);
+                            effect.View = _cameraService.View;
+                            effect.Projection = _cameraService.Projection;
+                            effect.EnableDefaultLighting();
+                        }
+                        mesh.Draw();
                     }
-                    mesh.Draw();
+                }
+                else
+                {
+                    foreach (var pair in _meshInfo.Where(pair => pair.Value.IsVisible))
+                    {
+                        foreach (var effect in pair.Key.Effects.Cast<BasicEffect>())
+                        {
+                            effect.World = _transforms[pair.Key.ParentBone.Index]*
+                                           pair.Value.Matrix*
+                                           Matrix.CreateRotationY(Heading.GetYAngle())*
+                                           Matrix.CreateTranslation(Position);
+                            effect.View = _cameraService.View;
+                            effect.Projection = _cameraService.Projection;
+                            effect.EnableDefaultLighting();
+                        }
+                        pair.Key.Draw();
+                    }
                 }
             }
 
@@ -464,6 +510,8 @@ namespace AIWorld.Entities
 
         #endregion
 
+        #region API
+
         #region API - Sound Effect Instructions
 
         /// <summary>
@@ -501,6 +549,35 @@ namespace AIWorld.Entities
             }
         }
 
+        [ScriptingFunction]
+        public bool PlaySound(string sound, float volume, float x, float y)
+        {
+            try
+            {
+                var audioEmitter = new AudioEmitter
+                {
+                    Position = new Vector3(x, 0, y),
+                    Up = Vector3.Up,
+                    Forward = Vector3.Right,
+                    Velocity = Vector3.Forward
+                };
+
+                var soundEffect = Game.Content.Load<SoundEffect>(sound);
+                
+                var soundEffectInstance = soundEffect.CreateInstance();
+                soundEffectInstance.IsLooped = false;
+                soundEffectInstance.Volume = volume;
+                soundEffectInstance.Apply3D(_cameraService.AudioListener, audioEmitter);
+                soundEffectInstance.Play();
+
+                _sounds[soundEffectInstance] = audioEmitter;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
         /// <summary>
         ///     Removes the sound effect.
         /// </summary>
@@ -539,6 +616,69 @@ namespace AIWorld.Entities
 
             _transforms = new Matrix[_model.Bones.Count];
             _model.CopyAbsoluteBoneTransformsTo(_transforms);
+        }
+
+        MeshData GetMeshData(string mesh)
+        {
+            var key = _meshInfo.Select(p => p.Key).FirstOrDefault(k => k.Name == mesh);
+
+            if (key == null)
+            {
+                key = _model.Meshes.FirstOrDefault(m => m.Name == mesh);
+
+                if (key == null)
+                    return null;
+
+                return _meshInfo[key] = new MeshData(Vector3.Zero,Vector3.Zero, Vector3.One);
+            }
+
+            return _meshInfo[key];
+        }
+
+        [ScriptingFunction]
+        public void ResetMeshData()
+        {
+            _meshInfo.Clear();
+        }
+
+        [ScriptingFunction]
+        public bool SetMeshVisible(string mesh, bool toggle)
+        {
+            var info = GetMeshData(mesh);
+            if (info == null) return false;
+
+            info.IsVisible = toggle;
+            return true;
+        }
+
+        [ScriptingFunction]
+        public bool SetMeshTranslation(string mesh, float x, float y, float z)
+        {
+            var info = GetMeshData(mesh);
+            if (info == null) return false;
+
+            info.Translation = new Vector3(x, y, z);
+            return true;
+        }
+
+        [ScriptingFunction]
+        public bool SetMeshScale(string mesh, float x, float y, float z)
+        {
+            var info = GetMeshData(mesh);
+            if (info == null) return false;
+
+            info.Scale = new Vector3(x, y, z);
+            return true;
+        }
+
+        [ScriptingFunction]
+        public bool SetMeshRotation(string mesh, float x, float y, float z)
+        {
+            var info = GetMeshData(mesh);
+            if (info == null) return false;
+
+            info.Rotation = new Vector3(x, y, z);
+            return true;
         }
 
         #endregion
@@ -615,6 +755,45 @@ namespace AIWorld.Entities
         public float GetDistanceToPoint(float x, float y)
         {
             return Vector3.Distance(Position, new Vector3(x, 0, y));
+        }
+
+        public Vector3 PointToLocal(Vector3 point)
+        {
+            return Transform.ToLocalSpace(Position, Heading, Vector3.Up, Side, point);
+        }
+
+        [ScriptingFunction]
+        public void PointToLocal(float x, float y, out float lx, out float ly)
+        {
+            var local = PointToLocal(new Vector3(x, 0, y));
+            lx = local.X;
+            ly = local.Z;
+        }
+
+        public Vector3 PointToWorld(Vector3 point)
+        {
+            return Transform.PointToWorldSpace(Position, Heading, Vector3.Up, Side, point);
+        }
+
+        [ScriptingFunction]
+        public void PointToWorld(float x, float y, out float wx, out float wy)
+        {
+            var local = PointToWorld(new Vector3(x, 0, y));
+            wx = local.X;
+            wy = local.Z;
+        }
+
+        public Vector3 VectorToWorld(Vector3 vector)
+        {
+            return Transform.VectorToWorldSpace(Heading, Vector3.Up, Side, vector);
+        }
+
+        [ScriptingFunction]
+        public void VectorToWorld(float x, float y, out float vx, out float vy)
+        {
+            var local = VectorToWorld(new Vector3(x, 0, y));
+            vx = local.X;
+            vy = local.Z;
         }
 
         #endregion
@@ -838,6 +1017,136 @@ namespace AIWorld.Entities
         {
             return _goals.Sum(g => GetGoalCount(g, includingSubgoals));
         }
+
+        [ScriptingFunction]
+        public int CallPublicFunction(AMXArgumentList arguments)
+        {
+            if (arguments.Length < 2)
+                return 0;
+
+            var function = arguments[0].AsString();
+            var format = arguments[1].AsString();
+            var publicFunction = Script.Publics.ContainsKey(function) ? Script.Publics[function] : null;
+            var result = 0;
+
+            // Call in top goal
+            if (_goals.Count > 0)
+            {
+                var goal = _goals.Peek().GetActiveGoal() as Goal;
+
+                if (goal != null)
+                {
+                    var strings = new List<CellPtr>();
+                    var goalPublicFunction = goal.Script.Publics.ContainsKey(function)
+                        ? goal.Script.Publics[function]
+                        : null;
+                    if (goalPublicFunction != null)
+                    {
+                        var i = 2;
+                        var pars = new List<object>();
+                        foreach (var t in format.TakeWhile(t => i < arguments.Length))
+                        {
+                            switch (t)
+                            {
+                                case 'd':
+                                case 'i':
+                                case 'f':
+                                    pars.Add(arguments[i++].AsCellPtr().Get());
+                                    break;
+                                case 's':
+                                    pars.Add(arguments[i++].AsString());
+                                    break;
+                            }
+                        }
+
+                        pars.Reverse();
+                        foreach (var p in pars)
+                        {
+                            if (p is string)
+                                strings.Add(Script.Push(p as string));
+                            else
+                                Script.Push((Cell)p);
+                        }
+
+                        try
+                        {
+                            result = goalPublicFunction.Execute();
+                        }
+                        catch (Exception e)
+                        {
+                            _consoleService.WriteLine(Color.Red, e);
+                        }
+
+                        foreach (var str in strings)
+                            goal.Script.Release(str);
+                    }
+                }
+            }
+
+            // Prefer agent script as result (last to call)
+            if (publicFunction != null)
+            {
+                var strings = new List<CellPtr>();
+                var i = 2;
+
+                var pars = new List<object>();
+                foreach (var t in format.TakeWhile(t => i < arguments.Length))
+                {
+                    switch (t)
+                    {
+                        case 'd':
+                        case 'i':
+                        case 'f':
+                            pars.Add(arguments[i++].AsCellPtr().Get());
+                            break;
+                        case 's':
+                            pars.Add(arguments[i++].AsString());
+                            break;
+                    }
+                }
+
+                pars.Reverse();
+                foreach (var p in pars)
+                {
+                    if (p is string)
+                        strings.Add(Script.Push(p as string));
+                    else
+                        Script.Push((Cell) p);
+                }
+
+                try
+                {
+                    result = publicFunction.Execute();
+                }
+                catch (Exception e)
+                {
+                    _consoleService.WriteLine(Color.Red, e);
+                }
+
+                foreach (var str in strings)
+                    Script.Release(str);
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region API - Actions
+
+        [ScriptingFunction]
+        public int SpawnProjectile(string name, float size, float lifeTime, float x, float y, float z, float hx, float hy, float sx, float sy, float sz, float rx, float ry, float rz, float tx, float ty, float tz, string meshes)
+        {
+            // Create the entity and return the id.
+            var obj = new Projectile(Game, this, name, size, lifeTime, new Vector3(x, y, z), new Vector3(rx, ry, rz),
+                new Vector3(tx, ty, tz), new Vector3(sx, sy, sz), new Vector3(hx, 0, hy),
+                meshes.Split(',').Select(v => v.Trim()).Where(v => v.Length > 0));
+
+            _gameWorldService.Add(obj);
+
+            return obj.Id;
+        }
+
+        #endregion
 
         #endregion
 

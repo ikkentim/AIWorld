@@ -14,7 +14,9 @@
 // limitations under the License.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using AIWorld.Events;
 using AIWorld.Services;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -24,7 +26,7 @@ namespace AIWorld.Entities
     /// <summary>
     ///     Represents a world object.
     /// </summary>
-    public class WorldObject : Entity
+    public class WorldObject : Entity, IHitable
     {
         private readonly ICameraService _cameraService;
         private readonly ModelMesh[] _meshes;
@@ -115,6 +117,11 @@ namespace AIWorld.Entities
         public override bool OnClicked(MouseClickEventArgs e)
         {
             return false;
+        }
+
+        public void Hit(Projectile projectile)
+        {
+            // Just drop the projectile. Keep object intact.
         }
 
         #endregion

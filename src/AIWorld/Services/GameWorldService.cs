@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 using AIWorld.Core;
 using AIWorld.Entities;
+using AIWorld.Planes;
 using AIWorld.Scripting;
 using AMXWrapper;
 using Microsoft.Xna.Framework;

@@ -16,6 +16,7 @@
 using System;
 using AIWorld.Core;
 using AIWorld.Entities;
+using AIWorld.Planes;
 using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 

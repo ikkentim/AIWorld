@@ -3,6 +3,7 @@
 #endif
 #define _math_included
 
+#include <a_logging>
 #define PI              (3.14159265359)
 
 #define RAD2DEG(%0)     (%0 * (180 / PI))
@@ -14,6 +15,9 @@
 \**--------------------------------------------------------------------------**/
 native Float:frand();
 
+// float.inc additions
+native Float:floatatan2(Float:a, Float:b);
+
 /**--------------------------------------------------------------------------**\
 <summary>Generates a pseudo-random float value between the specified boundaries.</summary>
 <param name="min">The minimum value.</param>
@@ -23,10 +27,13 @@ native Float:frand();
 stock Float:frandom(Float:min, Float:max)
     return frand() * (max-min) + min;
 
-    /**--------------------------------------------------------------------------**\
-    <summary>Gets the absolute value of the specified value.</summary>
-    <param name="value">The value.</param>
-    <returns>The absolute value.</returns>
-    \**--------------------------------------------------------------------------**/
+//TODO: Add docs
+stock Float:fclamp(Float:min, Float:max, Float:value)
+    return value < min ? min : (value > max ? max : value);
+/**--------------------------------------------------------------------------**\
+<summary>Gets the absolute value of the specified value.</summary>
+<param name="value">The value.</param>
+<returns>The absolute value.</returns>
+\**--------------------------------------------------------------------------**/
 stock Float:fabs(Float:value)
     return value < 0 ? -value : value;

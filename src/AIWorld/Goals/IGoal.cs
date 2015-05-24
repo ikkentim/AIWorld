@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using AIWorld.Entities;
 using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 
-namespace AIWorld
+namespace AIWorld.Goals
 {
     public interface IGoal : IEnumerable<IGoal>, IScriptingNatives, IMessageHandler
     {
@@ -14,6 +15,7 @@ namespace AIWorld
         void Pause();
         void Terminate();
         void AddSubgoal(IGoal goal);
+        IGoal GetActiveGoal();
         event EventHandler Terminated;
     }
 }

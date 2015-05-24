@@ -22,7 +22,7 @@ using AIWorld.Services;
 using AMXWrapper;
 using Microsoft.Xna.Framework;
 
-namespace AIWorld
+namespace AIWorld.Goals
 {
     public class Goal : Stack<IGoal>, IGoal, IScripted, IDisposable
     {
@@ -165,6 +165,11 @@ namespace AIWorld
             goal.Terminated += GoalTerminated;
             Push(goal);
             goal.Activate();
+        }
+
+        public IGoal GetActiveGoal()
+        {
+            return Count > 0 ? Peek().GetActiveGoal() : this;
         }
 
         [ScriptingFunction]

@@ -54,6 +54,11 @@ namespace AMXWrapper
             Set(value.AsInt32());
         }
 
+        public Cell AsCell()
+        {
+            return new Cell(_value.ToInt32());
+        }
+
         public static CellPtr operator +(CellPtr cellPtr, int offset)
         {
             return new CellPtr(IntPtr.Add(cellPtr.Value, offset*Marshal.SizeOf(typeof (Cell))));

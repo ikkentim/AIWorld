@@ -17,7 +17,7 @@ using AIWorld.Services;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace AIWorld
+namespace AIWorld.Planes
 {
     public class QuadPlane : DrawableGameComponent
     {

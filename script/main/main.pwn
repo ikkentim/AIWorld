@@ -104,10 +104,10 @@ CreateObjects()
 
     AddGameObject("models/house02", HOUSE_SIZE, 1.5, 3.8, DEFAULT_SCALE, 0, DEG2RAD(90));
     AddGameObject("models/house02", HOUSE_SIZE, 1.5, 2.0, DEFAULT_SCALE, 0, DEG2RAD(90));
-    AddGameObject("models/supermarket", HOUSE_SIZE, 1.5, 0.0, 0.5, 0.5, 0.5, 0, DEG2RAD(90));
+    AddGameObject("models/supermarket", HOUSE_SIZE*2, 1.5, 0.0, 0.5, 0.5, 0.5, 0, DEG2RAD(90));
 
 
-    AddGameObject("models/tank", 0.0001, 0, 0, 0.1,0.1,0.1, 0, DEG2RAD(-90));
+    //AddGameObject("models/tank", 0.0001, 0, 0, 0.1,0.1,0.1, 0, DEG2RAD(-90));
 }
 
 CreateGroundGraph()
@@ -163,5 +163,6 @@ CreateRoads()
 CreateAgents()
 {
     //AddAgent("car", frandom(-5,5), frandom(-5,5));
-    AddAgent("car",0,0);
+    AddAgent("tank",3,10, "tx,ty", 10.0, 12.0);
+    AddAgent("tank",10,12, "tx,ty", 3.0, 10.0);
 }

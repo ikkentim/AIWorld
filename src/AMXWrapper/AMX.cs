@@ -219,9 +219,15 @@ namespace AMXWrapper
         /// <param name="disposing">Whether managed resources should be disposed.</param>
         protected override void Dispose(bool disposing)
         {
-            _natives.Clear();
-            AMXCall.Cleanup(ref _amx);
-            Marshal.FreeHGlobal(_code);
+            if (disposing)
+            {
+                _natives.Clear();
+            }
+            if (_codeLength > 0)
+            {
+                AMXCall.Cleanup(ref _amx);
+                Marshal.FreeHGlobal(_code);
+            }
         }
 
         private delegate int LibraryLoader(ref AMXStruct amx);

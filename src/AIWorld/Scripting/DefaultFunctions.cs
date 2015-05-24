@@ -112,6 +112,22 @@ namespace AIWorld.Scripting
             return (float) _random.NextDouble();
         }
 
+        [ScriptingFunction("floatatan2")]
+        public float FloatAtan2(float y, float x)
+        {
+            return (float) Math.Atan2(y, x);
+        }
+
+        [ScriptingFunction("floatsin2")]
+        public float FloatSin2(float a)
+        {
+            return (float)Math.Sin(a);
+        }
+        [ScriptingFunction("floatcos2")]
+        public float FloatCos2(float a)
+        {
+            return (float)Math.Cos(a);
+        }
         /// <summary>
         /// Gets the distance between the specified points..
         /// </summary>

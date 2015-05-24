@@ -125,6 +125,13 @@ native GetPathStackSize();
 \** ************************************************************************ **/
 native SetModel(const value[]);
 
+//TODO: Add documentation
+native ResetMeshData();
+native SetMeshVisible(const mesh[], toggle);
+native SetMeshTranslation(const mesh[], Float:x, Float:y, Float:z);
+native SetMeshScale(const mesh[], Float:x, Float:y, Float:z);
+native SetMeshRotation(const mesh[], Float:x, Float:y, Float:z);
+
 /** ************************************************************************ **\
 <summary>Sets the mass of this agent.</summary>
 <param name="value">The mass of this agent.</param>
@@ -325,6 +332,21 @@ native SetSoundEffect(const sound[], isLooped=false, Float:volume=1.0);
 \** ************************************************************************ **/
 native RemoveSoundEffect();
 
+//TODO: Add documentation
+native PlaySound(const sound[], Float:volume, Float:x, Float:y);
+
+native PointToLocal(Float:x, Float:y, &Float:lx, &Float:ly);
+native PointToWorld(Float:x, Float:y, &Float:wx, &Float:wy);
+native VectorToWorld(Float:x, Float:y, &Float:vx, &Float:vy);
+
+native CallPublicFunction(const function[], const format[], {Float,_}:...);
+
+native SpawnProjectile(const name[], Float:size, Float:life,
+    Float:x, Float:y, Float:z,
+    Float:hx, Float:hy, Float:sx = 1.0, Float:sy = 1.0, Float:sz = 1.0,
+    Float:rx = 0.0, Float:ry = 0.0, Float:rz = 0.0, Float:tx = 0.0,
+    Float:ty = 0.0, Float:tz = 0.0, const meshes[] = '''');
+
 /** ************************************************************************ **\
 <summary>This callback is called every time this actor gets updated.</summary>
 <param name="elapsed">Elapsed seconds since last update.</param>
@@ -369,3 +391,6 @@ forward OnClicked(button, Float:x, Float:y);
 <returns>This callback does not handle return values.</returns>
 \** ************************************************************************ **/
 forward OnIncomingMessage(message, contents);
+
+//TODO: Add docs
+forward OnHit(hitid, Float:damage);
