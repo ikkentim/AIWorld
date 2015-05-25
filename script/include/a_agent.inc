@@ -347,6 +347,14 @@ native SpawnProjectile(const name[], Float:size, Float:life,
     Float:rx = 0.0, Float:ry = 0.0, Float:rz = 0.0, Float:tx = 0.0,
     Float:ty = 0.0, Float:tz = 0.0, const meshes[] = '''');
 
+native SetVar(const key[], value);
+native SetVarFloat(const key[], Float:value);
+native SetVarstring(const key[], value[]);
+native DeleteVar(const key[]);
+native GetVar(const key[]);
+native GetVarFloat(const key[]);
+native GetVarString(const key[], value[], len);
+
 /** ************************************************************************ **\
 <summary>This callback is called every time this actor gets updated.</summary>
 <param name="elapsed">Elapsed seconds since last update.</param>

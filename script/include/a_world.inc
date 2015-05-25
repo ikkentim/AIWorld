@@ -131,6 +131,14 @@ native FindNearestWorldObject(Float:x, Float:y, const model[] = '''');
 \** ************************************************************************ **/
 native FindNearestAgent(Float:x, Float:y, const scriptname[]);
 
+native SetAgentVar(agentid, const key[], value);
+native SetAgentVarFloat(agentid, const key[], Float:value);
+native SetAgentVarstring(agentid, const key[], value[]);
+native DeleteAgentVar(agentid, const key[]);
+native GetAgentVar(agentid, const key[]);
+native GetAgentVarFloat(agentid, const key[]);
+native GetAgentVarString(agentid, const key[], value[], len);
+
 /** ************************************************************************ **\
 <summary>
     Sents the specified message to the specified agent and it's goals.

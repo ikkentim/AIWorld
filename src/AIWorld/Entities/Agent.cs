@@ -14,6 +14,7 @@
 // limitations under the License.
 
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -53,6 +54,7 @@ namespace AIWorld.Entities
 
         private readonly Stack<IGoal> _goals = new Stack<IGoal>();
         private readonly Stack<Node> _path = new Stack<Node>();
+        private readonly Dictionary<string,object> _variables = new Dictionary<string, object>(); 
         private readonly Dictionary<string, WeightedSteeringBehavior> _steeringBehaviors =
             new Dictionary<string, WeightedSteeringBehavior>();
 
@@ -1144,6 +1146,65 @@ namespace AIWorld.Entities
             _gameWorldService.Add(obj);
 
             return obj.Id;
+        }
+
+        #endregion
+
+        #region API - Variables
+
+        [ScriptingFunction]
+        public void SetVar(string key, int value)
+        {
+            _variables[key] = value;
+        }
+
+        [ScriptingFunction]
+        public void SetVarFloat(string key, float value)
+        {
+            _variables[key] = value;
+        }
+
+        [ScriptingFunction]
+        public void SetVarString(string key, string value)
+        {
+            _variables[key] = value;
+        }
+
+        [ScriptingFunction]
+        public bool DeleteVar(string key)
+        {
+            return _variables.Remove(key);
+        }
+
+        [ScriptingFunction]
+        public int GetVar(string key)
+        {
+            if (!_variables.ContainsKey(key) || !(_variables[key] is int))
+                return 0;
+            return (int)_variables[key];
+        }
+
+        [ScriptingFunction]
+        public float GetVarFloat(string key)
+        {
+            if (!_variables.ContainsKey(key) || !(_variables[key] is float))
+                return 0;
+
+            return (float)_variables[key];
+        }
+
+        [ScriptingFunction]
+        public int GetVarString(string key, CellPtr retval, int length)
+        {
+            if (!_variables.ContainsKey(key) || !(_variables[key] is string))
+                return -1;
+
+            if (--length <= 0) return -1;
+
+            var value = (string) _variables[key];
+            AMX.SetString(retval, value.Length > length ? value.Substring(0, length) : value, false);
+
+            return value.Length;
         }
 
         #endregion

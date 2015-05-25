@@ -50,6 +50,7 @@ namespace AIWorld
         private IConsoleService _consoleService;
         private IGameWorldService _gameWorldService;
         private IDrawingService _drawingService;
+        private IParticleService _particleService;
         private KeyboardState _lastKeyboardState;
         private MouseState _lastMouseState;
         private int _lastScroll;
@@ -87,11 +88,13 @@ namespace AIWorld
             Services.AddService(typeof (ICameraService), _cameraService = new CameraService(this));
             Services.AddService(typeof(IGameWorldService), _gameWorldService = new GameWorldService(this, _cameraService));
             Services.AddService(typeof(IDrawingService), _drawingService = new DrawingService(this, _cameraService));
+            Services.AddService(typeof(IParticleService), _particleService = new ParticleService(this));
 
             Components.Add(_consoleService);
             Components.Add(_cameraService);
             Components.Add(_gameWorldService);
             Components.Add(_drawingService);
+            Components.Add(_particleService);
 
             // Set up the script and let it handle further setup.
             try

@@ -35,6 +35,8 @@ namespace AIWorld.Services
         private readonly Dictionary<string, Graph> _graphsByName = new Dictionary<string, Graph>();
         private int _entityId;
 
+        #region Constructors
+
         public GameWorldService(Game game, ICameraService cameraService) : base(game)
         {
             if (cameraService == null) throw new ArgumentNullException("cameraService");
@@ -42,6 +44,8 @@ namespace AIWorld.Services
             _cameraService = cameraService;
             _basicEffect = new BasicEffect(GraphicsDevice);
         }
+
+        #endregion
 
         #region Overrides of GameComponent
 
@@ -62,10 +66,16 @@ namespace AIWorld.Services
             base.Dispose(disposing);
         }
 
+        public override void Update(GameTime gameTime)
+        {
+            base.Update(gameTime);
+
+            _entities.FixPositions();
+        }
+
         #endregion
 
-        [ScriptingFunction]
-        public bool DrawGraphs { get; set; }
+        #region Implementation of IGameWorldService
 
         public QuadTree Entities
         {
@@ -92,7 +102,7 @@ namespace AIWorld.Services
             Game.Components.Add(plane);
         }
 
-        [ScriptingFunction]
+        [ScriptingFunction] // Also available to API
         public bool CreateGraph(string name)
         {
             if (name == null || _graphsByName.ContainsKey(name)) return false;
@@ -101,93 +111,35 @@ namespace AIWorld.Services
             return true;
         }
 
-        [ScriptingFunction]
-        public void SetTarget(float x, float y)
+        #endregion
+
+        #region Methods of GameWorldService
+
+        /// <summary>
+        ///     Draws a line between the specified points in the specified color.
+        /// </summary>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <param name="color1">The color1.</param>
+        /// <param name="color2">The color2.</param>
+        private void DrawLine(Vector3 point1, Vector3 point2, Color color1, Color color2)
         {
-            _cameraService.SetTarget(new Vector3(x, 0, y));
-        }
-
-        [ScriptingFunction]
-        public void SetTargetEntity(int id)
-        {
-            var entity = _entities.FirstOrDefault(a => a.Id == id);
-            _cameraService.SetTarget(entity);
-        }
-
-        [ScriptingFunction]
-        public bool GetEntityPosition(int id, out float x, out float y)
-        {
-            var entity = _entities.FirstOrDefault(a => a.Id == id);
-
-            if (entity == null)
-            {
-                x = 0;
-                y = 0;
-                return false;
-            }
-
-            x = entity.Position.X;
-            y = entity.Position.Z;
-            return true;
-        }
-
-        [ScriptingFunction]
-        public int FindNearestWorldObject(float x, float y, string model)
-        {
-            var result = _entities.OfType<WorldObject>()
-                .Where(w => model.Length == 0 || w.ModelName == model)
-                .OrderBy(w => Vector3.DistanceSquared(w.Position, new Vector3(x, 0, y)))
-                .FirstOrDefault();
-
-            return result == null ? -1 : result.Id;
-        }
-
-        [ScriptingFunction]
-        public int FindNearestAgent(float x, float y, string scriptName)
-        {
-            var result = _entities.OfType<Agent>()
-                .Where(a => a.ScriptName == scriptName)
-                .OrderBy(a => Vector3.DistanceSquared(a.Position, new Vector3(x, 0, y)))
-                .FirstOrDefault();
-
-            return result == null ? -1 : result.Id;
-        }
-
-        [ScriptingFunction]
-        public bool SendMessage(int id, int message, int contents)
-        {
-            var entity = _entities.FirstOrDefault(a => a.Id == id);
-            var messageHandler = entity as IMessageHandler;
-
-            if (messageHandler == null) return false;
-
-            messageHandler.HandleMessage(message, contents);
-            return true;
-        }
-
-        [ScriptingFunction]
-        public int SendMessageToAll(int message, int contents)
-        {
-            var messageHandlers = _entities.OfType<IMessageHandler>();
-
-            var enumerable = messageHandlers as IMessageHandler[] ?? messageHandlers.ToArray();
-
-            foreach (var messageHandler in enumerable)
-                messageHandler.HandleMessage(message, contents);
-
-            return enumerable.Count();
-        }
-
-        #region Overrides of GameComponent
-
-        public override void Update(GameTime gameTime)
-        {
-            base.Update(gameTime);
-
-            _entities.FixPositions();
+            var vertices = new[] { new VertexPositionColor(point1, color1), new VertexPositionColor(point2, color2) };
+            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
 
         #endregion
+
+        #region API
+
+        #region API - Debugging
+
+        [ScriptingFunction]
+        public bool DrawGraphs { get; set; }
+
+        #endregion
+
+        #region API - Graphs
 
         [ScriptingFunction]
         public int GetClosestNode(string key, float x, float y, out float nx, out float ny)
@@ -282,36 +234,188 @@ namespace AIWorld.Services
             return graph.Keys.Count - init;
         }
 
-        private void Line(Vector3 a, Vector3 b, Color c, Color d)
+        #endregion
+
+        #region API - Camera
+
+        [ScriptingFunction]
+        public void SetTarget(float x, float y)
         {
-            var vertices = new[] {new VertexPositionColor(a, c), new VertexPositionColor(b, d)};
-            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
+            _cameraService.SetTarget(new Vector3(x, 0, y));
         }
+
+        [ScriptingFunction]
+        public void SetTargetEntity(int id)
+        {
+            var entity = _entities.FirstOrDefault(a => a.Id == id);
+            _cameraService.SetTarget(entity);
+        }
+
+        #endregion
+
+        #region API - Entity
+
+        [ScriptingFunction]
+        public bool GetEntityPosition(int id, out float x, out float y)
+        {
+            var entity = _entities.FirstOrDefault(a => a.Id == id);
+
+            if (entity == null)
+            {
+                x = 0;
+                y = 0;
+                return false;
+            }
+
+            x = entity.Position.X;
+            y = entity.Position.Z;
+            return true;
+        }
+
+        #endregion
+
+        #region API - WorldObject
+
+        [ScriptingFunction]
+        public int FindNearestWorldObject(float x, float y, string model)
+        {
+            var result = _entities.OfType<WorldObject>()
+                .Where(w => model.Length == 0 || w.ModelName == model)
+                .OrderBy(w => Vector3.DistanceSquared(w.Position, new Vector3(x, 0, y)))
+                .FirstOrDefault();
+
+            return result == null ? -1 : result.Id;
+        }
+
+        #endregion
+
+        #region API - Agent
+
+        [ScriptingFunction]
+        public int FindNearestAgent(float x, float y, string scriptName)
+        {
+            var result = _entities.OfType<Agent>()
+                .Where(a => a.ScriptName == scriptName)
+                .OrderBy(a => Vector3.DistanceSquared(a.Position, new Vector3(x, 0, y)))
+                .FirstOrDefault();
+
+            return result == null ? -1 : result.Id;
+        }
+
+        [ScriptingFunction]
+        public bool SetAgentVar(int agentid, string key, int value)
+        {
+            var agent = _entities.FirstOrDefault(a => a.Id == agentid) as Agent;
+            if (agent == null) return false;
+
+            agent.SetVar(key, value);
+            return true;
+        }
+
+        [ScriptingFunction]
+        public bool SetAgentVarFloat(int agentid, string key, float value)
+        {
+            var agent = _entities.FirstOrDefault(a => a.Id == agentid) as Agent;
+            if (agent == null) return false;
+
+            agent.SetVarFloat(key, value);
+            return true;
+        }
+
+        [ScriptingFunction]
+        public bool SetAgentVarString(int agentid, string key, string value)
+        {
+            var agent = _entities.FirstOrDefault(a => a.Id == agentid) as Agent;
+            if (agent == null) return false;
+
+            agent.SetVarString(key, value);
+            return true;
+        }
+
+        [ScriptingFunction]
+        public bool DeleteAgentVar(int agentid, string key)
+        {
+            var agent = _entities.FirstOrDefault(a => a.Id == agentid) as Agent;
+            return agent != null && agent.DeleteVar(key);
+        }
+
+        [ScriptingFunction]
+        public int GetAgentVar(int agentid, string key)
+        {
+            var agent = _entities.FirstOrDefault(a => a.Id == agentid) as Agent;
+            return agent == null ? 0 : agent.GetVar(key);
+        }
+
+        [ScriptingFunction]
+        public float GetAgentVarFloat(int agentid, string key)
+        {
+            var agent = _entities.FirstOrDefault(a => a.Id == agentid) as Agent;
+            return agent == null ? 0 : agent.GetVarFloat(key);
+        }
+
+        [ScriptingFunction]
+        public int GetAgentVarString(int agentid, string key, CellPtr retval, int length)
+        {
+            var agent = _entities.FirstOrDefault(a => a.Id == agentid) as Agent;
+            return agent == null ? -1 : agent.GetVarString(key, retval, length);
+        }
+
+        #endregion
+
+        #region API - IMessageHandler
+
+        [ScriptingFunction]
+        public bool SendMessage(int id, int message, int contents)
+        {
+            var entity = _entities.FirstOrDefault(a => a.Id == id);
+            var messageHandler = entity as IMessageHandler;
+
+            if (messageHandler == null) return false;
+
+            messageHandler.HandleMessage(message, contents);
+            return true;
+        }
+
+        [ScriptingFunction]
+        public int SendMessageToAll(int message, int contents)
+        {
+            var messageHandlers = _entities.OfType<IMessageHandler>();
+
+            var enumerable = messageHandlers as IMessageHandler[] ?? messageHandlers.ToArray();
+
+            foreach (var messageHandler in enumerable)
+                messageHandler.HandleMessage(message, contents);
+
+            return enumerable.Count();
+        }
+
+        #endregion
+
+        #endregion
 
         #region Overrides of DrawableGameComponent
 
         public override void Draw(GameTime gameTime)
         {
-            if (DrawGraphs)
+            if (!DrawGraphs) return;
+
+            _basicEffect.VertexColorEnabled = true;
+            _basicEffect.World = Matrix.Identity;
+            _basicEffect.View = _cameraService.View;
+            _basicEffect.Projection = _cameraService.Projection;
+
+            _basicEffect.CurrentTechnique.Passes[0].Apply();
+
+            var height = new Vector3(0, 0.1f, 0);
+            foreach (var graph in _graphsByName.Values)
             {
-                _basicEffect.VertexColorEnabled = true;
-                _basicEffect.World = Matrix.Identity;
-                _basicEffect.View = _cameraService.View;
-                _basicEffect.Projection = _cameraService.Projection;
-
-                _basicEffect.CurrentTechnique.Passes[0].Apply();
-
-                var height = new Vector3(0, 0.1f, 0);
-                foreach (var graph in _graphsByName.Values)
+                foreach (var node in graph.Values)
                 {
-                    foreach (var node in graph.Values)
-                    {
-                        foreach (var n in node)
-                            Line(node.Position + height, n.Target.Position + height, Color.Red, Color.GreenYellow);
-                    }
-
-                    height.Y += 0.2f;
+                    foreach (var n in node)
+                        DrawLine(node.Position + height, n.Target.Position + height, Color.Red, Color.GreenYellow);
                 }
+
+                height.Y += 0.2f;
             }
         }
 
