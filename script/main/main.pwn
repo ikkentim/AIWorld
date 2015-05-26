@@ -4,16 +4,12 @@
 
 new isShiftDown = false;
 
-new Drawable:text2D;
-new Drawable:sphere;
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of the simulation.</summary>
 \**--------------------------------------------------------------------------**/
 main()
 {
-    logprintf(COLOR_WHITE, "Testing123 123 test test test. Testing123 123 test test test. Testing123 123 test test test.Testing123 123 test test test.");
-
-    chatprintf(COLOR_WHITE, "Some Chat Message Here.");
+    //state debug;
 
     //PlayAmbience("sounds/ambient", true, 0.015);
     SetBackgroundColor(0x00000000);
@@ -22,23 +18,11 @@ main()
     CreateGroundGraph();
     CreateRoads();
     CreateAgents();
-
-    text2D = CreateDrawableText3D(5, 0, 5, COLOR_WHITE, "fonts/consolas", "Hello, World!");
-    sphere = CreateDrawableLineCone(0, 0.5, 0, 0, 1,0, 1, 0.5, COLOR_RED, COLOR_BLUE);
-    ShowDrawable(sphere);
-    ShowDrawable(text2D);
 }
 
 public OnKeyStateChanged(newKeys[], oldKeys[])
 {
     isShiftDown = IsKeyDown(newKeys, KEY_LEFTSHIFT);
-
-
-    if(IsKeyDown(newKeys, KEY_T) && !IsKeyDown(oldKeys, KEY_T))
-    {
-        SetDrawableColor(sphere, random(0xFFFFFFFF));
-        SetDrawableColor2(sphere, random(0xFFFFFFFF));
-    }
 
     if(IsKeyDown(newKeys, KEY_A) && !IsKeyDown(oldKeys, KEY_A))
     {
@@ -46,8 +30,7 @@ public OnKeyStateChanged(newKeys[], oldKeys[])
         AddAgent("doll", frandom(-5,5), frandom(-5,5));
     }
 
-    if(IsKeyDown(newKeys, KEY_F9) != GetDrawGraphs())
-        SetDrawGraphs(IsKeyDown(newKeys, KEY_F9));
+    SetDrawGraphs(IsKeyDown(newKeys, KEY_F9));
 }
 
 public OnMouseClick(button, Float:x, Float:y)
@@ -56,15 +39,30 @@ public OnMouseClick(button, Float:x, Float:y)
         SetTarget(x,y);
 }
 
-CreatePlanes()
+ /*============================*
+ *      OBJECT PLACEMENT      *
+*============================*/
+
+#define SIZE_TREE           (0.25)
+#define SIZE_SUPERMARKET    (0.70)
+#define SIZE_HOUSE01        (0.45)
+#define SIZE_HOUSE02        (0.45)
+
+stock CreateCollisionSphere(Float:x, Float:y, Float:radius) <debug>
 {
-    // Create the floor.
-    for (new x = -5; x <= 5; x++)
-        for (new y = -5; y <= 5; y++)
-          AddQuadPlane(x*4, -0.01, y*4, 4, ROTATION_NONE, "textures/grass");
+    ShowDrawable(
+        CreateDrawableLineCylinder(x, 0, y, 0, 1, 0, 1.0, radius,
+            COLOR_BLACK, COLOR_BLACK));
 }
 
-RandomTree(Float:x, Float:y)
+stock CreateCollisionSphere(Float:x, Float:y, Float:radius) <>
+{
+    #pragma unused x
+    #pragma unused y
+    #pragma unused radius
+}
+
+CreateRandomTree(Float:x, Float:y)
 {
     new mesh[10];
     new meshidx = random(7);
@@ -80,34 +78,60 @@ RandomTree(Float:x, Float:y)
         case 6: strcopy(mesh, "tree.007");
     }
 
-    return AddGameObject("models/trees", 0.25, x, y, 0.2, 0.2, 0.2,
-    0, frandom(-PI, PI), 0, -meshidx * 5, 0, 0, mesh);
+    CreateCollisionSphere(x, y, SIZE_TREE);
+    AddGameObject("models/trees", SIZE_TREE, x, y, 0.2, 0.2, 0.2,
+        0, frandom(-PI, PI), 0, -meshidx * 5, 0, 0, mesh);
+}
+
+CreateHouse01(Float:x, Float:y, Float:angle)
+{
+    CreateCollisionSphere(x, y, SIZE_HOUSE01);
+    AddGameObject("models/house01", SIZE_HOUSE01, x, y, 0.25,0.25,0.25,
+        0, angle, 0);
+}
+
+CreateHouse02(Float:x, Float:y, Float:angle)
+{
+    CreateCollisionSphere(x, y, SIZE_HOUSE02);
+    AddGameObject("models/house02", SIZE_HOUSE02, x, y, 1, 1, 1,
+        0, angle, 0);
+}
+
+CreateSupermarket(Float:x, Float:y, Float:angle)
+{
+    CreateCollisionSphere(x, y, SIZE_SUPERMARKET);
+    AddGameObject("models/supermarket", SIZE_SUPERMARKET, x, y, 0.5, 0.5, 0.5,
+        0, angle, 0, 0, 0, 0.8);
 }
 
 CreateObjects()
 {
-    #define HOUSE_SIZE 0.45
+    CreateRandomTree(1,1);
 
-    RandomTree(1,1);
+    CreateHouse02(3.9, 2.5, DEG2RAD(-90));
+    CreateHouse01(4.5, 8.5, DEG2RAD(90));
 
-    #define DEFAULT_SCALE 1, 1, 1
-    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 2.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
-    AddGameObject("models/house01", HOUSE_SIZE, 3.9, 3.8, 0.25,0.25,0.25, 0, DEG2RAD(-90));
-    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 4.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
-    AddGameObject("models/house02", HOUSE_SIZE, 3.9, 6.5, DEFAULT_SCALE, 0, DEG2RAD(-90));
+    CreateHouse02(3.9, 3.8, DEG2RAD(-90));
+    CreateHouse02(3.9, 4.5, DEG2RAD(-90));
+    CreateHouse02(3.9, 6.5, DEG2RAD(-90));
+    CreateHouse02(10.0, 0.0, DEG2RAD(90));
 
-    AddGameObject("models/house02", HOUSE_SIZE, 10.0, 0.0, DEFAULT_SCALE, 0, DEG2RAD(90));
+    CreateHouse02(-1, 3.8, DEG2RAD(90));
+    CreateHouse02(-1, 2.0, DEG2RAD(90));
+    CreateHouse02(-1, 0.0, DEG2RAD(90));
 
-    AddGameObject("models/house02", HOUSE_SIZE, -1, 3.8, DEFAULT_SCALE, 0, DEG2RAD(90));
-    AddGameObject("models/house02", HOUSE_SIZE, -1, 2.0, DEFAULT_SCALE, 0, DEG2RAD(90));
-    AddGameObject("models/house02", HOUSE_SIZE, -1, 0.0, DEFAULT_SCALE, 0, DEG2RAD(90));
+    CreateHouse02(1.5, 3.8, DEG2RAD(90));
+    CreateHouse02(1.5, 2.0, DEG2RAD(90));
 
-    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 3.8, DEFAULT_SCALE, 0, DEG2RAD(90));
-    AddGameObject("models/house02", HOUSE_SIZE, 1.5, 2.0, DEFAULT_SCALE, 0, DEG2RAD(90));
-    AddGameObject("models/supermarket", HOUSE_SIZE*2, 1.5, 0.0, 0.5, 0.5, 0.5, 0, DEG2RAD(90));
+    CreateSupermarket(1.5, 0.0, DEG2RAD(90));
+}
 
-
-    //AddGameObject("models/tank", 0.0001, 0, 0, 0.1,0.1,0.1, 0, DEG2RAD(-90));
+CreatePlanes()
+{
+    // Create the floor.
+    for (new x = -5; x <= 5; x++)
+        for (new y = -5; y <= 5; y++)
+          AddQuadPlane(x*4, -0.01, y*4, 4, ROTATION_NONE, "textures/grass");
 }
 
 CreateGroundGraph()
@@ -163,6 +187,6 @@ CreateRoads()
 CreateAgents()
 {
     //AddAgent("car", frandom(-5,5), frandom(-5,5));
-    AddAgent("tank",3,10, "tx,ty", 10.0, 12.0);
-    AddAgent("tank",10,12, "tx,ty", 3.0, 10.0);
+    AddAgent("tank", 3, 10, "tx,ty", 10.0, 12.0);
+    AddAgent("tank", 10, 12, "tx,ty", 3.0, 10.0);
 }

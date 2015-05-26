@@ -23,6 +23,7 @@ using AIWorld.Planes;
 using AIWorld.Scripting;
 using AMXWrapper;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld.Services
@@ -291,15 +292,97 @@ namespace AIWorld.Services
 
         #region API - Agent
 
-        [ScriptingFunction]
-        public int FindNearestAgent(float x, float y, string scriptName)
+        public IEnumerable<Agent> GetNearestAgents(float x, float y, float range, string scriptName,
+            Func<Agent, bool> predicate)
         {
-            var result = _entities.OfType<Agent>()
-                .Where(a => a.ScriptName == scriptName)
-                .OrderBy(a => Vector3.DistanceSquared(a.Position, new Vector3(x, 0, y)))
-                .FirstOrDefault();
+            return _entities.Query(new AABB(new Vector3(x, 0, y), new Vector3(range)))
+                .OfType<Agent>()
+                .Where(a => string.IsNullOrEmpty(scriptName) && a.ScriptName == scriptName)
+                .Where(predicate)
+                .OrderBy(a => Vector3.DistanceSquared(a.Position, new Vector3(x, 0, y)));
+        }
+
+        public int FindNearestAgent(float x, float y, float range, string scriptName, Func<Agent, bool> predicate)
+        {
+            var result = GetNearestAgents(x, y, range, scriptName, predicate).FirstOrDefault();
 
             return result == null ? -1 : result.Id;
+        }
+
+        [ScriptingFunction]
+        public int FindNearestAgent(float x, float y, float range, string scriptName)
+        {
+            return FindNearestAgent(x, y, range, scriptName, a => true);
+        }
+
+        [ScriptingFunction]
+        public int FindNearestAgentByVar(float x, float y, float range, string key, int value, string scriptName)
+        {
+            return FindNearestAgent(x, y, range, scriptName, a => a.GetVar(key) == value);
+        }
+
+        [ScriptingFunction]
+        public int FindNearestAgentByVarFloat(float x, float y, float range, string key, float value, string scriptName)
+        {
+            return FindNearestAgent(x, y, range, scriptName, a => a.GetVarFloat(key) == value);
+        }
+
+        [ScriptingFunction]
+        public int FindNearestAgentByVarString(float x, float y, float range, string key, string value, string scriptName)
+        {
+            return FindNearestAgent(x, y, range, scriptName, a => a.GetVarString(key) == value);
+        }
+
+        [ScriptingFunction]
+        public int GetNearestAgents(float x, float y, float range, string scriptName, CellPtr array, int length)
+        {
+            if (length < 0)
+                return 0;
+
+            var idx = 0;
+            foreach (var agent in GetNearestAgents(x, y, range, scriptName, a => true).Take(length))
+                array[idx] = agent.Id;
+
+            return idx;
+        }
+
+        [ScriptingFunction]
+        public int GetNearestAgentsByVar(float x, float y, float range, string key, int value, string scriptName, CellPtr array, int length)
+        {
+            if (length < 0)
+                return 0;
+
+            var idx = 0;
+            foreach (var agent in GetNearestAgents(x, y, range, scriptName, a => a.GetVar(key) == value).Take(length))
+                array[idx] = agent.Id;
+
+            return idx;
+        }
+
+        [ScriptingFunction]
+        public int GetNearestAgentsByVarFloat(float x, float y, float range, string key, float value, string scriptName, CellPtr array, int length)
+        {
+            if (length < 0)
+                return 0;
+
+            var idx = 0;
+            foreach (var agent in GetNearestAgents(x, y, range, scriptName, a => a.GetVarFloat(key) == value).Take(length))
+                array[idx] = agent.Id;
+
+            return idx;
+        }
+
+        [ScriptingFunction]
+        public int GetNearestAgentsByVarString(float x, float y, float range, string key, string value, string scriptName, CellPtr array, int length)
+        {
+            if (length < 0)
+                return 0;
+
+            var idx = 0;
+            foreach (var agent in GetNearestAgents(x, y, range, scriptName, a => a.GetVarString(key) == value).Take(length))
+                array[idx] = agent.Id;
+
+            return idx;
         }
 
         [ScriptingFunction]

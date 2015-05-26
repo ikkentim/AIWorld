@@ -41,7 +41,7 @@ namespace AIWorld.Services
         private const float ChatShadowOffset = 2.5f;
         private const float ChatShadowColorScale = .3f;
         private const float ChatTextMargin = 4.0f;
-        private const float ChatMaxWidth = .4f;
+        private const float ChatMaxWidth = .5f;
         private const float ChatVisibleTime = 8.5f;
         private const float ChatFadeInTime = 0.212f;
         private const float ChatFadeOutTime = 1.2f;
@@ -81,7 +81,6 @@ namespace AIWorld.Services
         protected override void Dispose(bool disposing)
         {
             Debug.Listeners.Remove(_traceListener);
-            Debug.WriteLine("Dispose ConsoleService");
             _backgroundTexture.Dispose();
             _spriteBatch.Dispose();
         }
@@ -188,14 +187,14 @@ namespace AIWorld.Services
 
             if (size.X > maxWidth)
             {
-                var tmpLength = (int)(maxWidth / (AverageCharWidth * ChatFontScale));
+                var resultLength = (int)(maxWidth / (AverageCharWidth * ChatFontScale));
                 // Asuming the average character is at maximum 10 pixels wide. This improved performance.
 
-                while (tmpLength != -1 && tmpLength < message.Length)
+                while (resultLength != -1 && resultLength < message.Length)
                 {
                     // Find first terminator.
-                    var curLength = message.IndexOfAny(_terminators, tmpLength);
-                    if (curLength != -1 && curLength >= message.Length) break;
+                    var curLength = message.IndexOfAny(_terminators, resultLength);
+                    if (curLength != -1 || curLength >= message.Length) break;
 
                     // Include the terminator character.
                     curLength++;
@@ -207,15 +206,15 @@ namespace AIWorld.Services
                     // If string surpasses the maximum line width, break from the loop.
                     if (curSize.X > maxWidth) break;
 
-                    tmpLength = curLength;
+                    resultLength = curLength;
                 }
 
                 // Is split successful?
-                if (tmpLength < message.Length)
+                if (resultLength < message.Length)
                 {
                     // Split string into two parts; Print both to the chat.
-                    WriteChatLine(color, message.Substring(0, tmpLength));
-                    WriteChatLine(color, message.Substring(tmpLength));
+                    WriteChatLine(color, message.Substring(0, resultLength));
+                    WriteChatLine(color, message.Substring(resultLength));
                     return;
                 }
             }

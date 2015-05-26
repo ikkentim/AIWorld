@@ -26,13 +26,20 @@ namespace AMXWrapper
     {
         private readonly IntPtr _value;
 
+        public CellPtr(IntPtr value)
+        {
+            _value = value;
+        }
+
         public IntPtr Value
         {
             get { return _value; }
         }
-        public CellPtr(IntPtr value)
+
+        public Cell this[int offset]
         {
-            _value = value;
+            get { return Get(offset); }
+            set { Set(offset, value); }
         }
 
         public Cell Get()
@@ -44,9 +51,20 @@ namespace AMXWrapper
         {
             return Cell.FromIntPtr(IntPtr.Add(_value, offset*Marshal.SizeOf(typeof (Cell))));
         }
+
+        public void Set(int offset, int value)
+        {
+            Marshal.WriteInt32(IntPtr.Add(_value, offset * Marshal.SizeOf(typeof(Cell))), value);
+        }
+
         public void Set(int value)
         {
             Marshal.WriteInt32(_value, value);
+        }
+
+        public void Set(int offset, Cell value)
+        {
+            Marshal.WriteInt32(IntPtr.Add(_value, offset * Marshal.SizeOf(typeof(Cell))), value.AsInt32());
         }
 
         public void Set(Cell value)

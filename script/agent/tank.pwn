@@ -1,5 +1,6 @@
 #include <a_agent>
 #include <a_drawable>
+#include <a_fuzzy>
 
 // Public (setup) variables
 public tx;
@@ -50,6 +51,35 @@ main()
 
     // Focus for debugging
     Focus();
+
+    new FuzzyVar:namelength = CreateFuzzyVariable("name_length");
+    new FuzzyVar:awesomeness = CreateFuzzyVariable("awesomeness");
+
+    AddFuzzyLeftShoulder(namelength, "short", 1, 4, 6);
+    AddFuzzyTriangle(namelength, "medium", 1, 4, 6);
+    AddFuzzyRightShoulder(namelength, "long", 6, 8, 50);
+
+    AddFuzzyLeftShoulder(awesomeness, "low", 0, 25, 35);
+    AddFuzzyTriangle(awesomeness, "below_normal", 25, 35, 45);
+    AddFuzzyTrapezium(awesomeness, "normal", 35, 45, 65, 75);
+    AddFuzzyTriangle(awesomeness, "high", 65, 75, 85);
+    AddFuzzyRightShoulder(awesomeness, "awesome", 75, 85, 100);
+
+/*
+(longName, lowAwesomeness.Fairly());
+(longName.Very(), lowAwesomeness.Very());
+*/
+    AddFuzzyRule("IF very short name_length THEN very awesome awesomeness");
+    AddFuzzyRule("IF fairly short name_length AND fairly medium name_length THEN very high awesomeness");
+    AddFuzzyRule("IF medium name_length THEN very normal awesomeness AND fairly high awesomeness AND fairly below_normal awesomeness");
+    AddFuzzyRule("IF medium name_length OR fairly long name_length THEN below_normal awesomeness AND fairly low awesomeness");
+    AddFuzzyRule("IF long name_length THEN fairly low awesomeness");
+    AddFuzzyRule("IF very long name_length THEN very low awesomeness");
+
+    Fuzzify(namelength, 7);
+    new Float:result = Defuzzify(awesomeness);
+
+    chatprintf(COLOR_YELLOW, "A name length of 7 is %f awesome", result);
 }
 
 public OnUpdate(Float:elapsed)
@@ -81,12 +111,12 @@ Focus()
  *        AIMING LOGIC        *
 *============================*/
 
-#define TURRET_SPEED                    (PI/8)
+#define TURRET_SPEED                    (PI/6)
 #define MAX_TURRET_OFFSET               (PI/512)
 
-#define TURRET_POST_ROTATE_DELAY        (0.2)
+#define TURRET_POST_ROTATE_DELAY        (0.8)
 #define TURRET_POST_FIRE_DELAY          (0.8)
-#define TURRET_POST_FIRE_EXTRA_DELAY    (0.4)
+#define TURRET_POST_FIRE_EXTRA_DELAY    (1.2)
 
 #define TURRET_BARREL_SLIDE             (0.25)
 #define TURRET_CANNON_SPEED             (25)
@@ -197,7 +227,7 @@ stock TurretFire()
 
 
         // Notify everyone
-        CallPublicFunction("TankFired", "ff", turretTargetX, turretTargetY);
+        CallPublicFunction("OnTankFired", "ff", turretTargetX, turretTargetY);
 
         // Play sound
         new Float:x, Float:y;

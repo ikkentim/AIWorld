@@ -80,6 +80,7 @@
     <Compile Include="Entities\IHitable.cs" />
     <Compile Include="Entities\MeshData.cs" />
     <Compile Include="Entities\Projectile.cs" />
+    <Compile Include="Fuzzy\FuzzyModule.cs" />
     <Compile Include="Fuzzy\FuzzyRule.cs" />
     <Compile Include="Fuzzy\FuzzyVariable.cs" />
     <Compile Include="Fuzzy\Sets\FuzzyLeftShoulder.cs" />

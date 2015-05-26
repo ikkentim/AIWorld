@@ -126,10 +126,27 @@ native FindNearestWorldObject(Float:x, Float:y, const model[] = '''');
 </summary>
 <param name="x">The x-coordinate of where to look.</param>
 <param name="y">The y-coordinate of where to look.</param>
+<param name="range">The range in which to look.</param>
 <param name="scriptname">The name of the script for which to look.</param>
 <returns>The id of the found entity. -1 if none was found.</returns>
 \** ************************************************************************ **/
-native FindNearestAgent(Float:x, Float:y, const scriptname[]);
+native FindNearestAgent(Float:x, Float:y, Float:range,
+    const scriptname[] = '''');
+
+native FindNearestAgentByVar(Float:x, Float:y, Float:range, const key[], value,
+    const scriptname[] = '''');
+native FindNearestAgentByVarFloat(Float:x, Float:y, Float:range, const key[],
+    Float:value, const scriptname[] = '''');
+native FindNearestAgentByVarString(Float:x, Float:y, Float:range, const key[],
+    value[], const scriptname[] = '''');
+native GetNearestAgent(Float:x, Float:y, Float:range, const scriptname[],
+    agents[], length = sizeof agents);
+native GetNearestAgentByVar(Float:x, Float:y, Float:range, const key[], value,
+    const scriptname[], agents[], length = sizeof agents);
+native GetNearestAgentByVarFloat(Float:x, Float:y, Float:range, const key[],
+    Float:value, const scriptname[], agents[], length = sizeof agents);
+native GetNearestAgentByVarString(Float:x, Float:y, Float:range, const key[],
+    value[], const scriptname[], agents[], length = sizeof agents);
 
 native SetAgentVar(agentid, const key[], value);
 native SetAgentVarFloat(agentid, const key[], Float:value);

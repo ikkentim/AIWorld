@@ -21,6 +21,7 @@ using System.IO;
 using System.Linq;
 using AIWorld.Core;
 using AIWorld.Events;
+using AIWorld.Fuzzy;
 using AIWorld.Goals;
 using AIWorld.Helpers;
 using AIWorld.Scripting;
@@ -123,7 +124,7 @@ namespace AIWorld.Entities
             Position = position;
             Heading = Vector3.Right;
             Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
-
+            
             // Fetch service instances
             var drawingService = simulation.Services.GetService<IDrawingService>();
             _cameraService = simulation.Services.GetService<ICameraService>();
@@ -132,7 +133,7 @@ namespace AIWorld.Entities
 
             // Load script
             Script = new ScriptBox("agent", scriptName);
-            Script.Register(this, _gameWorldService, _consoleService, drawingService);
+            Script.Register(this, _gameWorldService, _consoleService, drawingService, new FuzzyModule(_consoleService));
 
             // Load scripting callbacks
             _onUpdate = Script.FindPublic("OnUpdate");
@@ -1191,6 +1192,15 @@ namespace AIWorld.Entities
                 return 0;
 
             return (float)_variables[key];
+        }
+
+
+        public string GetVarString(string key)
+        {
+            if (!_variables.ContainsKey(key) || !(_variables[key] is string))
+                return null;
+
+            return (string) _variables[key];
         }
 
         [ScriptingFunction]

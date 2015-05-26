@@ -144,6 +144,7 @@ namespace AIWorld
             Services.RemoveService(typeof (ICameraService));
             Services.RemoveService(typeof (IGameWorldService));
             Services.RemoveService(typeof (IDrawingService));
+            Services.RemoveService(typeof(IParticleService));
 
             GC.Collect();
         }

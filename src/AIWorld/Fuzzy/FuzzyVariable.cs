@@ -29,7 +29,11 @@ namespace AIWorld.Fuzzy
 
         public FuzzySet this[string name]
         {
-            get { return _sets[name]; }
+            get
+            {
+                FuzzySet set;
+                return _sets.TryGetValue(name, out set) ? set : null;
+            }
         }
 
         public FuzzySet Add(string name, FuzzySet set)
