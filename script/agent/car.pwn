@@ -16,7 +16,7 @@ main()
     SetMass(0.25);
     SetTargetRange(0.95);
 
-    AddSteeringBehavior("obstacleavoidance", BEHAVIOR_OBSTACLE_AVOIDANCE, 0.9);
+    AddAvoidObstacles(0.9);
 
     text = CreateDrawableText3D(0, 0, 0, COLOR_WHITE,
         "fonts/consolas", "Hoi!");

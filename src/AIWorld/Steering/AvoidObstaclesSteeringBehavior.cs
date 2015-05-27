@@ -22,17 +22,18 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Steering
 {
-    public class AvoidObstaclesBehavior : ISteeringBehavior
+    public class AvoidObstaclesSteeringBehavior : ISteeringBehavior
     {
         //private const float MinimumDetectionBoxLength = 0.75f;
         private const float MinimumDetectionBoxLengthSizeMultiplier = 1.9f;
         //private const float AproxMaxObjectSize = 1.0f;
-        private const float BreakingWeight = 0.005f * 0.001f;
+        private const float BreakingWeight = 0.005f*0.001f;
         private readonly Agent _agent;
         private readonly IGameWorldService _gameWorldService;
 
-        public AvoidObstaclesBehavior(Agent agent)
+        public AvoidObstaclesSteeringBehavior(Agent agent)
         {
+            if (agent == null) throw new ArgumentNullException("agent");
             _agent = agent;
             _gameWorldService = agent.Game.Services.GetService<IGameWorldService>();
         }
@@ -48,7 +49,7 @@ namespace AIWorld.Steering
 
         #region Implementation of ISteeringBehavior
 
-        public Vector3 Calculate(GameTime gameTime)
+        public virtual Vector3 Calculate(GameTime gameTime)
         {
             var bLength = DetectionBoxLength;
 

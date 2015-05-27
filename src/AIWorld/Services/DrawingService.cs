@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AIWorld.Drawable;
+using AIWorld.Helpers;
 using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -30,7 +31,7 @@ namespace AIWorld.Services
         private readonly Dictionary<string, SpriteFont> _fonts = new Dictionary<string, SpriteFont>();
         private readonly SpriteBatch _spriteBatch;
         private int _currentDrawOrder;
-        private IDrawablePart[] _drawables = new IDrawablePart[1];
+        private readonly Pool<IDrawablePart> _drawables = new Pool<IDrawablePart>(); 
 
         public DrawingService(Game game, ICameraService cameraService) : base(game)
         {
@@ -40,26 +41,8 @@ namespace AIWorld.Services
             DrawOrder = 10;
         }
 
-        private int GetFreeSlot<T>(ref T[] arr) where T : class
-        {
-            if (arr == null) throw new ArgumentNullException("arr");
-            for (var i = 0; i < arr.Length; i++)
-                if (arr[i] == null)
-                    return i;
-
-            var len = arr.Length;
-            var tmp = new T[len*2];
-            Array.Copy(arr, tmp, len);
-
-            arr = tmp;
-            return len;
-        }
-
         private bool IsValidDrawableId(int drawableid)
         {
-            if (drawableid < 0 || drawableid >= _drawables.Length)
-                return false;
-
             return _drawables[drawableid] != null;
         }
 
@@ -107,53 +90,50 @@ namespace AIWorld.Services
         [ScriptingFunction]
         public int CreateDrawableText2D(float x, float y, uint color, string font, string text)
         {
-            var key = GetFreeSlot(ref _drawables);
-            _drawables[key] = new DrawableText2D(new Vector2(x, y), UInt32ToColor(color), GetFont(font), text);
-            return key;
+            return _drawables.Add(new DrawableText2D(new Vector2(x, y), UInt32ToColor(color), GetFont(font), text));
         }
 
         [ScriptingFunction]
         public int CreateDrawableText3D(float x, float y, float z, uint color, string font, string text)
         {
-            var key = GetFreeSlot(ref _drawables);
-            _drawables[key] = new DrawableText3D(_cameraService, new Vector3(x, y, z), UInt32ToColor(color), GetFont(font), text);
-            return key;
+            return
+                _drawables.Add(new DrawableText3D(_cameraService, new Vector3(x, y, z), UInt32ToColor(color),
+                    GetFont(font), text));
         }
 
         [ScriptingFunction]
         public int CreateDrawableLine(float x1, float y1, float z1, float x2, float y2, float z2, uint color1,
             uint color2)
         {
-            var key = GetFreeSlot(ref _drawables);
-            _drawables[key] = new DrawableLine(_cameraService, GraphicsDevice, new Vector3(x1, y1, z1), new Vector3(x2, y2, z2), UInt32ToColor(color1),
-                UInt32ToColor(color2));
-            return key;
+            return
+                _drawables.Add(new DrawableLine(_cameraService, GraphicsDevice, new Vector3(x1, y1, z1),
+                    new Vector3(x2, y2, z2), UInt32ToColor(color1), UInt32ToColor(color2)));
         }
 
         [ScriptingFunction]
         public int CreateDrawableLineCylinder(float x, float y, float z, float hx, float hy, float hz, float length, float radius, uint color1, uint color2)
         {
-            var key = GetFreeSlot(ref _drawables);
-            _drawables[key] = new DrawableLineCylinder(_cameraService, GraphicsDevice, new Vector3(x,y,z), new Vector3(hx, hy, hz), length, radius, UInt32ToColor(color1),
-                UInt32ToColor(color2));
-            return key;
+            return
+                _drawables.Add(new DrawableLineCylinder(_cameraService, GraphicsDevice, new Vector3(x, y, z),
+                    new Vector3(hx, hy, hz), length, radius, UInt32ToColor(color1),
+                    UInt32ToColor(color2)));
         }
 
         [ScriptingFunction]
         public int CreateDrawableLineCone(float x, float y, float z, float hx, float hy, float hz, float length, float radius, uint color1, uint color2)
         {
-            var key = GetFreeSlot(ref _drawables);
-            _drawables[key] = new DrawableLineCone(_cameraService, GraphicsDevice, new Vector3(x, y, z), new Vector3(hx, hy, hz), length, radius, UInt32ToColor(color1),
-                UInt32ToColor(color2));
-            return key;
+            return
+                _drawables.Add(new DrawableLineCone(_cameraService, GraphicsDevice, new Vector3(x, y, z),
+                    new Vector3(hx, hy, hz), length, radius, UInt32ToColor(color1),
+                    UInt32ToColor(color2)));
         }
 
         [ScriptingFunction]
         public int CreateDrawableLineShere(float x, float y, float z, float radius, uint color1, uint color2)
         {
-            var key = GetFreeSlot(ref _drawables);
-            _drawables[key] = new DrawableLineSphere(_cameraService, GraphicsDevice, new Vector3(x, y, z), radius, UInt32ToColor(color1), UInt32ToColor(color2));
-            return key;
+            return
+                _drawables.Add(new DrawableLineSphere(_cameraService, GraphicsDevice, new Vector3(x, y, z), radius,
+                    UInt32ToColor(color1), UInt32ToColor(color2)));
         }
 
         #endregion
@@ -255,9 +235,7 @@ namespace AIWorld.Services
             if (_drawables[drawableid].IsVisible)
                 _drawDrawables.RemoveAt(_drawDrawables.IndexOfValue(_drawables[drawableid]));
 
-            _drawables[drawableid] = null;
-
-            return true;
+            return _drawables.Remove(drawableid);
         }
 
         #endregion

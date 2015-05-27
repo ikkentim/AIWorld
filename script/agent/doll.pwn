@@ -18,7 +18,8 @@ main()
 
     // Just wander for now...
 
-    AddSteeringBehavior("obstacleavoidance", BEHAVIOR_OBSTACLE_AVOIDANCE, 0.9);
-    AddSteeringBehavior("wander", BEHAVIOR_WANDER, 0.2, 35,1,60);//jitter, radius, distance
+    AddAvoidObstacles(0.9);
+    AddWander(0.2, 35, 1, 60);
+
     SetTargetEntity(GetId());
 }

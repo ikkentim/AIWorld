@@ -1,4 +1,4 @@
-// AIWorld
+﻿// AIWorld
 // Copyright 2015 Tim Potze
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,28 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
-using Microsoft.Xna.Framework;
+using AIWorld.Entities;
 
 namespace AIWorld.Steering
 {
-    public class WeightedSteeringBehavior
+    public class EvadeByVarStringSteeringBehavior : EvadeSteeringBehavior
     {
-        public WeightedSteeringBehavior(ISteeringBehavior behavior, float weight)
+        public EvadeByVarStringSteeringBehavior(Agent agent)
+            : base(agent)
         {
-            if (behavior == null) throw new ArgumentNullException("behavior");
-            if (weight <= 0) throw new ArgumentException("weight must be greater than 0");
-
-            Behavior = behavior;
-            Weight = weight;
         }
 
-        public ISteeringBehavior Behavior { get; set; }
-        public float Weight { get; set; }
-
-        public Vector3 Calculate(GameTime gameTime)
+        [SteeringBehaviorArgument(2)]
+        public string Value
         {
-            return Behavior.Calculate(gameTime)*Weight;
+            get { return (string) KeyValue; }
+            set { KeyValue = value; }
         }
     }
 }

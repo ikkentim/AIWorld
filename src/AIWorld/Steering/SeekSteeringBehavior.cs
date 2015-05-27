@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using AIWorld.Entities;
 using AIWorld.Helpers;
 using Microsoft.Xna.Framework;
@@ -21,20 +22,23 @@ namespace AIWorld.Steering
 {
     public class SeekSteeringBehavior : ITargetedSteeringBehavior
     {
-        public Agent Agent { get; private set; }
-        public Vector3 Target { get; set; }
+        private readonly Agent _agent;
 
         public SeekSteeringBehavior(Agent agent, Vector3 target)
         {
-            Agent = agent;
+            if (agent == null) throw new ArgumentNullException("agent");
+            _agent = agent;
             Target = target;
         }
 
+        [SteeringBehaviorArgument]
+        public Vector3 Target { get; set; }
+
         #region Implementation of ISteeringBehavior
 
-        public Vector3 Calculate(GameTime gameTime)
+        public virtual Vector3 Calculate(GameTime gameTime)
         {
-            return (Target - Agent.Position).Truncate(Agent.MaxSpeed) - Agent.Velocity;
+            return (Target - _agent.Position).Truncate(_agent.MaxSpeed) - _agent.Velocity;
         }
 
         #endregion

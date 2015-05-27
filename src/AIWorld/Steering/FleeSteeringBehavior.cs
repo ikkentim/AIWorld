@@ -1,4 +1,4 @@
-// AIWorld
+﻿// AIWorld
 // Copyright 2015 Tim Potze
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,21 @@
 
 using System;
 using AIWorld.Entities;
+using AIWorld.Helpers;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Steering
 {
-    public class ArriveSteeringBehavior : ITargetedSteeringBehavior
+    public class FleeSteeringBehavior : ISteeringBehavior
     {
-        private const float ArriveDecelerationTweaker = 1.3f;
+        private readonly Agent _agent;
 
-        public ArriveSteeringBehavior(Agent agent)
+        public FleeSteeringBehavior(Agent agent, Vector3 target)
         {
             if (agent == null) throw new ArgumentNullException("agent");
-            Agent = agent;
+            Target = target;
+            _agent = agent;
         }
-
-        public Agent Agent { get; private set; }
 
         [SteeringBehaviorArgument]
         public Vector3 Target { get; set; }
@@ -38,19 +38,7 @@ namespace AIWorld.Steering
 
         public virtual Vector3 Calculate(GameTime gameTime)
         {
-            var toTarget = Target - Agent.Position;
-            var distance = toTarget.Length();
-
-            if (distance > 0.00001)
-            {
-                var speed = distance/(ArriveDecelerationTweaker);
-                speed = Math.Min(speed, Agent.MaxSpeed);
-                var desiredVelocity = toTarget*speed/distance;
-
-                return desiredVelocity - Agent.Velocity;
-            }
-
-            return Vector3.Zero;
+            return (_agent.Position - Target).Truncate(_agent.MaxSpeed) - _agent.Velocity;
         }
 
         #endregion

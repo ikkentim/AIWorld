@@ -14,27 +14,21 @@
 // limitations under the License.
 
 using System;
-using Microsoft.Xna.Framework;
 
 namespace AIWorld.Steering
 {
-    public class WeightedSteeringBehavior
+    [AttributeUsage(AttributeTargets.Property)]
+    public class SteeringBehaviorArgumentAttribute : Attribute
     {
-        public WeightedSteeringBehavior(ISteeringBehavior behavior, float weight)
+        public SteeringBehaviorArgumentAttribute()
         {
-            if (behavior == null) throw new ArgumentNullException("behavior");
-            if (weight <= 0) throw new ArgumentException("weight must be greater than 0");
-
-            Behavior = behavior;
-            Weight = weight;
         }
 
-        public ISteeringBehavior Behavior { get; set; }
-        public float Weight { get; set; }
-
-        public Vector3 Calculate(GameTime gameTime)
+        public SteeringBehaviorArgumentAttribute(int index)
         {
-            return Behavior.Calculate(gameTime)*Weight;
+            Index = index;
         }
+
+        public int Index { get; private set; }
     }
 }

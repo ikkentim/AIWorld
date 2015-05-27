@@ -14,7 +14,6 @@
 // limitations under the License.
 
 using System;
-using System.Diagnostics;
 using AIWorld.Entities;
 using Microsoft.Xna.Framework;
 
@@ -24,14 +23,36 @@ namespace AIWorld.Steering
     {
         private ITargetedSteeringBehavior _behavior;
         private Vector3 _bottomRight;
+        private Vector3 _center;
         private bool _isTargetBottom;
         private Vector3 _topLeft;
 
-        public ExploreSteeringBehavior(Agent agent, Vector3 size)
+        public ExploreSteeringBehavior(Agent agent)
         {
             Agent = agent;
-            _topLeft = agent.Position - size;
-            _bottomRight = agent.Position + size;
+            _topLeft = _bottomRight = _center = agent.Position;
+        }
+
+        [SteeringBehaviorArgument(0)]
+        public float Width
+        {
+            get { return _bottomRight.X - _topLeft.X; }
+            set
+            {
+                _bottomRight.X = _center.X + value/2;
+                _topLeft.X = _center.X - value/2;
+            }
+        }
+
+        [SteeringBehaviorArgument(1)]
+        public float Height
+        {
+            get { return _bottomRight.Y - _topLeft.Y; }
+            set
+            {
+                _bottomRight.Y = _center.Y + value/2;
+                _topLeft.Y = _center.Y - value/2;
+            }
         }
 
         public Agent Agent { get; private set; }
@@ -43,19 +64,19 @@ namespace AIWorld.Steering
             var target = _isTargetBottom ? new Vector3(_topLeft.X, 0, _bottomRight.Z) : _topLeft;
 
             if (_behavior is ArriveSteeringBehavior) return _behavior.Calculate(gameTime);
-            
+
             if (Agent.IsInTargetRangeOfPoint(target))
             {
                 _isTargetBottom = !_isTargetBottom;
                 _behavior = null;
-                _topLeft.X += Math.Max(1, Agent.TargetRange * 2);
+                _topLeft.X += Math.Max(1, Agent.TargetRange*2);
                 target = _isTargetBottom ? new Vector3(_topLeft.X, 0, _bottomRight.Z) : _topLeft;
             }
 
             if (_behavior != null) return _behavior.Calculate(gameTime);
 
             _behavior = ((Math.Abs(_bottomRight.X - _topLeft.X) < Math.Max(1, Agent.TargetRange*2))
-                ? (ITargetedSteeringBehavior) new ArriveSteeringBehavior(Agent, target)
+                ? (ITargetedSteeringBehavior) new ArriveSteeringBehavior(Agent) {Target = target}
                 : new SeekSteeringBehavior(Agent, target));
 
             return _behavior.Calculate(gameTime);

@@ -3,6 +3,7 @@
 new Float:targetX;
 new Float:targetY;
 
+new SB:explore;
 /**--------------------------------------------------------------------------**\
 <summary>Contains the setup logic of the goal.</summary>
 \**--------------------------------------------------------------------------**/
@@ -13,7 +14,7 @@ main()
 
 public OnEnter()
 {
-    AddSteeringBehavior("exploring", BEHAVIOR_EXPLORE, 0.78, 3.0, 3.0);
+    explore = AddExplore(0.78, 3.0, 3.0);
 
     GetPosition(targetX, targetY);
     targetX += 3.0;
@@ -35,7 +36,7 @@ public OnUpdate(Float:elapsed)
 
 public OnExit()
 {
-    RemoveSteeringBehavior("exploring");
+    RemoveSteeringBehavior(explore);
 }
 
 public OnIncomingMessage(message, contents)

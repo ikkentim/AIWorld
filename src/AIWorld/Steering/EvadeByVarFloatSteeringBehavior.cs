@@ -1,4 +1,4 @@
-// AIWorld
+﻿// AIWorld
 // Copyright 2015 Tim Potze
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using AIWorld.Entities;
+
 namespace AIWorld.Steering
 {
-    public enum SteeringBehaviorType
+    public class EvadeByVarFloatSteeringBehavior : EvadeSteeringBehavior
     {
-        Seek = 1,
-        Arrive = 2,
-        ObstacleAvoidance = 3,
-        Explore = 4,
-        Wander = 5,
+        public EvadeByVarFloatSteeringBehavior(Agent agent)
+            : base(agent)
+        {
+        }
+
+        [SteeringBehaviorArgument(2)]
+        public float Value
+        {
+            get { return (float) KeyValue; }
+            set { KeyValue = value; }
+        }
     }
 }

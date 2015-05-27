@@ -3,12 +3,6 @@
 #endif
 #define _agent_included
 
-#define BEHAVIOR_SEEK                   1
-#define BEHAVIOR_ARRIVE                 2
-#define BEHAVIOR_OBSTACLE_AVOIDANCE     3
-#define BEHAVIOR_EXPLORE                4
-#define BEHAVIOR_WANDER                 5
-
 /** ************************************************************************ **\
 <summary>Gets the id of this agent.</summary>
 <returns>The id of this agent.</returns>
@@ -207,37 +201,29 @@ native SetTargetRange(Float:value);
 \** ************************************************************************ **/
 native Float:GetTargetRange();
 
-/** ************************************************************************ **\
-<summary>
-* Adds the specified steering behavior to the queue. This behavior will be
-* executed every update in combination with all other behaviors in the queue.
-* The added steering behavior will have the specified weight.
-* </summary>
-<param name="key">
-    The key of the steering behavior to add from the queue.
-</param>
-<param name="type">The type of the steering behavior.</param>
-<param name="weight">The weight of the steering behavior.</param>
-<param name="a">Behavior specific parameter A.</param>
-<param name="b">Behavior specific parameter B.</param>
-<param name="c">Behavior specific parameter C.</param>
-<returns>True if successful; False otherwise (i.e. key was not found).</returns>
-<remarks>This function can only be used within an agent script.</remarks>
-\** ************************************************************************ **/
-native AddSteeringBehavior(const key[], type, Float:weight, Float:a=0.0,
-    Float:b=0.0, Float:c=0.0);
+// TODO: Add docs
+native SB:AddArrive(Float:weight, Float:x, Float:y);
+native SB:AddAvoidObstacles(Float:weight);
+native SB:AddExplore(Float:weight, Float:width, Float:height);
+native SB:AddFlee(Float:weight, Float:x, Float:y);
+native SB:AddSeek(Float:weight, Float:x, Float:y);
+native SB:AddWander(Float:weight, Float:jitter, Float:radius, Float:distance);
+native SB:AddEvadeByVar(Float:weight, Float:range, const key[], value);
+native SB:AddEvadeByVarString(Float:weight, Float:range, const key[], value[]);
+native SB:AddEvadeByVarFloat(Float:weight, Float:range, const key[],
+    Float:value);
 
 /** ************************************************************************ **\
 <summary>
     Removes the steering behavior with the specified key from the queue.
 </summary>
-<param name="key">
-    The key of the steering behavior to remove from the queue.
+<param name="behaviorid">
+    The handle of the steering behavior to remove from the queue.
 </param>
 <returns>True if successful; False otherwise (i.e. key was not found).</returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native RemoveSteeringBehavior(const key[]);
+native RemoveSteeringBehavior(SB:behaviorid);
 
 /** ************************************************************************ **\
 <summary>

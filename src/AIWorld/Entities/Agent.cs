@@ -56,8 +56,8 @@ namespace AIWorld.Entities
         private readonly Stack<IGoal> _goals = new Stack<IGoal>();
         private readonly Stack<Node> _path = new Stack<Node>();
         private readonly Dictionary<string,object> _variables = new Dictionary<string, object>(); 
-        private readonly Dictionary<string, WeightedSteeringBehavior> _steeringBehaviors =
-            new Dictionary<string, WeightedSteeringBehavior>();
+        private readonly Pool<WeightedSteeringBehavior> _steeringBehaviors =
+            new Pool<WeightedSteeringBehavior>();
 
         #endregion
 
@@ -134,6 +134,7 @@ namespace AIWorld.Entities
             // Load script
             Script = new ScriptBox("agent", scriptName);
             Script.Register(this, _gameWorldService, _consoleService, drawingService, new FuzzyModule(_consoleService));
+            SteeringBehaviorsContainer.Register(this);
 
             // Load scripting callbacks
             _onUpdate = Script.FindPublic("OnUpdate");
@@ -483,7 +484,7 @@ namespace AIWorld.Entities
         /// <returns>The summed steering force.</returns>
         private Vector3 CalculateSteeringForce(GameTime gameTime)
         {
-            var forces = _steeringBehaviors.Values.Aggregate(Vector3.Zero,
+            var forces = _steeringBehaviors.Aggregate(Vector3.Zero,
                 (current, behavior) => current + behavior.Calculate(gameTime));
             return forces.Truncate(MaxForce);
         }
@@ -803,57 +804,20 @@ namespace AIWorld.Entities
 
         #region API - Steering Behaviors
 
-        /// <summary>
-        ///     Adds a steering behavior.
-        /// </summary>
-        /// <param name="key">The key.</param>
-        /// <param name="type">The type.</param>
-        /// <param name="weight">The weight.</param>
-        /// <param name="a">Parameter a.</param>
-        /// <param name="b">Parameter b.</param>
-        /// <param name="c">Parameter c.</param>
-        /// <exception cref="ArgumentNullException">key</exception>
-        /// <exception cref="Exception">Invalid steering behavior</exception>
-        [ScriptingFunction]
-        public void AddSteeringBehavior(string key, SteeringBehaviorType type, float weight, float a, float b, float c)
+        public int AddSteeringBehavior(float weight, ISteeringBehavior behavior)
         {
-            if (key == null) throw new ArgumentNullException("key");
-
-            switch (type)
-            {
-                case SteeringBehaviorType.Arrive:
-                    _steeringBehaviors[key] =
-                        new WeightedSteeringBehavior(new ArriveSteeringBehavior(this, new Vector3(a, 0, b)), weight);
-                    break;
-                case SteeringBehaviorType.Seek:
-                    _steeringBehaviors[key] =
-                        new WeightedSteeringBehavior(new SeekSteeringBehavior(this, new Vector3(a, 0, b)), weight);
-                    break;
-                case SteeringBehaviorType.ObstacleAvoidance:
-                    _steeringBehaviors[key] = new WeightedSteeringBehavior(new AvoidObstaclesBehavior(this), weight);
-                    break;
-                case SteeringBehaviorType.Explore:
-                    _steeringBehaviors[key] =
-                        new WeightedSteeringBehavior(new ExploreSteeringBehavior(this, new Vector3(a, 0, b)), weight);
-                    break;
-                case SteeringBehaviorType.Wander:
-                    _steeringBehaviors[key] = new WeightedSteeringBehavior(new WanderSteeringBehavior(this, a, b, c),
-                        weight);
-                    break;
-                default:
-                    throw new Exception("Invalid steering behavior");
-            }
+            return _steeringBehaviors.Add(new WeightedSteeringBehavior(behavior, weight));
         }
 
         /// <summary>
         ///     Removes the specified steering behavior.
         /// </summary>
-        /// <param name="key">The key of the steering behavior.</param>
+        /// <param name="handle">The handle of the steering behavior.</param>
         /// <returns>True on success; False otherwise.</returns>
         [ScriptingFunction]
-        public bool RemoveSteeringBehavior(string key)
+        public bool RemoveSteeringBehavior(int handle)
         {
-            return _steeringBehaviors.Remove(key);
+            return _steeringBehaviors.Remove(handle);
         }
 
         #endregion
@@ -1183,6 +1147,11 @@ namespace AIWorld.Entities
             if (!_variables.ContainsKey(key) || !(_variables[key] is int))
                 return 0;
             return (int)_variables[key];
+        }
+
+        public object GetVarObject(string key)
+        {
+            return !_variables.ContainsKey(key) ? null : _variables[key];
         }
 
         [ScriptingFunction]
