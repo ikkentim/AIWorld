@@ -13,13 +13,14 @@ native Drawable:CreateDrawableLineCylinder(Float:x, Float:y, Float:z, Float:hx,
     Float:hy, Float:hz, Float:length, Float:radius, color1, color2);
 native Drawable:CreateDrawableLineCone(Float:x, Float:y, Float:z, Float:hx,
     Float:hy, Float:hz, Float:length, Float:radius, color1, color2);
-native Drawable:CreateDrawableLineShere(Float:x, Float:y, Float:z, Float:radius,
+native Drawable:CreateDrawableLineSphere(Float:x, Float:y, Float:z, Float:radius,
     color1, color2);
 
 native SetDrawablePosition(Drawable:drawableid, Float:x, Float:y,
     Float:z = 0.0);
 native SetDrawablePosition2(Drawable:drawableid, Float:x, Float:y,
     Float:z = 0.0);
+native SetDrawableScale(Drawable:drawableid, Float:x, Float:y);
 native SetDrawableText(Drawable:drawableid, const value[]);
 native SetDrawableColor(Drawable:drawableid, value);
 native SetDrawableColor2(Drawable:drawableid, value);

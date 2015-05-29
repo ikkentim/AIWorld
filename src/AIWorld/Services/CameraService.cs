@@ -16,6 +16,7 @@
 using System;
 using System.Diagnostics;
 using AIWorld.Entities;
+using AIWorld.Helpers;
 using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -24,19 +25,19 @@ namespace AIWorld.Services
 {
     public class CameraService : GameComponent, ICameraService
     {
-        public const float MaxCameraSpeed = 20.0f;
-        public const float CameraSpeed = 5.0f;
+        public const float MaxCameraSpeed = 10.0f;
+        public const float CameraSpeed = 500.0f;
         public const float DefaultZoom = 3;
         public const float MinZoom = 1;
         public const float MaxZoom = 15;
-        public const float CameraTargetOffset = 0.2f;
-        public const float CameraHeightOffset = 0.75f;
+        public const float CameraTargetOffset = 0.35f;
+        public const float CameraHeightOffset = 0.1f;
         private float _aspectRatio;
         private IEntity _target;
         private Vector3 _velocity;
         private Vector3 _undirectedVelocity;
         private float _zoom = DefaultZoom;
-        private AudioListener _audioListener;
+        private readonly AudioListener _audioListener;
 
         public CameraService(Game game) : base(game)
         {
@@ -74,45 +75,43 @@ namespace AIWorld.Services
             }
 
             if (_target != null) TargetPosition = _target.Position;
-            
-            _velocity = (TargetPosition - Position) * CameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            LimitVelocity(ref _undirectedVelocity);
-            LimitVelocity(ref _velocity);
+            _velocity = ((TargetPosition - Position) * CameraSpeed).Truncate((TargetPosition - Position).Length());
+
+            LimitVelocity(ref _undirectedVelocity, _zoom);
+            LimitVelocity(ref _velocity, 15);
+
+            _undirectedVelocity -= _undirectedVelocity*5.0f*(float) gameTime.ElapsedGameTime.TotalSeconds;
 
             if (_undirectedVelocity != Vector3.Zero)
             {
-                var worldCameraVelocity = _undirectedVelocity == Vector3.Zero
-                    ? Vector3.Zero
-                    : Vector3.Transform(_undirectedVelocity, Matrix.CreateRotationY(-Rotation));
+                var worldCameraVelocity = Vector3.Transform(_undirectedVelocity, Matrix.CreateRotationY(-Rotation));
 
-                Position += worldCameraVelocity;
+                Position += worldCameraVelocity*(float) gameTime.ElapsedGameTime.TotalSeconds;
                 TargetPosition = Position;
                 _target = null;
             }
             else
             {
-                Position += _velocity;
+                Position += _velocity*(float) gameTime.ElapsedGameTime.TotalSeconds;
             }
 
             CalculateView();
             base.Update(gameTime);
         }
 
-        private void LimitVelocity(ref Vector3 velocity)
+        private void LimitVelocity(ref Vector3 velocity, float zoom)
         {
             if (velocity == Vector3.Zero) return;
 
-            if (velocity.Length() > MaxCameraSpeed)
+            if (velocity.Length() > MaxCameraSpeed * zoom)
             {
                 velocity.Normalize();
-                velocity *= 2;
+                velocity *= MaxCameraSpeed * zoom;
             }
 
             if (velocity.LengthSquared() < 0.00001)
                 velocity = Vector3.Zero;
-            else
-                velocity *= 0.9f;
         }
 
         public void SetTarget(IEntity target)
@@ -134,7 +133,7 @@ namespace AIWorld.Services
 
         public void AddVelocity(Vector3 acceleration)
         {
-            _undirectedVelocity += acceleration;
+            _undirectedVelocity += acceleration * _zoom * 50;
         }
 
         public void Move(float deltaRotation, float deltaZoom)
@@ -149,9 +148,9 @@ namespace AIWorld.Services
         {
             var realCameraTarget = Position + new Vector3(0, CameraTargetOffset, 0);
             var cameraPosition = realCameraTarget +
-                                 new Vector3((float) Math.Cos(Rotation) * 1.8f,
+                                 new Vector3((float) Math.Cos(Rotation) * 2.8f,
                                      _zoom/3 + CameraTargetOffset + CameraHeightOffset,
-                                     (float)Math.Sin(Rotation) * 1.8f) * _zoom;
+                                     (float)Math.Sin(Rotation) * 2.8f) * _zoom;
 
             // Also update listener data
             _audioListener.Position = cameraPosition;

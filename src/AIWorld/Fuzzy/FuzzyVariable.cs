@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using AIWorld.Fuzzy.Sets;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld.Fuzzy
 {
@@ -53,12 +54,14 @@ namespace AIWorld.Fuzzy
 
         public void Fuzzify(float value)
         {
-            if (value < _minRange || value > _maxRange)
-                throw new ArgumentOutOfRangeException("value", value, "out of range.");
+            
 
             foreach (var set in _sets)
             {
-                set.Value.SetDOM(set.Value.CalculateDOM(value));
+                if (value < _minRange || value > _maxRange)
+                    set.Value.SetDOM(0);
+                else
+                    set.Value.SetDOM(set.Value.CalculateDOM(value));
             }
         }
 
@@ -76,7 +79,6 @@ namespace AIWorld.Fuzzy
 
             foreach (var set in _sets)
             {
-                Debug.WriteLine("{0} member of {1}", set.Value.DOM, set.Key);
                 bottom += set.Value.DOM;
                 top += set.Value.RepresentativeValue*set.Value.DOM;
             }

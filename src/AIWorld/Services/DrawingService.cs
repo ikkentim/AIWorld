@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using AIWorld.Drawable;
 using AIWorld.Helpers;
@@ -53,8 +54,12 @@ namespace AIWorld.Services
             var g = (colorCode >> 8*2) & 0xFF;
             var b = (colorCode >> 8*1) & 0xFF;
 
-            return new Color(new Vector4((float) r/byte.MaxValue, (float) g/byte.MaxValue, (float) b/byte.MaxValue,
-                (float) a/byte.MaxValue));
+            var color = Color.White;
+            color.A = (byte)(colorCode);
+            color.R = (byte)(colorCode >> 24);
+            color.G = (byte)(colorCode >> 16);
+            color.B = (byte) (colorCode >> 8);
+            return color;
         }
 
         private SpriteFont GetFont(string name)
@@ -71,7 +76,7 @@ namespace AIWorld.Services
                 part.Draw(this, gameTime);
             }
 
-            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied);
             foreach (var part in _drawDrawables.Where(p => p.Value is IDrawable2D).Select(p => p.Value as IDrawable2D))
             {
                 part.Draw(this, _spriteBatch, gameTime);
@@ -129,7 +134,7 @@ namespace AIWorld.Services
         }
 
         [ScriptingFunction]
-        public int CreateDrawableLineShere(float x, float y, float z, float radius, uint color1, uint color2)
+        public int CreateDrawableLineSphere(float x, float y, float z, float radius, uint color1, uint color2)
         {
             return
                 _drawables.Add(new DrawableLineSphere(_cameraService, GraphicsDevice, new Vector3(x, y, z), radius,
@@ -161,6 +166,12 @@ namespace AIWorld.Services
         public bool SetDrawablePosition2(int drawableid, float x, float y, float z)
         {
             return SetValue<IDrawableHasSecondPosition>(drawableid, p => p.SecondPosition = new Vector3(x, y, z));
+        }
+
+        [ScriptingFunction]
+        public bool SetDrawableScale(int drawableid, float x, float y)
+        {
+            return SetValue<IDrawableHasScale>(drawableid, p => p.Scale = new Vector2(x, y));
         }
 
         [ScriptingFunction]
@@ -210,8 +221,8 @@ namespace AIWorld.Services
 
             if (!_drawables[drawableid].IsVisible)
                 return true;
-
-            _drawDrawables.RemoveAt(_drawDrawables.IndexOfValue(_drawables[drawableid]));
+            var rmidx = _drawDrawables.IndexOfValue(_drawables[drawableid]);
+            _drawDrawables.RemoveAt(rmidx);
             _drawables[drawableid].IsVisible = false;
 
             return true;
@@ -222,7 +233,10 @@ namespace AIWorld.Services
         {
             if (!IsValidDrawableId(drawableid)) return false;
 
-            _drawables[drawableid].IsVisible = false;
+            if (_drawables[drawableid].IsVisible)
+                return true;
+
+            _drawables[drawableid].IsVisible = true;
             _drawDrawables.Add(_currentDrawOrder++, _drawables[drawableid]);
             return true;
         }

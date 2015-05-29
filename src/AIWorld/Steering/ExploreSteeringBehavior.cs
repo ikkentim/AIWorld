@@ -77,7 +77,7 @@ namespace AIWorld.Steering
 
             _behavior = ((Math.Abs(_bottomRight.X - _topLeft.X) < Math.Max(1, Agent.TargetRange*2))
                 ? (ITargetedSteeringBehavior) new ArriveSteeringBehavior(Agent) {Target = target}
-                : new SeekSteeringBehavior(Agent, target));
+                : new SeekSteeringBehavior(Agent) {Target = target});
 
             return _behavior.Calculate(gameTime);
         }

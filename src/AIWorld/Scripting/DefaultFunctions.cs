@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AIWorld.Services;
 using AMXWrapper;
 using Microsoft.Xna.Framework;
 
@@ -62,6 +63,62 @@ namespace AIWorld.Scripting
                 if (scripted.Script.PublicVars.TryGetValue(name, out cellPtr))
                     cellPtr.Set(value);
             }
+        }
+
+        public static int? CallFunctionOnScript(ScriptBox script, IConsoleService consoleService,
+            AMXArgumentList arguments)
+        { // name,format,...
+            if (arguments.Length < 2)
+                return null;
+
+            var function = arguments[0].AsString();
+            var format = arguments[1].AsString();
+            var publicFunction = script.Publics.ContainsKey(function) ? script.Publics[function] : null;
+
+            if (publicFunction == null) return null;
+
+            var strings = new List<CellPtr>();
+            var i = 2;
+
+            var pars = new List<object>();
+            foreach (var t in format.TakeWhile(t => i < arguments.Length))
+            {
+                switch (t)
+                {
+                    case 'd':
+                    case 'i':
+                    case 'f':
+                        pars.Add(arguments[i++].AsCellPtr().Get());
+                        break;
+                    case 's':
+                        pars.Add(arguments[i++].AsString());
+                        break;
+                }
+            }
+
+            pars.Reverse();
+            foreach (var p in pars)
+            {
+                if (p is string)
+                    strings.Add(script.Push(p as string));
+                else
+                    script.Push((Cell) p);
+            }
+
+            int? result = null;
+            try
+            {
+                result = publicFunction.Execute();
+            }
+            catch (Exception e)
+            {
+                consoleService.WriteLine(Color.Red, e);
+            }
+
+            foreach (var str in strings)
+                script.Release(str);
+
+            return result;
         }
 
         /// <summary>

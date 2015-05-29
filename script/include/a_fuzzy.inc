@@ -3,17 +3,17 @@
 #endif
 #define _fuzzy_included
 
-native FuzzyVar:CreateFuzzyVariable(const name[]);
-native IsValidFuzzyVariable(FuzzyVar:variable);
-native DeleteFuzzyVariable(FuzzyVar:variable);
+native Fuzzy:CreateFuzzyVariable(const name[]);
+native IsValidFuzzyVariable(Fuzzy:variable);
+native DeleteFuzzyVariable(Fuzzy:variable);
 native AddFuzzyRule(const rule[]);
-native Fuzzify(FuzzyVar:variable, Float:value);
-native Float:Defuzzify(FuzzyVar:variable);
-native AddFuzzyLeftShoulder(FuzzyVar:variable, const name[], Float:left,
+native Fuzzify(Fuzzy:variable, Float:value);
+native Float:Defuzzify(Fuzzy:variable);
+native AddFuzzyLeftShoulder(Fuzzy:variable, const name[], Float:left,
     Float:middle, Float:right);
-native AddFuzzyRightShoulder(FuzzyVar:variable, const name[], Float:left,
+native AddFuzzyRightShoulder(Fuzzy:variable, const name[], Float:left,
     Float:middle, Float:right);
-native AddFuzzyTrapezium(FuzzyVar:variable, const name[], Float:left,
+native AddFuzzyTrapezium(Fuzzy:variable, const name[], Float:left,
     Float:leftmiddle, Float:rightmiddle, Float:right);
-native AddFuzzyTriangle(FuzzyVar:variable, const name[], Float:left,
-    Float:middle, Float:right);
+native AddFuzzyTriangle(Fuzzy:variable, const name[], Float:left, Float:middle,
+    Float:right);

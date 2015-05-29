@@ -1,0 +1,5 @@
+
+stock Focus()
+{
+    SetTargetEntity(GetId());
+}

@@ -17,8 +17,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using AIWorld.Entities;
+using AIWorld.Fuzzy;
 using AIWorld.Scripting;
 using AIWorld.Services;
+using AIWorld.Steering;
 using AMXWrapper;
 using Microsoft.Xna.Framework;
 
@@ -41,9 +43,11 @@ namespace AIWorld.Goals
             Agent = agent;
             _scriptName = scriptName;
 
-            Script = new ScriptBox("goal", scriptName);
+            Script = new ScriptBox(scriptName);
             Script.Register(this, agent, agent.Game.Services.GetService<IGameWorldService>(),
+                new FuzzyModule(agent.Game.Services.GetService<IConsoleService>()),
                 agent.Game.Services.GetService<IConsoleService>());
+            SteeringBehaviorsContainer.Register(agent, Script);
 
             _onUpdate = Script.FindPublic("OnUpdate");
             _onEnter = Script.FindPublic("OnEnter");

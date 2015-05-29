@@ -37,3 +37,9 @@ stock Float:fclamp(Float:min, Float:max, Float:value)
 \**--------------------------------------------------------------------------**/
 stock Float:fabs(Float:value)
     return value < 0 ? -value : value;
+
+stock Float:fmin(Float:val1, Float:val2)
+    return val2 < val1 ? val2 : val1;
+    
+stock Float:fmax(Float:val1, Float:val2)
+    return val2 > val1 ? val2 : val1;

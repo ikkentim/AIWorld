@@ -17,6 +17,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using AIWorld.Entities;
+using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Steering
@@ -35,7 +36,7 @@ namespace AIWorld.Steering
                 .ToArray();
         }
 
-        public static void Register(Agent agent)
+        public static void Register(Agent agent, ScriptBox script)
         {
             foreach (var behavior in SteeringBehaviors)
             {
@@ -46,7 +47,7 @@ namespace AIWorld.Steering
 
                 var localBehavior = behavior;
 
-                agent.Script.Register(functionName, (amx, args) =>
+                script.Register(functionName, (amx, args) =>
                 {
                     var properties = localBehavior.GetProperties()
                         .Where(
@@ -60,13 +61,13 @@ namespace AIWorld.Steering
                                         .First())
                                     .Index).ToArray();
 
-                    if (args.Length != 1 + properties.Length) return -1;
+                    if (args.Length != 1 + properties.Sum(p => p.PropertyType == typeof(Vector3) ? 2 : 1))
+                        return -1;
 
                     var weight = args[0].AsFloat();
                     var idx = 1;
 
                     var instance = Activator.CreateInstance(localBehavior, agent) as ISteeringBehavior;
-
                     foreach (var property in properties)
                     {
                         if (property.PropertyType == typeof (int))

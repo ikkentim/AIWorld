@@ -33,9 +33,8 @@ namespace AIWorld.Scripting
         /// <summary>
         ///     Initializes a new instance of the <see cref="ScriptBox" /> class.
         /// </summary>
-        /// <param name="type">The type.</param>
         /// <param name="name">The name.</param>
-        public ScriptBox(string type, string name) : base(string.Format("{0}/{1}.amx", type, name))
+        public ScriptBox(string name) : base(string.Format("{0}.amx", name))
         {
             LoadLibrary(AMXDefaultLibrary.Core | AMXDefaultLibrary.Float | AMXDefaultLibrary.String |
                         AMXDefaultLibrary.Time);

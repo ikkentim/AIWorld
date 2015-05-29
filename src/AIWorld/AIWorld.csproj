@@ -65,6 +65,7 @@
     <Compile Include="Drawable\DrawableLineCylinder.cs" />
     <Compile Include="Drawable\DrawableLineSphere.cs" />
     <Compile Include="Drawable\DrawableText2D.cs" />
+    <Compile Include="Drawable\DrawableText3D.cs" />
     <Compile Include="Drawable\IDrawable2D.cs" />
     <Compile Include="Drawable\IDrawable3D.cs" />
     <Compile Include="Drawable\IDrawableHasColor.cs" />
@@ -72,6 +73,7 @@
     <Compile Include="Drawable\IDrawableHasLength.cs" />
     <Compile Include="Drawable\IDrawableHasPosition.cs" />
     <Compile Include="Drawable\IDrawableHasRadius.cs" />
+    <Compile Include="Drawable\IDrawableHasScale.cs" />
     <Compile Include="Drawable\IDrawableHasSecondColor.cs" />
     <Compile Include="Drawable\IDrawableHasSecondPosition.cs" />
     <Compile Include="Drawable\IDrawableHasText.cs" />
@@ -103,8 +105,16 @@
     <Compile Include="Services\DrawingService.cs" />
     <Compile Include="Services\IDrawingService.cs" />
     <Compile Include="Services\IParticleService.cs" />
+    <Compile Include="Steering\AlignmentByVarFloatSteeringBehavior.cs" />
+    <Compile Include="Steering\AlignmentByVarSteeringBehavior.cs" />
+    <Compile Include="Steering\AlignmentByVarStringSteeringBehavior.cs" />
+    <Compile Include="Steering\AlignmentSteeringBehavior.cs" />
     <Compile Include="Steering\ArriveSteeringBehavior.cs" />
     <Compile Include="Steering\AvoidObstaclesSteeringBehavior.cs" />
+    <Compile Include="Steering\CohesionSteeringBehavior.cs" />
+    <Compile Include="Steering\CohesionSteeringByVarBehavior.cs" />
+    <Compile Include="Steering\CohesionSteeringByVarFloatBehavior.cs" />
+    <Compile Include="Steering\CohesionSteeringByVarStringBehavior.cs" />
     <Compile Include="Steering\EvadeByVarFloatSteeringBehavior.cs" />
     <Compile Include="Steering\EvadeByVarSteeringBehavior.cs" />
     <Compile Include="Steering\EvadeByVarStringSteeringBehavior.cs" />
@@ -113,7 +123,13 @@
     <Compile Include="Steering\FleeSteeringBehavior.cs" />
     <Compile Include="Steering\ISteeringBehavior.cs" />
     <Compile Include="Steering\ITargetedSteeringBehavior.cs" />
+    <Compile Include="Steering\OffsetPursuitSteeringBehavior.cs" />
+    <Compile Include="Steering\PursuitSteeringBehavior.cs" />
     <Compile Include="Steering\SeekSteeringBehavior.cs" />
+    <Compile Include="Steering\SeparationByVarFloatSteeringBehavior.cs" />
+    <Compile Include="Steering\SeparationByVarSteeringBehavior.cs" />
+    <Compile Include="Steering\SeparationByVarStringSteeringBehavior.cs" />
+    <Compile Include="Steering\SeparationSteeringBehavior.cs" />
     <Compile Include="Steering\SteeringBehaviorArgumentAttribute.cs" />
     <Compile Include="Steering\SteeringBehaviorsContainer.cs" />
     <Compile Include="Steering\WanderSteeringBehavior.cs" />

@@ -23,14 +23,14 @@ namespace AIWorld.Steering
 {
     public class WanderSteeringBehavior : ISteeringBehavior
     {
-        private readonly Random _random = new Random();
+        private static readonly Random Random = new Random();
         private Vector3 _wanderTarget;
 
         public WanderSteeringBehavior(Agent agent)
         {
             Agent = agent;
 
-            var theta = (float) _random.NextDouble()*(float) Math.PI*2;
+            var theta = (float) Random.NextDouble()*(float) Math.PI*2;
             _wanderTarget = new Vector3(Radius*(float) Math.Cos(theta), 0,
                 Radius*(float) Math.Sin(theta));
         }
@@ -52,8 +52,8 @@ namespace AIWorld.Steering
         {
             var jitter = Jitter*((float) gameTime.ElapsedGameTime.TotalSeconds);
 
-            var add = new Vector3((float) ((_random.NextDouble()*2) - 1)*jitter, 0,
-                (float) ((_random.NextDouble()*2) - 1)*jitter);
+            var add = new Vector3((float) ((Random.NextDouble()*2) - 1)*jitter, 0,
+                (float) ((Random.NextDouble()*2) - 1)*jitter);
             _wanderTarget += add;
 
             _wanderTarget = Vector3.Normalize(_wanderTarget)*Radius;

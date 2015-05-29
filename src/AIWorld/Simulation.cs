@@ -38,28 +38,66 @@ namespace AIWorld
     /// </summary>
     public class Simulation : Game, IScripted
     {
+        #region Fields
+
+        #region Fields - Constants - Scrolling
+
         private const float ScrollMaxSpeed = 0.3f;
         private const float ScrollMultiplier = 0.01f;
         private const float ScrollMinDelta = 0.05f;
         private const float ScrollModifier = 2.5f;
-        private const float MouseRotationModifier = 0.005f;
+        private const float MouseRotationModifier = 0.015f;
+
+        #endregion
+
+        #region Fields - Scrolling
+
+        private float _scrollVelocity;
+        private float _unprocessedScrollDelta;
+
+        #endregion
+
+        #region Fields - Graphics
+
         private readonly GraphicsDeviceManager _graphics;
+
+        #endregion
+
+        #region Fields - Scripting
+
         private readonly string _scriptName;
         private Color _backgroundColor;
+        private readonly List<SoundEffectInstance> _soundEffectInstances = new List<SoundEffectInstance>();
+        private readonly List<SoundEffect> _soundEffects = new List<SoundEffect>();
+
+        #endregion
+
+        #region Fields - Services
+
         private ICameraService _cameraService;
         private IConsoleService _consoleService;
         private IGameWorldService _gameWorldService;
         private IDrawingService _drawingService;
         private IParticleService _particleService;
+
+        #endregion
+
         private KeyboardState _lastKeyboardState;
         private MouseState _lastMouseState;
         private int _lastScroll;
+
+        #region Fields - Scripting functions
+
         private AMXPublic _onKeyStateChanged;
         private AMXPublic _onMouseClick;
-        private float _scrollVelocity;
-        private float _unprocessedScrollDelta;
-        private readonly List<SoundEffectInstance> _soundEffectInstances = new List<SoundEffectInstance>(); 
-        private readonly List<SoundEffect> _soundEffects = new List<SoundEffect>(); 
+        private AMXPublic _onUpdate;
+
+        #endregion
+
+        #endregion
+
+        #region Constructors
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Simulation" /> class.
         /// </summary>
@@ -74,9 +112,22 @@ namespace AIWorld
             IsMouseVisible = true;
         }
 
+        #endregion
+
+        #region Implementation of IScripted
+
         public ScriptBox Script { get; private set; }
+
+        #endregion
+
+        #region Events of Simulation
+
         public event EventHandler<MouseClickEventArgs> MouseClick;
         public event EventHandler<KeyStateEventArgs> KeyStateChanged;
+
+        #endregion
+
+        #region Methods of Simulation
 
         private void LoadSimulation()
         {
@@ -86,7 +137,7 @@ namespace AIWorld
             // Register various services.
             Services.AddService(typeof (IConsoleService), _consoleService = new ConsoleService(this));
             Services.AddService(typeof (ICameraService), _cameraService = new CameraService(this));
-            Services.AddService(typeof(IGameWorldService), _gameWorldService = new GameWorldService(this, _cameraService));
+            Services.AddService(typeof(IGameWorldService), _gameWorldService = new GameWorldService(this, _cameraService, _consoleService));
             Services.AddService(typeof(IDrawingService), _drawingService = new DrawingService(this, _cameraService));
             Services.AddService(typeof(IParticleService), _particleService = new ParticleService(this));
 
@@ -99,11 +150,12 @@ namespace AIWorld
             // Set up the script and let it handle further setup.
             try
             {
-                Script = new ScriptBox("main", _scriptName);
+                Script = new ScriptBox(_scriptName);
                 Script.Register(this, _gameWorldService, _consoleService, _drawingService);
 
                 _onMouseClick = Script.FindPublic("OnMouseClick");
                 _onKeyStateChanged = Script.FindPublic("OnKeyStateChanged");
+                _onUpdate = Script.FindPublic("OnUpdate");
 
                 Script.ExecuteMain();
             }
@@ -116,8 +168,6 @@ namespace AIWorld
 
         private void UnloadSimulation()
         {
-            Debug.WriteLine("UnloadSimulation");
-
             if (Script != null)
                 Script.Dispose();
             Script = null;
@@ -148,6 +198,10 @@ namespace AIWorld
 
             GC.Collect();
         }
+
+        #endregion
+
+        #region Overrides of Game
 
         /// <summary>
         ///     Loads the content.
@@ -185,139 +239,150 @@ namespace AIWorld
             }
 
             // Prevent user input while not in focus or no script is running.
-            if (!IsActive || Script == null)
+            if (Script == null)
             {
                 _lastMouseState = mouseState;
                 _lastKeyboardState = keyboardState;
                 return;
             }
 
-            #region Process camera manipulation input
-
-            float deltaCameraRotation = 0;
-            float deltaCameraZoom = 0;
-
-            // If middle or right button is pressed, hide the mouse button and track the x-axis (rotation) movements
-            if (mouseState.MiddleButton == ButtonState.Pressed || mouseState.RightButton == ButtonState.Pressed)
+            // Update the script.
+            if (_onUpdate != null)
             {
-                // If this is the first update in which the button is pressed, recenter the mouse and
-                // wait for the next update, in which we actually update the mouse rotation
-                if (_lastMouseState.MiddleButton == ButtonState.Pressed ||
-                    _lastMouseState.RightButton == ButtonState.Pressed)
+                Script.Push((float) gameTime.ElapsedGameTime.TotalSeconds);
+                _onUpdate.Execute();
+            }
+
+            if (IsActive)
+            {
+                #region Process camera manipulation input
+
+                float deltaCameraRotation = 0;
+                float deltaCameraZoom = 0;
+
+                // If middle or right button is pressed, hide the mouse button and track the x-axis (rotation) movements
+                if (mouseState.MiddleButton == ButtonState.Pressed || mouseState.RightButton == ButtonState.Pressed)
                 {
-                    // Add rotation delta based on mouse movement
-                    deltaCameraRotation += ((float)mouseState.X - Window.ClientBounds.Width/2)*MouseRotationModifier;
+                    // If this is the first update in which the button is pressed, recenter the mouse and
+                    // wait for the next update, in which we actually update the mouse rotation
+                    if (_lastMouseState.MiddleButton == ButtonState.Pressed ||
+                        _lastMouseState.RightButton == ButtonState.Pressed)
+                    {
+                        // Add rotation delta based on mouse movement
+                        deltaCameraRotation += ((float) mouseState.X - Window.ClientBounds.Width/2)*
+                                               MouseRotationModifier;
 
-                    // Recenter mouse.
-                    Mouse.SetPosition(
-                        Window.ClientBounds.Width/2,
-                        Window.ClientBounds.Height/2);
+                        // Recenter mouse.
+                        Mouse.SetPosition(
+                            Window.ClientBounds.Width/2,
+                            Window.ClientBounds.Height/2);
+                    }
+                    else
+                    {
+                        // Hide and center mouse.
+                        IsMouseVisible = false;
+                        Mouse.SetPosition(
+                            Window.ClientBounds.Width/2,
+                            Window.ClientBounds.Height/2);
+
+                        // TODO: It might be better only to recenter the mouse when you start dragging and when you stop relocate the mouse to were you started.
+                    }
                 }
-                else
+                else if (_lastMouseState.MiddleButton == ButtonState.Pressed ||
+                         _lastMouseState.RightButton == ButtonState.Pressed)
                 {
-                    // Hide and center mouse.
-                    IsMouseVisible = false;
-                    Mouse.SetPosition(
-                        Window.ClientBounds.Width/2,
-                        Window.ClientBounds.Height/2);
-
-                    // TODO: It might be better only to recenter the mouse when you start dragging and when you stop relocate the mouse to were you started.
+                    // Button is released; show mouse again.
+                    IsMouseVisible = true;
                 }
-            }
-            else if (_lastMouseState.MiddleButton == ButtonState.Pressed ||
-                     _lastMouseState.RightButton == ButtonState.Pressed)
-            {
-                // Button is released; show mouse again.
-                IsMouseVisible = true;
-            }
 
-            // Calculate the delta scroll value.
-            var scroll = mouseState.ScrollWheelValue;
-            var deltaScroll = scroll - _lastScroll;
-            _lastScroll = scroll;
+                // Calculate the delta scroll value.
+                var scroll = mouseState.ScrollWheelValue;
+                var deltaScroll = scroll - _lastScroll;
+                _lastScroll = scroll;
 
-            // Add the delta scroll to the unprocessed scroll value. 
-            _unprocessedScrollDelta -= deltaScroll;
+                // Add the delta scroll to the unprocessed scroll value. 
+                _unprocessedScrollDelta -= deltaScroll;
 
-            // If there is some reasonable amount of unprocessed scroll, handle it.
-            if (Math.Abs(_unprocessedScrollDelta) > ScrollMinDelta)
-            {
-                _scrollVelocity = MathHelper.Clamp(_unprocessedScrollDelta*ScrollMultiplier, -ScrollMaxSpeed,
-                    ScrollMaxSpeed);
-           
-                _unprocessedScrollDelta -= _scrollVelocity/ScrollMultiplier;
-
-                deltaCameraZoom += (_scrollVelocity*_cameraService.Zoom/
-                                   (CameraService.MaxZoom - CameraService.MinZoom + 1))*ScrollModifier;
-            }
-
-            Vector3 acceleration = Vector3.Zero;
-            if (keyboardState.IsKeyDown(Keys.Left)) acceleration += Vector3.Backward;
-            if (keyboardState.IsKeyDown(Keys.Right)) acceleration += Vector3.Forward;
-            if (keyboardState.IsKeyDown(Keys.Up)) acceleration += Vector3.Left;
-            if (keyboardState.IsKeyDown(Keys.Down)) acceleration += Vector3.Right;
-
-            _cameraService.AddVelocity(acceleration*(float) gameTime.ElapsedGameTime.TotalSeconds);
-            _cameraService.Move(deltaCameraRotation, deltaCameraZoom);
-
-            #endregion
-
-            #region Handle keyboard state
-
-            if (keyboardState != _lastKeyboardState)
-                OnKeyStateChanged(new KeyStateEventArgs(keyboardState.GetPressedKeys(),
-                    _lastKeyboardState.GetPressedKeys()));
-
-            #endregion
-
-            #region Handle clicking
-
-            // Check which buttons were pressed.
-            var leftMouseButtonPressed = mouseState.LeftButton == ButtonState.Pressed &&
-                                         _lastMouseState.LeftButton == ButtonState.Released;
-            var middleMouseButtonPressed = mouseState.MiddleButton == ButtonState.Pressed &&
-                                           _lastMouseState.MiddleButton == ButtonState.Released;
-            var rightMouseButtonPressed = mouseState.RightButton == ButtonState.Pressed &&
-                                          _lastMouseState.RightButton == ButtonState.Released;
-
-            // If any button was pressed, calculate click position.
-            if (leftMouseButtonPressed || middleMouseButtonPressed || rightMouseButtonPressed)
-            {
-                // Create a ray based on the clicked position.
-                var nearPoint = GraphicsDevice.Viewport.Unproject(new Vector3(mouseState.Position.ToVector2(), 0),
-                    _cameraService.Projection, _cameraService.View, Matrix.Identity);
-
-                var farPoint = GraphicsDevice.Viewport.Unproject(new Vector3(mouseState.Position.ToVector2(), 1),
-                    _cameraService.Projection, _cameraService.View, Matrix.Identity);
-
-                var ray = new Ray(nearPoint, Vector3.Normalize(farPoint - nearPoint));
-
-                // Test where the ray hits the ground.
-                var groundDistance = ray.Intersects(new Plane(Vector3.Up, 0));
-                if (groundDistance != null)
+                // If there is some reasonable amount of unprocessed scroll, handle it.
+                if (Math.Abs(_unprocessedScrollDelta) > ScrollMinDelta)
                 {
-                    // If the ray hits the ground, look for nearby entities and find which one was clicked.
+                    _scrollVelocity = MathHelper.Clamp(_unprocessedScrollDelta*ScrollMultiplier, -ScrollMaxSpeed,
+                        ScrollMaxSpeed);
 
-                    Vector3 clickPostion = nearPoint + ray.Direction*groundDistance.Value;
+                    _unprocessedScrollDelta -= _scrollVelocity/ScrollMultiplier;
 
-                    var clickedEntity =
-                        _gameWorldService.Entities.Query(new AABB(clickPostion, Vector3.One*(Entity.MaxSize/2)))
-                            .FirstOrDefault(e => ray.Intersects(new BoundingSphere(e.Position, e.Size)) != null);
-
-                    // Fire click events for every pressed button. If an entity is clicked and it handles the call,
-                    // don't call the general OnMouseClick event.
-                    foreach (var args in Enumerable.Range(1, 3)
-                        .Where(
-                            n =>
-                                (n == 1 && leftMouseButtonPressed) || (n == 2 && middleMouseButtonPressed) ||
-                                (n == 3 && rightMouseButtonPressed))
-                        .Select(button => new MouseClickEventArgs(button, clickPostion))
-                        .Where(args => clickedEntity == null || clickedEntity.OnClicked(args) == false))
-                        OnMouseClick(args);
+                    deltaCameraZoom += (_scrollVelocity*_cameraService.Zoom/
+                                        (CameraService.MaxZoom - CameraService.MinZoom + 1))*ScrollModifier;
                 }
-            }
 
-            #endregion
+                Vector3 acceleration = Vector3.Zero;
+                if (keyboardState.IsKeyDown(Keys.Left)) acceleration += Vector3.Backward;
+                if (keyboardState.IsKeyDown(Keys.Right)) acceleration += Vector3.Forward;
+                if (keyboardState.IsKeyDown(Keys.Up)) acceleration += Vector3.Left;
+                if (keyboardState.IsKeyDown(Keys.Down)) acceleration += Vector3.Right;
+
+                _cameraService.AddVelocity(acceleration*(float) gameTime.ElapsedGameTime.TotalSeconds);
+                _cameraService.Move(deltaCameraRotation, deltaCameraZoom);
+
+                #endregion
+
+                #region Handle keyboard state
+
+                if (keyboardState != _lastKeyboardState)
+                    OnKeyStateChanged(new KeyStateEventArgs(keyboardState.GetPressedKeys(),
+                        _lastKeyboardState.GetPressedKeys()));
+
+                #endregion
+
+                #region Handle clicking
+
+                // Check which buttons were pressed.
+                var leftMouseButtonPressed = mouseState.LeftButton == ButtonState.Pressed &&
+                                             _lastMouseState.LeftButton == ButtonState.Released;
+                var middleMouseButtonPressed = mouseState.MiddleButton == ButtonState.Pressed &&
+                                               _lastMouseState.MiddleButton == ButtonState.Released;
+                var rightMouseButtonPressed = mouseState.RightButton == ButtonState.Pressed &&
+                                              _lastMouseState.RightButton == ButtonState.Released;
+
+                // If any button was pressed, calculate click position.
+                if (leftMouseButtonPressed || middleMouseButtonPressed || rightMouseButtonPressed)
+                {
+                    // Create a ray based on the clicked position.
+                    var nearPoint = GraphicsDevice.Viewport.Unproject(new Vector3(mouseState.Position.ToVector2(), 0),
+                        _cameraService.Projection, _cameraService.View, Matrix.Identity);
+
+                    var farPoint = GraphicsDevice.Viewport.Unproject(new Vector3(mouseState.Position.ToVector2(), 1),
+                        _cameraService.Projection, _cameraService.View, Matrix.Identity);
+
+                    var ray = new Ray(nearPoint, Vector3.Normalize(farPoint - nearPoint));
+
+                    // Test where the ray hits the ground.
+                    var groundDistance = ray.Intersects(new Plane(Vector3.Up, 0));
+                    if (groundDistance != null)
+                    {
+                        // If the ray hits the ground, look for nearby entities and find which one was clicked.
+
+                        Vector3 clickPostion = nearPoint + ray.Direction*groundDistance.Value;
+
+                        var clickedEntity =
+                            _gameWorldService.Entities.Query(new AABB(clickPostion, Vector3.One*(Entity.MaxSize/2)))
+                                .FirstOrDefault(e => ray.Intersects(new BoundingSphere(e.Position, e.Size)) != null);
+
+                        // Fire click events for every pressed button. If an entity is clicked and it handles the call,
+                        // don't call the general OnMouseClick event.
+                        foreach (var args in Enumerable.Range(1, 3)
+                            .Where(
+                                n =>
+                                    (n == 1 && leftMouseButtonPressed) || (n == 2 && middleMouseButtonPressed) ||
+                                    (n == 3 && rightMouseButtonPressed))
+                            .Select(button => new MouseClickEventArgs(button, clickPostion))
+                            .Where(args => clickedEntity == null || clickedEntity.OnClicked(args) == false))
+                            OnMouseClick(args);
+                    }
+                }
+
+                #endregion
+            }
 
             // Remember last status
             _lastMouseState = mouseState;
@@ -331,6 +396,10 @@ namespace AIWorld
 
             base.Draw(gameTime);
         }
+
+        #endregion
+
+        #region API
 
         [ScriptingFunction]
         public void AddQuadPlane(float x, float y, float z, float size, int rotation, string texture)
@@ -373,6 +442,15 @@ namespace AIWorld
             _gameWorldService.Add(obj);
 
             return obj.Id;
+        }
+
+        [ScriptingFunction]
+        public bool RemoveEntity(int id)
+        {
+            var el = _gameWorldService.Entities.FirstOrDefault(e => e.Id == id);
+            if (el == null) return false;
+            _gameWorldService.Entities.Remove(el);
+            return true;
         }
 
         [ScriptingFunction]
@@ -446,6 +524,10 @@ namespace AIWorld
             return result;
         }
 
+        #endregion
+
+        #region Event Raisers
+
         /// <summary>
         ///     Raises the <see cref="E:MouseClick" /> event.
         /// </summary>
@@ -505,5 +587,7 @@ namespace AIWorld
             if (KeyStateChanged != null)
                 KeyStateChanged(this, e);
         }
+
+        #endregion
     }
 }

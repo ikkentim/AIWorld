@@ -24,11 +24,10 @@ namespace AIWorld.Steering
     {
         private readonly Agent _agent;
 
-        public SeekSteeringBehavior(Agent agent, Vector3 target)
+        public SeekSteeringBehavior(Agent agent)
         {
             if (agent == null) throw new ArgumentNullException("agent");
             _agent = agent;
-            Target = target;
         }
 
         [SteeringBehaviorArgument]

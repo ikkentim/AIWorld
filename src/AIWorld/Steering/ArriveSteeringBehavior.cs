@@ -21,8 +21,6 @@ namespace AIWorld.Steering
 {
     public class ArriveSteeringBehavior : ITargetedSteeringBehavior
     {
-        private const float ArriveDecelerationTweaker = 1.3f;
-
         public ArriveSteeringBehavior(Agent agent)
         {
             if (agent == null) throw new ArgumentNullException("agent");
@@ -31,8 +29,11 @@ namespace AIWorld.Steering
 
         public Agent Agent { get; private set; }
 
-        [SteeringBehaviorArgument]
+        [SteeringBehaviorArgument(0)]
         public Vector3 Target { get; set; }
+
+        [SteeringBehaviorArgument(1)]
+        public float DecelerationSpeed { get; set; }
 
         #region Implementation of ISteeringBehavior
 
@@ -43,7 +44,7 @@ namespace AIWorld.Steering
 
             if (distance > 0.00001)
             {
-                var speed = distance/(ArriveDecelerationTweaker);
+                var speed = distance / (DecelerationSpeed);
                 speed = Math.Min(speed, Agent.MaxSpeed);
                 var desiredVelocity = toTarget*speed/distance;
 

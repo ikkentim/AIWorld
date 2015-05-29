@@ -14,6 +14,7 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using AIWorld.Entities;
 using AIWorld.Services;
@@ -21,18 +22,21 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Steering
 {
-    public abstract class EvadeSteeringBehavior : FleeSteeringBehavior
+    public abstract class EvadeSteeringBehavior : ISteeringBehavior
     {
         private readonly Agent _agent;
         private readonly IGameWorldService _gameWorldService;
         private float _range;
         private float _rangeSquared;
 
-        protected EvadeSteeringBehavior(Agent agent) : base(agent, Vector3.Zero)
+        private FleeSteeringBehavior _fleeSteeringBehavior;
+        protected EvadeSteeringBehavior(Agent agent) 
         {
             if (agent == null) throw new ArgumentNullException("agent");
             _agent = agent;
             _gameWorldService = agent.Game.Services.GetService<IGameWorldService>();
+
+            _fleeSteeringBehavior = new FleeSteeringBehavior(agent);
         }
 
         [SteeringBehaviorArgument(0)]
@@ -53,17 +57,17 @@ namespace AIWorld.Steering
 
         #region Implementation of ISteeringBehavior
 
-        public override Vector3 Calculate(GameTime gameTime)
+        public virtual Vector3 Calculate(GameTime gameTime)
         {
             if (KeyValue == null) return Vector3.Zero;
 
             var result = Vector3.Zero;
-
             foreach (var agent in _gameWorldService.Entities.Query(new AABB(_agent.Position, new Vector3(Range)))
                 .OfType<Agent>()
                 .Where(a => a != _agent)
-                .Where(a => a.GetVarObject(Key) == KeyValue)
-                .Where(a => Vector3.DistanceSquared(_agent.Position, a.Position) < _rangeSquared))
+                .Where(a => KeyValue.Equals(a.GetVarObject(Key)))
+                .Where(a => Vector3.DistanceSquared(_agent.Position, a.Position) < _rangeSquared)
+                )
             {
                 var toPursuer = agent.Position - _agent.Position;
 
@@ -71,8 +75,8 @@ namespace AIWorld.Steering
                                     (_agent.MaxSpeed /* + actual speed? */);
 
                 //now flee away from predicted future position of the pursuer
-                Target = agent.Position + agent.Velocity*lookAheadTime;
-                result += base.Calculate(gameTime);
+                _fleeSteeringBehavior.Target = agent.Position + agent.Velocity*lookAheadTime;
+                result += _fleeSteeringBehavior.Calculate(gameTime);
             }
 
             return result;

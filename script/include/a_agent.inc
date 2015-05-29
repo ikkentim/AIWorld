@@ -23,6 +23,8 @@ native GetId();
 \** ************************************************************************ **/
 native GetPosition(&Float:x, &Float:y);
 
+native SetPosition(Float:x, Float:y);
+
 /** ************************************************************************ **\
 <summary>Gets the direction this agent is facing.</summary>
 <param name="x">
@@ -202,16 +204,39 @@ native SetTargetRange(Float:value);
 native Float:GetTargetRange();
 
 // TODO: Add docs
-native SB:AddArrive(Float:weight, Float:x, Float:y);
+native SB:AddArrive(Float:weight, Float:x, Float:y, Float:deceleration = 1.3);
 native SB:AddAvoidObstacles(Float:weight);
 native SB:AddExplore(Float:weight, Float:width, Float:height);
 native SB:AddFlee(Float:weight, Float:x, Float:y);
 native SB:AddSeek(Float:weight, Float:x, Float:y);
 native SB:AddWander(Float:weight, Float:jitter, Float:radius, Float:distance);
+
 native SB:AddEvadeByVar(Float:weight, Float:range, const key[], value);
 native SB:AddEvadeByVarString(Float:weight, Float:range, const key[], value[]);
 native SB:AddEvadeByVarFloat(Float:weight, Float:range, const key[],
     Float:value);
+
+native SB:AddAlignmentByVar(Float:weight, Float:range, const key[], value);
+native SB:AddAlignmentByVarString(Float:weight, Float:range, const key[],
+    value[]);
+native SB:AddAlignmentByVarFloat(Float:weight, Float:range, const key[],
+    Float:value);
+
+native SB:AddCohesionByVar(Float:weight, Float:range, const key[], value);
+native SB:AddCohesionByVarString(Float:weight, Float:range, const key[],
+    value[]);
+native SB:AddCohesionByVarFloat(Float:weight, Float:range, const key[],
+    Float:value);
+
+native SB:AddSeparationByVar(Float:weight, Float:range, const key[], value);
+native SB:AddSeparationByVarString(Float:weight, Float:range, const key[],
+    value[]);
+native SB:AddSeparationByVarFloat(Float:weight, Float:range, const key[],
+    Float:value);
+
+native SB:AddPursuit(Float:weight, evaderid);
+
+native SB:AddOffsetPursuit(Float:weight, leaderid, Float:ox, Float:oy);
 
 /** ************************************************************************ **\
 <summary>
@@ -325,7 +350,7 @@ native PointToLocal(Float:x, Float:y, &Float:lx, &Float:ly);
 native PointToWorld(Float:x, Float:y, &Float:wx, &Float:wy);
 native VectorToWorld(Float:x, Float:y, &Float:vx, &Float:vy);
 
-native CallPublicFunction(const function[], const format[], {Float,_}:...);
+native CallLocalFunction(const function[], const format[], {Float,_}:...);
 
 native SpawnProjectile(const name[], Float:size, Float:life,
     Float:x, Float:y, Float:z,

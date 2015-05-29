@@ -32,17 +32,24 @@ namespace AIWorld.Services
     {
         private readonly BasicEffect _basicEffect;
         private readonly ICameraService _cameraService;
+        private readonly IConsoleService _consoleService;
         private readonly BoundlessQuadTree _entities = new BoundlessQuadTree();
         private readonly Dictionary<string, Graph> _graphsByName = new Dictionary<string, Graph>();
+        private readonly Dictionary<string, object> _variables = new Dictionary<string, object>(); 
         private int _entityId;
+
+        public Simulation Simulation { get; private set; }
 
         #region Constructors
 
-        public GameWorldService(Game game, ICameraService cameraService) : base(game)
+        public GameWorldService(Simulation simulation, ICameraService cameraService, IConsoleService consoleService) : base(simulation)
         {
+            if (simulation == null) throw new ArgumentNullException("simulation");
             if (cameraService == null) throw new ArgumentNullException("cameraService");
 
+            Simulation = simulation;
             _cameraService = cameraService;
+            _consoleService = consoleService;
             _basicEffect = new BasicEffect(GraphicsDevice);
         }
 
@@ -273,6 +280,14 @@ namespace AIWorld.Services
             return true;
         }
 
+        [ScriptingFunction]
+        public float GetEntitySize(int id)
+        {
+            var entity = _entities.FirstOrDefault(a => a.Id == id);
+
+            return entity == null ? 0 : entity.Size;
+        }
+
         #endregion
 
         #region API - WorldObject
@@ -297,7 +312,7 @@ namespace AIWorld.Services
         {
             return _entities.Query(new AABB(new Vector3(x, 0, y), new Vector3(range)))
                 .OfType<Agent>()
-                .Where(a => string.IsNullOrEmpty(scriptName) && a.ScriptName == scriptName)
+                .Where(a => string.IsNullOrEmpty(scriptName) || a.ScriptName == scriptName)
                 .Where(predicate)
                 .OrderBy(a => Vector3.DistanceSquared(a.Position, new Vector3(x, 0, y)));
         }
@@ -445,6 +460,65 @@ namespace AIWorld.Services
 
         #endregion
 
+        #region API - GVar
+
+        [ScriptingFunction]
+        public void SetGVar(string key, int value)
+        {
+            _variables[key] = value;
+        }
+
+        [ScriptingFunction]
+        public void SetGVarFloat(string key, float value)
+        {
+            _variables[key] = value;
+        }
+
+        [ScriptingFunction]
+        public void SetGVarString(string key, string value)
+        {
+            _variables[key] = value;
+        }
+
+        [ScriptingFunction]
+        public bool DeleteGVar(string key)
+        {
+            return _variables.Remove(key);
+        }
+
+        [ScriptingFunction]
+        public int GetGVar(string key)
+        {
+            if (!_variables.ContainsKey(key) || !(_variables[key] is int))
+                return 0;
+            return (int)_variables[key];
+        }
+
+        [ScriptingFunction]
+        public float GetGVarFloat(string key)
+        {
+            if (!_variables.ContainsKey(key) || !(_variables[key] is float))
+                return 0;
+
+            return (float)_variables[key];
+        }
+
+        [ScriptingFunction]
+        public int GetGVarString(string key, CellPtr retval, int length)
+        {
+            if (!_variables.ContainsKey(key) || !(_variables[key] is string))
+                return -1;
+
+            if (--length <= 0) return -1;
+
+            var value = (string)_variables[key];
+            AMX.SetString(retval, value.Length > length ? value.Substring(0, length) : value, false);
+
+            return value.Length;
+        }
+
+        #endregion
+
         #region API - IMessageHandler
 
         [ScriptingFunction]
@@ -470,6 +544,26 @@ namespace AIWorld.Services
                 messageHandler.HandleMessage(message, contents);
 
             return enumerable.Count();
+        }
+
+        #endregion
+
+        #region API - IScripted
+
+        [ScriptingFunction]
+        public int CallPublicFunction(AMXArgumentList arguments)
+        {
+            var result = 0;
+            foreach (
+                var retval in
+                    _entities.OfType<Agent>().Select(s => s.CallLocalFunction(arguments)).Where(retval => retval != 0))
+                result = retval;
+
+            var mainRetval = DefaultFunctions.CallFunctionOnScript(Simulation.Script, _consoleService, arguments);
+            if (mainRetval != null)
+                result = mainRetval.Value;
+
+            return result;
         }
 
         #endregion

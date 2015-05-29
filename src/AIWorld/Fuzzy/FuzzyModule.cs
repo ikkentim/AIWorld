@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AIWorld.Fuzzy.Sets;
@@ -75,11 +76,16 @@ namespace AIWorld.Fuzzy
 
         private FuzzyTerm CreateTerm(string expression)
         {
+            if (expression == null) throw new ArgumentNullException("expression");
+
             return CreateTerm(new Stack<string>(expression.Split(' ').Where(k => !string.IsNullOrEmpty(k))));
         }
 
         private FuzzyTerm CreateTerm(Stack<string> stack)
         {
+            if (stack == null)
+                throw new ArgumentNullException("stack");
+
             var unaryTerms = new Dictionary<string, Func<FuzzyTerm, FuzzyTerm>>();
             var binaryTerms = new Dictionary<string, Func<FuzzyTerm, FuzzyTerm, FuzzyTerm>>();
 
@@ -128,7 +134,7 @@ namespace AIWorld.Fuzzy
                     return null;
                 }
 
-                var fuzzyVariable = _variables.FirstOrDefault(v => v.Item1 == keyword);
+                var fuzzyVariable = _variables.Where(v => v!= null).FirstOrDefault(v => v.Item1 == keyword);
 
                 if (fuzzyVariable == null)
                 {

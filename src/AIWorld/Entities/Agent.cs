@@ -14,10 +14,7 @@
 // limitations under the License.
 
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using AIWorld.Core;
 using AIWorld.Events;
@@ -32,7 +29,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Media;
 
 namespace AIWorld.Entities
 {
@@ -124,7 +120,12 @@ namespace AIWorld.Entities
             Position = position;
             Heading = Vector3.Right;
             Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
-            
+            Mass = 1;
+            MaxForce = 1;
+            MaxSpeed = 1;
+            Size = 1;
+            TargetRange = 1;
+
             // Fetch service instances
             var drawingService = simulation.Services.GetService<IDrawingService>();
             _cameraService = simulation.Services.GetService<ICameraService>();
@@ -132,9 +133,9 @@ namespace AIWorld.Entities
             _consoleService = simulation.Services.GetService<IConsoleService>();
 
             // Load script
-            Script = new ScriptBox("agent", scriptName);
+            Script = new ScriptBox(scriptName);
             Script.Register(this, _gameWorldService, _consoleService, drawingService, new FuzzyModule(_consoleService));
-            SteeringBehaviorsContainer.Register(this);
+            SteeringBehaviorsContainer.Register(this, Script);
 
             // Load scripting callbacks
             _onUpdate = Script.FindPublic("OnUpdate");
@@ -143,6 +144,15 @@ namespace AIWorld.Entities
             _onMouseClick = Script.FindPublic("OnMouseClick");
             _onKeyStateChanged = Script.FindPublic("OnKeyStateChanged");
             _onIncomingMessage = Script.FindPublic("OnIncomingMessage");
+        }
+
+        #endregion
+
+        #region Properties of Agent
+
+        public IEnumerable<WeightedSteeringBehavior> SteeringBehaviors
+        {
+            get { return _steeringBehaviors; }
         }
 
         #endregion
@@ -497,6 +507,9 @@ namespace AIWorld.Entities
         {
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
             var steeringForce = CalculateSteeringForce(gameTime);
+
+            if (steeringForce == Vector3.Zero)
+                steeringForce = -Velocity;
 
             var acceleration = steeringForce/Mass;
             Velocity += acceleration*deltaTime;
@@ -986,14 +999,11 @@ namespace AIWorld.Entities
         }
 
         [ScriptingFunction]
-        public int CallPublicFunction(AMXArgumentList arguments)
+        public int CallLocalFunction(AMXArgumentList arguments)
         {
             if (arguments.Length < 2)
                 return 0;
 
-            var function = arguments[0].AsString();
-            var format = arguments[1].AsString();
-            var publicFunction = Script.Publics.ContainsKey(function) ? Script.Publics[function] : null;
             var result = 0;
 
             // Call in top goal
@@ -1003,96 +1013,16 @@ namespace AIWorld.Entities
 
                 if (goal != null)
                 {
-                    var strings = new List<CellPtr>();
-                    var goalPublicFunction = goal.Script.Publics.ContainsKey(function)
-                        ? goal.Script.Publics[function]
-                        : null;
-                    if (goalPublicFunction != null)
-                    {
-                        var i = 2;
-                        var pars = new List<object>();
-                        foreach (var t in format.TakeWhile(t => i < arguments.Length))
-                        {
-                            switch (t)
-                            {
-                                case 'd':
-                                case 'i':
-                                case 'f':
-                                    pars.Add(arguments[i++].AsCellPtr().Get());
-                                    break;
-                                case 's':
-                                    pars.Add(arguments[i++].AsString());
-                                    break;
-                            }
-                        }
-
-                        pars.Reverse();
-                        foreach (var p in pars)
-                        {
-                            if (p is string)
-                                strings.Add(Script.Push(p as string));
-                            else
-                                Script.Push((Cell)p);
-                        }
-
-                        try
-                        {
-                            result = goalPublicFunction.Execute();
-                        }
-                        catch (Exception e)
-                        {
-                            _consoleService.WriteLine(Color.Red, e);
-                        }
-
-                        foreach (var str in strings)
-                            goal.Script.Release(str);
-                    }
+                    var goalRetval = DefaultFunctions.CallFunctionOnScript(Script, _consoleService, arguments);
+                    if (goalRetval != null)
+                        result = goalRetval.Value;
                 }
             }
 
             // Prefer agent script as result (last to call)
-            if (publicFunction != null)
-            {
-                var strings = new List<CellPtr>();
-                var i = 2;
-
-                var pars = new List<object>();
-                foreach (var t in format.TakeWhile(t => i < arguments.Length))
-                {
-                    switch (t)
-                    {
-                        case 'd':
-                        case 'i':
-                        case 'f':
-                            pars.Add(arguments[i++].AsCellPtr().Get());
-                            break;
-                        case 's':
-                            pars.Add(arguments[i++].AsString());
-                            break;
-                    }
-                }
-
-                pars.Reverse();
-                foreach (var p in pars)
-                {
-                    if (p is string)
-                        strings.Add(Script.Push(p as string));
-                    else
-                        Script.Push((Cell) p);
-                }
-
-                try
-                {
-                    result = publicFunction.Execute();
-                }
-                catch (Exception e)
-                {
-                    _consoleService.WriteLine(Color.Red, e);
-                }
-
-                foreach (var str in strings)
-                    Script.Release(str);
-            }
+            var agentRetval = DefaultFunctions.CallFunctionOnScript(Script, _consoleService, arguments);
+            if (agentRetval != null)
+                result = agentRetval.Value;
 
             return result;
         }

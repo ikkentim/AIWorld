@@ -156,6 +156,18 @@ native GetAgentVar(agentid, const key[]);
 native GetAgentVarFloat(agentid, const key[]);
 native GetAgentVarString(agentid, const key[], value[], len);
 
+native SetGVar(const key[], value);
+native SetGVarFloat(const key[], Float:value);
+native SetGVarstring(const key[], value[]);
+native DeleteGVar(const key[]);
+native GetGVar(const key[]);
+native GetGVarFloat(const key[]);
+native GetGVarString(const key[], value[], len);
+
+native CallPublicFunction(const function[], const format[], {Float,_}:...);
+
+native Float:GetEntitySize(entityid);
+
 /** ************************************************************************ **\
 <summary>
     Sents the specified message to the specified agent and it's goals.

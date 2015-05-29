@@ -24,10 +24,9 @@ namespace AIWorld.Steering
     {
         private readonly Agent _agent;
 
-        public FleeSteeringBehavior(Agent agent, Vector3 target)
+        public FleeSteeringBehavior(Agent agent)
         {
             if (agent == null) throw new ArgumentNullException("agent");
-            Target = target;
             _agent = agent;
         }
 

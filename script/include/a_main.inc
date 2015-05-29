@@ -43,6 +43,9 @@ native AddGameObject(const modelname[], Float:size, Float:x, Float:y,
     Float:rz=0.0, Float:tx=0.0, Float:ty=0.0, Float:tz=0.0,
     const meshes[]='''');
 
+//TODO: add docs
+native RemoveEntity(id);
+
 /** ************************************************************************ **\
 <summary>Adds a road to the game world.</summary>
 <param name="key">The key of the graph in which to put the road nodes.</param>
@@ -138,3 +141,6 @@ forward OnKeyStateChanged(newKeys[], oldKeys[]);
 <returns>This callback does not handle return values.</returns>
 \** ************************************************************************ **/
 forward OnMouseClick(button, Float:x, Float:y);
+
+//TODO docs
+forward OnUpdate(Float:elapsed);

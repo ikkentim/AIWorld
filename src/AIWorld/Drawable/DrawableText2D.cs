@@ -20,8 +20,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld.Drawable
 {
-    public class DrawableText2D : IDrawable2D, IDrawableHasPosition, IDrawableHasText, IDrawableHasColor,
-        IDrawableHasFont
+    public class DrawableText2D : IDrawable2D, IDrawableHasPosition, IDrawableHasScale, IDrawableHasText, IDrawableHasColor, IDrawableHasFont
     {
         private Vector2 _position;
 
@@ -30,6 +29,7 @@ namespace AIWorld.Drawable
             if (font == null) throw new ArgumentNullException("font");
             if (text == null) throw new ArgumentNullException("text");
             _position = position;
+            Scale = Vector2.One;
             Color = color;
             Font = font;
             Text = text;
@@ -69,61 +69,14 @@ namespace AIWorld.Drawable
 
         public void Draw(DrawingService drawingService, SpriteBatch spriteBatch, GameTime gameTime)
         {
-            spriteBatch.DrawString(Font, Text, _position, Color);
+            spriteBatch.DrawString(Font, Text, _position, Color, 0, Vector2.Zero, Scale, SpriteEffects.None, 0);
         }
 
         #endregion
-    }
-    public class DrawableText3D : IDrawable2D, IDrawableHasPosition, IDrawableHasText, IDrawableHasColor,
-        IDrawableHasFont
-    {
-        private readonly ICameraService _cameraService;
 
-        public DrawableText3D(ICameraService cameraService, Vector3 position, Color color, SpriteFont font, string text)
-        {
-            _cameraService = cameraService;
-            if (font == null) throw new ArgumentNullException("font");
-            if (text == null) throw new ArgumentNullException("text");
-            Position = position;
-            Color = color;
-            Font = font;
-            Text = text;
-        }
+        #region Implementation of IDrawableHasScale
 
-        #region Implementation of IDrawableHasColor
-
-        public Color Color { get; set; }
-
-        #endregion
-
-        #region Implementation of IDrawableHasFont
-
-        public SpriteFont Font { get; set; }
-
-        #endregion
-
-        #region Implementation of IDrawableHasPosition
-
-        public Vector3 Position { get; set; }
-
-        #endregion
-
-        #region Implementation of IDrawableHasText
-
-        public string Text { get; set; }
-
-        #endregion
-
-        #region Implementation of IDrawablePart
-
-        public bool IsVisible { get; set; }
-
-        public void Draw(DrawingService drawingService, SpriteBatch spriteBatch, GameTime gameTime)
-        {
-            var drp = drawingService.GraphicsDevice.Viewport.Project(Position, _cameraService.Projection, _cameraService.View,
-                Matrix.Identity);
-            spriteBatch.DrawString(Font, Text, new Vector2(drp.X, drp.Y) - Font.MeasureString(Text) * new Vector2(0.5f, 1), Color);
-        }
+        public Vector2 Scale { get; set; }
 
         #endregion
     }
