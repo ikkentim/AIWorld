@@ -344,8 +344,6 @@ native SetSoundEffect(const sound[], isLooped=false, Float:volume=1.0);
 native RemoveSoundEffect();
 
 //TODO: Add documentation
-native PlaySound(const sound[], Float:volume, Float:x, Float:y);
-
 native PointToLocal(Float:x, Float:y, &Float:lx, &Float:ly);
 native PointToWorld(Float:x, Float:y, &Float:wx, &Float:wy);
 native VectorToWorld(Float:x, Float:y, &Float:vx, &Float:vy);

@@ -3,6 +3,7 @@
 #include <a_fuzzy>
 #include "../includes/utils"
 
+#include "common/carepackages"
 #include "tank/turret"
 #include "tank/status"
 
@@ -32,7 +33,7 @@ main()
 {
     SetVar("team", team);
     SetVarFloat("health", 100);
-    SetVar("ammo", 25);
+    SetVar("ammo", 0);//25);
     SetVar("orb", -1);
 
     AddAvoidObstacles(0.9);

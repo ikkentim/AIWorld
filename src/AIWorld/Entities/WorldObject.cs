@@ -14,7 +14,6 @@
 // limitations under the License.
 
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using AIWorld.Events;
 using AIWorld.Services;
@@ -30,10 +29,7 @@ namespace AIWorld.Entities
     {
         private readonly ICameraService _cameraService;
         private readonly ModelMesh[] _meshes;
-        private readonly Vector3 _rotation;
-        private readonly Vector3 _scale;
         private readonly Matrix[] _transforms;
-        private readonly Vector3 _translation;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="WorldObject" /> class.
@@ -54,9 +50,9 @@ namespace AIWorld.Entities
             ModelName = modelName;
             Position = position;
             var model = game.Content.Load<Model>(modelName);
-            _rotation = rotation;
-            _translation = translation;
-            _scale = scale;
+            Rotation = rotation;
+            Translation = translation;
+            Scale = scale;
             Size = size;
             _meshes = meshes.Any()
                 ? model.Meshes.Where(n => meshes.Contains(n.Name)).ToArray()
@@ -67,6 +63,10 @@ namespace AIWorld.Entities
 
             _cameraService = game.Services.GetService<ICameraService>();
         }
+
+        public Vector3 Rotation { get; set; }
+        public Vector3 Scale { get; set; }
+        public Vector3 Translation { get; set; }
 
         /// <summary>
         ///     Gets the model name.
@@ -87,11 +87,11 @@ namespace AIWorld.Entities
                 {
                     effect.World =
                         _transforms[mesh.ParentBone.Index]*
-                        (Matrix.CreateTranslation(_translation)* // Translation of the mesh
-                         Matrix.CreateScale(_scale))*
-                        (Matrix.CreateRotationX(_rotation.X)*
-                         Matrix.CreateRotationY(_rotation.Y)*
-                         Matrix.CreateRotationZ(_rotation.Z))*
+                        (Matrix.CreateTranslation(Translation)* // Translation of the mesh
+                         Matrix.CreateScale(Scale))*
+                        (Matrix.CreateRotationX(Rotation.X)*
+                         Matrix.CreateRotationY(Rotation.Y)*
+                         Matrix.CreateRotationZ(Rotation.Z))*
                         Matrix.CreateTranslation(Position); // Translation of the model in the world space
                     effect.View = _cameraService.View;
                     effect.Projection = _cameraService.Projection;

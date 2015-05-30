@@ -105,6 +105,8 @@
     <Compile Include="Services\DrawingService.cs" />
     <Compile Include="Services\IDrawingService.cs" />
     <Compile Include="Services\IParticleService.cs" />
+    <Compile Include="Services\ISoundService.cs" />
+    <Compile Include="Services\SoundService.cs" />
     <Compile Include="Steering\AlignmentByVarFloatSteeringBehavior.cs" />
     <Compile Include="Steering\AlignmentByVarSteeringBehavior.cs" />
     <Compile Include="Steering\AlignmentByVarStringSteeringBehavior.cs" />

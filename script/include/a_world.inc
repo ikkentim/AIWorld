@@ -120,6 +120,12 @@ native GetEntityPosition(id, &Float:x, &Float:y);
 \** ************************************************************************ **/
 native FindNearestWorldObject(Float:x, Float:y, const model[] = '''');
 
+//TODO add docs
+native SetWorldObjectTranslation(id, Float:x, Float:y, Float:z);
+native SetWorldObjectScale(id, Float:x, Float:y, Float:z);
+native SetWorldObjectRotation(id, Float:x, Float:y, Float:z);
+native RemoveWorldObject(id);
+
 /** ************************************************************************ **\
 <summary>
     Finds the id of the nearest world object with the specified script name.
@@ -165,6 +171,7 @@ native GetGVarFloat(const key[]);
 native GetGVarString(const key[], value[], len);
 
 native CallPublicFunction(const function[], const format[], {Float,_}:...);
+native CallRemoteFunction(const function[], const format[], {Float,_}:...);
 
 native Float:GetEntitySize(entityid);
 

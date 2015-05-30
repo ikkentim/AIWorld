@@ -3,7 +3,8 @@
 #endif
 #define _math_included
 
-#include <a_logging>
+#include <core>
+
 #define PI              (3.14159265359)
 
 #define RAD2DEG(%0)     (%0 * (180 / PI))
@@ -40,6 +41,17 @@ stock Float:fabs(Float:value)
 
 stock Float:fmin(Float:val1, Float:val2)
     return val2 < val1 ? val2 : val1;
-    
+
 stock Float:fmax(Float:val1, Float:val2)
     return val2 > val1 ? val2 : val1;
+
+stock Float:fdist(Float:x1, Float:y1, Float:x2, Float:y2)
+{
+    new Float:x = fabs(x1 - x2);
+    new Float:y = fabs(y1 - y2);
+
+    return floatsqroot(x*x+y*y);
+}
+
+stock random2(min, max)
+    return min + random(max-min);

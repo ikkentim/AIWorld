@@ -263,3 +263,39 @@
 /processorParam:TextureFormat=DxtCompressed
 /build:models/ammocrate.fbx
 
+#begin sounds/ammo.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/ammo.mp3
+
+#begin sounds/crate_drop.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/crate_drop.wav
+
+#begin sounds/repair.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/repair.wav
+
+#begin sounds/turret_fire.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/turret_fire.wav
+
+#begin sounds/turret_impact.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/turret_impact.wav
+
+#begin sounds/plane_flyby.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/plane_flyby.wav
+

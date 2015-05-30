@@ -1,7 +1,8 @@
 #include <a_goal>
-#include "../common/area"
+#include "../../common/area"
 #include "../common/fuzzy"
 #include "../common/status"
+
 main()
 {
     LoadFuzzy();
@@ -18,7 +19,7 @@ public OnUpdate(Float:elapsed)
     get create
     */
 
-    UpdateStatus("Calculating goal...");
+    //UpdateStatus("Calculating goal...");
 
     SetFuzzyVariables();
 
@@ -43,13 +44,12 @@ public OnUpdate(Float:elapsed)
     }
     else if(BEST_DESIRABILITY(want_carepackage))
     {
-        UpdateStatus("Want to get carepackage, but itn't implemented...");
-        logprintf(-1, "Get want_carepackage");
+        AddSubgoal("kotmogu/tank/goal/get_carepackage");
     }
     else if(BEST_DESIRABILITY(want_hold))
     {
-        UpdateStatus("Want to hold stance, but itn't implemented...");
-        logprintf(-1, "Get want_hold");
+        //UpdateStatus("Want to hold stance, but itn't implemented...");
+        //logprintf(-1, "Get want_hold");
     }
     else if(BEST_DESIRABILITY(want_defend))
     {
@@ -57,12 +57,11 @@ public OnUpdate(Float:elapsed)
     }
     else if(BEST_DESIRABILITY(want_atack))
     {
-        UpdateStatus("Want to attack, but itn't implemented...");
-        logprintf(-1, "Get want_atack");
+        //UpdateStatus("Want to attack, but itn't implemented...");
+        //logprintf(-1, "Get want_atack");
     }
     else
     {
         logprintf(COLOR_RED, "ERROR: No goal assigned.");
     }
-    //AddSubgoal("kotmogu/tank/goal")
 }

@@ -1,5 +1,5 @@
 #include <a_goal>
-#include "../common/area"
+#include "../../common/area"
 #include "../common/status"
 
 new SB:seek;

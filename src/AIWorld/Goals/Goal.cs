@@ -15,7 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using AIWorld.Entities;
 using AIWorld.Fuzzy;
 using AIWorld.Scripting;
@@ -46,7 +45,9 @@ namespace AIWorld.Goals
             Script = new ScriptBox(scriptName);
             Script.Register(this, agent, agent.Game.Services.GetService<IGameWorldService>(),
                 new FuzzyModule(agent.Game.Services.GetService<IConsoleService>()),
-                agent.Game.Services.GetService<IConsoleService>());
+                agent.Game.Services.GetService<IConsoleService>(),
+                agent.Game.Services.GetService<ISoundService>());
+
             SteeringBehaviorsContainer.Register(agent, Script);
 
             _onUpdate = Script.FindPublic("OnUpdate");

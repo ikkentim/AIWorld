@@ -109,15 +109,14 @@ namespace AIWorld
         {
             var part = Parts.FirstOrDefault(p => p.ContainsEntity(entity));
 
+            if (part == null) return 0;
             base.Remove(entity);
-
-            Debug.Assert(part != null);
 
             if (part.IsEmpty)
             {
                 _parts.Remove(part);
             }
-            return 0;
+            return 1;
         }
 
         public override QuadTree FindQuadTreeForEntity(IEntity entity)

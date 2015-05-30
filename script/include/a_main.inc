@@ -122,6 +122,16 @@ native PlayAmbience(const sound[], isLooped=false, Float:volume=1.0,
 native StopAmbience();
 
 /** ************************************************************************ **\
+<summary>
+    Changes the simulation to the script to the simulated path.
+</summary>
+<param name="newMode">The new script path.</param>
+<returns>This function does not return a specific value.</returns>
+<remarks>This function can only be used within the main script.</remarks>
+\** ************************************************************************ **/
+native ChangeMode(const newMode[]);
+
+/** ************************************************************************ **\
 <summary>This callback is called when the keyboard state changes.</summary>
 <param name="newKeys">
     An array of all the keys pressed after the change of state.

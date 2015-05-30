@@ -64,7 +64,6 @@ namespace AIWorld.Services
         {
             if (disposing)
             {
-                Debug.WriteLine("Dispose GameWorldService");
                 _basicEffect.Dispose();
 
                 _graphsByName.Clear();
@@ -303,6 +302,48 @@ namespace AIWorld.Services
             return result == null ? -1 : result.Id;
         }
 
+        [ScriptingFunction]
+        public bool SetWorldObjectScale(int id, float x, float y, float z)
+        {
+            var worldObject = _entities.OfType<WorldObject>().FirstOrDefault(w => w.Id == id);
+
+            if (worldObject == null) return false;
+
+            worldObject.Scale = new Vector3(x, y, z);
+            return true;
+        }
+        [ScriptingFunction]
+        public bool SetWorldObjectRotation(int id, float x, float y, float z)
+        {
+            var worldObject = _entities.OfType<WorldObject>().FirstOrDefault(w => w.Id == id);
+
+            if (worldObject == null) return false;
+
+            worldObject.Rotation = new Vector3(x, y, z);
+            return true;
+        }
+        [ScriptingFunction]
+        public bool SetWorldObjectTranslation(int id, float x, float y, float z)
+        {
+            var worldObject = _entities.OfType<WorldObject>().FirstOrDefault(w => w.Id == id);
+
+            if (worldObject == null) return false;
+
+            worldObject.Translation = new Vector3(x, y, z);
+            return true;
+        }
+
+        [ScriptingFunction]
+        public bool RemoveWorldObject(int id)
+        {
+            var worldObject = _entities.OfType<WorldObject>().FirstOrDefault(w => w.Id == id);
+
+            if (worldObject == null) return false;
+
+            _entities.Remove(worldObject);
+            Game.Components.Remove(worldObject);
+            return true; 
+        }
         #endregion
 
         #region API - Agent
@@ -554,16 +595,31 @@ namespace AIWorld.Services
         public int CallPublicFunction(AMXArgumentList arguments)
         {
             var result = 0;
-            foreach (
-                var retval in
-                    _entities.OfType<Agent>().Select(s => s.CallLocalFunction(arguments)).Where(retval => retval != 0))
-                result = retval;
+            foreach (IEntity entity in _entities)
+            {
+                Agent s = entity as Agent;
+                if (s != null)
+                {
+                    var retval = s.CallLocalFunction(arguments);
+                    if (retval != 0) result = retval;
+                }
+            }
 
             var mainRetval = DefaultFunctions.CallFunctionOnScript(Simulation.Script, _consoleService, arguments);
             if (mainRetval != null)
                 result = mainRetval.Value;
 
             return result;
+        }
+
+        [ScriptingFunction]
+        public int CallRemoteFunction(AMXArgumentList arguments)
+        {
+            var retval = DefaultFunctions.CallFunctionOnScript(Simulation.Script, _consoleService, arguments);
+            if (retval != null)
+                return retval.Value;
+
+            return 0;
         }
 
         #endregion

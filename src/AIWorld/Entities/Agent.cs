@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using AIWorld.Core;
 using AIWorld.Events;
@@ -84,7 +85,6 @@ namespace AIWorld.Entities
 
         #region Fields - Audio
 
-        private readonly Dictionary<SoundEffectInstance, AudioEmitter> _sounds = new Dictionary<SoundEffectInstance, AudioEmitter>(); 
         private readonly BasicEffect _basicEffect;
         private AudioEmitter _audioEmitter;
         private SoundEffect _soundEffect;
@@ -128,13 +128,14 @@ namespace AIWorld.Entities
 
             // Fetch service instances
             var drawingService = simulation.Services.GetService<IDrawingService>();
+            var soundService = simulation.Services.GetService<ISoundService>();
             _cameraService = simulation.Services.GetService<ICameraService>();
             _gameWorldService = simulation.Services.GetService<IGameWorldService>();
             _consoleService = simulation.Services.GetService<IConsoleService>();
 
             // Load script
             Script = new ScriptBox(scriptName);
-            Script.Register(this, _gameWorldService, _consoleService, drawingService, new FuzzyModule(_consoleService));
+            Script.Register(this, _gameWorldService, _consoleService, drawingService, soundService, new FuzzyModule(_consoleService));
             SteeringBehaviorsContainer.Register(this, Script);
 
             // Load scripting callbacks
@@ -312,12 +313,6 @@ namespace AIWorld.Entities
                 _audioEmitter.Velocity = Velocity;
 
                 _soundEffectInstance.Apply3D(_cameraService.AudioListener, _audioEmitter);
-            }
-
-            foreach (var pair in _sounds.Where(p => p.Key.State == SoundState.Stopped).ToArray())
-            {
-                _sounds.Remove(pair.Key);
-                pair.Key.Dispose();
             }
 
             base.Update(gameTime);
@@ -566,35 +561,6 @@ namespace AIWorld.Entities
             }
         }
 
-        [ScriptingFunction]
-        public bool PlaySound(string sound, float volume, float x, float y)
-        {
-            try
-            {
-                var audioEmitter = new AudioEmitter
-                {
-                    Position = new Vector3(x, 0, y),
-                    Up = Vector3.Up,
-                    Forward = Vector3.Right,
-                    Velocity = Vector3.Forward
-                };
-
-                var soundEffect = Game.Content.Load<SoundEffect>(sound);
-                
-                var soundEffectInstance = soundEffect.CreateInstance();
-                soundEffectInstance.IsLooped = false;
-                soundEffectInstance.Volume = volume;
-                soundEffectInstance.Apply3D(_cameraService.AudioListener, audioEmitter);
-                soundEffectInstance.Play();
-
-                _sounds[soundEffectInstance] = audioEmitter;
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
         /// <summary>
         ///     Removes the sound effect.
         /// </summary>
@@ -1013,7 +979,7 @@ namespace AIWorld.Entities
 
                 if (goal != null)
                 {
-                    var goalRetval = DefaultFunctions.CallFunctionOnScript(Script, _consoleService, arguments);
+                    var goalRetval = DefaultFunctions.CallFunctionOnScript(goal.Script, _consoleService, arguments);
                     if (goalRetval != null)
                         result = goalRetval.Value;
                 }

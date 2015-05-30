@@ -14,10 +14,7 @@
 // limitations under the License.
 
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
-using System.ComponentModel.Design.Serialization;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using AIWorld.Entities;
@@ -50,10 +47,13 @@ namespace AIWorld
 
         #endregion
 
-        #region Fields - Scrolling
+        #region Fields - User input
 
         private float _scrollVelocity;
         private float _unprocessedScrollDelta;
+        private KeyboardState _lastKeyboardState;
+        private MouseState _lastMouseState;
+        private int _lastScroll;
 
         #endregion
 
@@ -65,7 +65,8 @@ namespace AIWorld
 
         #region Fields - Scripting
 
-        private readonly string _scriptName;
+        private string _scriptName;
+        private string _awaitNewScriptName;
         private Color _backgroundColor;
         private readonly List<SoundEffectInstance> _soundEffectInstances = new List<SoundEffectInstance>();
         private readonly List<SoundEffect> _soundEffects = new List<SoundEffect>();
@@ -79,12 +80,9 @@ namespace AIWorld
         private IGameWorldService _gameWorldService;
         private IDrawingService _drawingService;
         private IParticleService _particleService;
+        private ISoundService _soundService;
 
         #endregion
-
-        private KeyboardState _lastKeyboardState;
-        private MouseState _lastMouseState;
-        private int _lastScroll;
 
         #region Fields - Scripting functions
 
@@ -140,6 +138,7 @@ namespace AIWorld
             Services.AddService(typeof(IGameWorldService), _gameWorldService = new GameWorldService(this, _cameraService, _consoleService));
             Services.AddService(typeof(IDrawingService), _drawingService = new DrawingService(this, _cameraService));
             Services.AddService(typeof(IParticleService), _particleService = new ParticleService(this));
+            Services.AddService(typeof(ISoundService), _soundService = new SoundService(this, _cameraService));
 
             Components.Add(_consoleService);
             Components.Add(_cameraService);
@@ -151,7 +150,7 @@ namespace AIWorld
             try
             {
                 Script = new ScriptBox(_scriptName);
-                Script.Register(this, _gameWorldService, _consoleService, _drawingService);
+                Script.Register(this, _gameWorldService, _consoleService, _drawingService, _soundService);
 
                 _onMouseClick = Script.FindPublic("OnMouseClick");
                 _onKeyStateChanged = Script.FindPublic("OnKeyStateChanged");
@@ -195,6 +194,7 @@ namespace AIWorld
             Services.RemoveService(typeof (IGameWorldService));
             Services.RemoveService(typeof (IDrawingService));
             Services.RemoveService(typeof(IParticleService));
+            Services.RemoveService(typeof(ISoundService));
 
             GC.Collect();
         }
@@ -243,6 +243,19 @@ namespace AIWorld
             {
                 _lastMouseState = mouseState;
                 _lastKeyboardState = keyboardState;
+                return;
+            }
+
+            // Boot queued script if set.
+            if (_awaitNewScriptName != null)
+            {
+                _scriptName = _awaitNewScriptName;
+                _awaitNewScriptName = null;
+                _lastMouseState = mouseState;
+                _lastKeyboardState = keyboardState;
+
+                UnloadSimulation();
+                LoadSimulation();
                 return;
             }
 
@@ -524,6 +537,11 @@ namespace AIWorld
             return result;
         }
 
+        [ScriptingFunction]
+        public void ChangeMode(string script)
+        {
+            _awaitNewScriptName = script;
+        }
         #endregion
 
         #region Event Raisers
