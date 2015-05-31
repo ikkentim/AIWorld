@@ -6,6 +6,7 @@
 #include "common/carepackages"
 #include "tank/turret"
 #include "tank/status"
+#include "tank/common/team"
 
 // Public (setup) variables
 public team;
@@ -27,17 +28,41 @@ public team;
 #define MASS            (1.2)
 #define TARGET_RANGE    (1)
 
-new Drawable:collisionBox;
+#define RESPAWN_TIME    (15.0)
+
+new Float:deathTime,
+    Float:spawnx,
+    Float:spawny,
+    Drawable:collisionBox,
+    Drawable:name;
+
+InitVariables()
+{
+    SetVar("team", team);
+    SetVarFloat("health", 100.0);
+    SetVar("ammo", 25);
+    SetVar("orb", -1);
+
+    TurretInit();
+
+    AddGoal("kotmogu/tank/goal/think");
+
+    //AddAvoidObstacles(0.9);
+}
+
+UnsetVariables()
+{
+    deathTime = 0.0;
+
+    SetVar("team", 0);
+    SetVarFloat("health", 0.0);
+    ResetGoals();
+}
 
 main()
 {
-    SetVar("team", team);
-    SetVarFloat("health", 100);
-    SetVar("ammo", 0);//25);
-    SetVar("orb", -1);
+    InitVariables();
 
-    AddAvoidObstacles(0.9);
-    AddGoal("kotmogu/tank/goal/think");
 
     // Set agent properties
     SetModel("models/tank");
@@ -60,9 +85,15 @@ main()
         COLOR_BLACK, COLOR_BLACK);
     ShowDrawable(collisionBox);
 
+    // Create the name label
+    name = CreateDrawableText3D(0,0,0, GetTeamColor(), "fonts/consolas",
+        "Tank");
+    SetDrawableScale(name, 0.5, 0.5);
+    ShowDrawable(name);
+
     StatusInit();
 
-    Focus();
+    GetPosition(spawnx, spawny);
 }
 
 public OnUpdate(Float:elapsed)
@@ -72,8 +103,24 @@ public OnUpdate(Float:elapsed)
     GetPosition(x, y);
     SetDrawablePosition(collisionBox, x, 0, y);
 
-    // Update componenets
-    TurretUpdate(elapsed);
+    SetDrawablePosition(name, x, 0.5, y);
+
+    if(GetVar("team") == 0)
+    {
+        deathTime += elapsed;
+
+        if(deathTime > RESPAWN_TIME)
+        {
+            InitVariables();
+            SetPosition(spawnx, spawny);
+        }
+    }
+    else
+    {
+        // Update components
+        TurretUpdate(elapsed);
+    }
+
     StatusUpdate(elapsed);
 }
 
@@ -83,7 +130,17 @@ public OnClicked(button, Float:x, Float:y)
     return 1;
 }
 
-public OnHit(hitid, Float: damage)
+public OnHit(hitid, Float:damage)
 {
-    chatprintf(COLOR_ORANGE, "I was hit for %f damage by #%d!", damage, hitid);
+    new Float:health = GetVarFloat("health") - damage;
+    SetVarFloat("health", health);
+
+    chatprintf(COLOR_ORANGE, "Hit for %f => %f.", damage, health);
+
+    if(health <= 0)
+    {
+        // Die.
+        UnsetVariables();
+        UpdateStatus("Died!");
+    }
 }

@@ -1,12 +1,15 @@
+/*
+ * This goal defends a nearby ally.
+ *
+ */
 #include <a_goal>
 #include "../common/status"
 
-new Float:total_time;
-new targetid;
-main()
-{
-    //
-}
+new static
+    Float:total_time,
+    targetid;
+
+main() { }
 
 public OnEnter()
 {
@@ -32,7 +35,6 @@ public OnUpdate(Float:elapsed)
     // TODO: Tail teammate
     // TODO: Check for death
 
-
     if(total_time > 60)
     {
         Terminate();
@@ -44,14 +46,4 @@ public OnUpdate(Float:elapsed)
         Terminate();
         return;
     }
-}
-
-public OnExit()
-{
-    //
-}
-
-public OnIncomingMessage(message, contents)
-{
-    //
 }

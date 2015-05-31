@@ -1,13 +1,19 @@
+/*
+ * This goal gets the nearest carepackage.
+ *
+ */
 #include <a_goal>
 #include <math>
 #include <a_sound>
 
 #include "../../common/carepackages"
 #include "../common/status"
+#include "../common/combat"
 
 #define CAREPACKAGE_RANGE   (2.0)
 
-new SB:seek,
+new static
+    SB:seek,
     targetid,
     Float:targetx,
     Float:targety;
@@ -35,6 +41,8 @@ public OnEnter()
 
 public OnUpdate(Float:elapsed)
 {
+    if(AttackIfEnemyNearby()) return;
+
     new Float:x, Float:y;
     GetPosition(x, y);
 
@@ -49,12 +57,14 @@ public OnUpdate(Float:elapsed)
         if(ammo > 0)
         {
             chatprintf(COLOR_RED, "Picked up %d ammo", ammo);
-            PlaySound("sounds/ammo", 0.5, x, y);
+            PlaySound("sounds/ammo", 1.0, x, y);
+            SetVar("ammo", min(GetVar("ammo") + ammo, 40));
         }
         if(health > 0)
         {
             chatprintf(COLOR_RED, "Picked up %f health", health);
-            PlaySound("sounds/repair",  0.5, x, y);
+            PlaySound("sounds/repair",  1.0, x, y);
+            SetVarFloat("health", fmin(GetVarFloat("health") + health, 100));
         }
 
         RemoveCarepackage(targetid);
@@ -69,8 +79,6 @@ public OnPickUpCarepackage(entityid, carepackageid)
         logprintf(-1, "Someone was beaten to a carepackage");
         Terminate();
     }
-
-    return 1;
 }
 
 public OnExit()

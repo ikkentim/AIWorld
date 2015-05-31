@@ -1,9 +1,15 @@
+/*
+ * This goal gets the nearest orb.
+ *
+ */
 #include <a_goal>
 
 #include "../common/status"
+#include "../common/combat"
 
-new SB:seek;
-new targetid;
+new static
+    SB:seek,
+    targetid;
 
 main() { }
 
@@ -27,6 +33,8 @@ public OnEnter()
 
 public OnUpdate(Float:elapsed)
 {
+    if(AttackIfEnemyNearby()) return;
+    
     if(GetAgentVar(targetid, "team") != 0)
     {
         if(GetVar("orb") >= 0)

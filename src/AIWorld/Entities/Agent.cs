@@ -799,6 +799,11 @@ namespace AIWorld.Entities
             return _steeringBehaviors.Remove(handle);
         }
 
+        [ScriptingFunction]
+        public int GetSteeringBehaviorsCount()
+        {
+            return _steeringBehaviors.Count();
+        }
         #endregion
 
         #region API - Pathing
@@ -965,6 +970,15 @@ namespace AIWorld.Entities
         }
 
         [ScriptingFunction]
+        public void ResetGoals()
+        {
+            while(_goals.Count > 0)
+                _goals.Peek().Terminate();
+            
+            _goals.Clear();
+        }
+
+        [ScriptingFunction]
         public int CallLocalFunction(AMXArgumentList arguments)
         {
             if (arguments.Length < 2)
@@ -997,10 +1011,10 @@ namespace AIWorld.Entities
         #region API - Actions
 
         [ScriptingFunction]
-        public int SpawnProjectile(string name, float size, float lifeTime, float x, float y, float z, float hx, float hy, float sx, float sy, float sz, float rx, float ry, float rz, float tx, float ty, float tz, string meshes)
+        public int SpawnProjectile(string name, float damage, float lifeTime, float x, float y, float z, float hx, float hy, float sx, float sy, float sz, float rx, float ry, float rz, float tx, float ty, float tz, string meshes)
         {
             // Create the entity and return the id.
-            var obj = new Projectile(Game, this, name, size, lifeTime, new Vector3(x, y, z), new Vector3(rx, ry, rz),
+            var obj = new Projectile(Game, this, name, damage, lifeTime, new Vector3(x, y, z), new Vector3(rx, ry, rz),
                 new Vector3(tx, ty, tz), new Vector3(sx, sy, sz), new Vector3(hx, 0, hy),
                 meshes.Split(',').Select(v => v.Trim()).Where(v => v.Length > 0));
 

@@ -1,6 +1,6 @@
 #include <a_agent>
 #include <a_drawable>
-#include "tank/common/area"
+#include "common/area"
 /*
 | === VARIABLES TABLE ===
 | name      | type  | description
@@ -48,15 +48,17 @@ public OnUpdate(Float:elapsed)
         {
             new Float:tx, Float:ty;
             GetEntityPosition(tank, tx, ty);
-            if(floatsqroot(floatabs(x-tx)*floatabs(x-tx)+floatabs(y-ty)*floatabs(y-ty)) < GetEntitySize(tank) + 0.2)
+            if(fdist(x, y, tx, ty) < GetEntitySize(tank) + 0.2)
             {
                 carier = tank;
                 SetVar("carier", tank);
                 SetVar("team", GetAgentVar(tank, "team"));
+
                 if(GetAgentVar(tank, "team") == 1)
                     SetGVar("orbs_axis", GetGVar("orbs_axis") + 1);
                 else
                     SetGVar("orbs_alies", GetGVar("orbs_alies") + 1);
+
                 SetAgentVar(tank, "orb", GetId());
                 chatprintf(COLOR_YELLOW, "An orb was picked up!");
 

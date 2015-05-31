@@ -103,6 +103,12 @@ namespace AIWorld.Services
             Entities.Add(entity);
         }
 
+        public void Remove(IEntity entity)
+        {
+            _entities.Remove(entity);
+            Game.Components.Remove(entity);
+        }
+
         public void Add(QuadPlane plane)
         {
             if (plane == null) throw new ArgumentNullException("plane");
@@ -340,8 +346,7 @@ namespace AIWorld.Services
 
             if (worldObject == null) return false;
 
-            _entities.Remove(worldObject);
-            Game.Components.Remove(worldObject);
+            Remove(worldObject);
             return true; 
         }
         #endregion
@@ -353,6 +358,7 @@ namespace AIWorld.Services
         {
             return _entities.Query(new AABB(new Vector3(x, 0, y), new Vector3(range)))
                 .OfType<Agent>()
+                .Where(a => Vector3.DistanceSquared(new Vector3(x, 0, y), a.Position) < range * range)
                 .Where(a => string.IsNullOrEmpty(scriptName) || a.ScriptName == scriptName)
                 .Where(predicate)
                 .OrderBy(a => Vector3.DistanceSquared(a.Position, new Vector3(x, 0, y)));

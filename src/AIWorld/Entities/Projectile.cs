@@ -61,22 +61,23 @@ namespace AIWorld.Entities
 
             if (_timeAlive > _lifeTime)
             {
-                Game.Components.Remove(this);
+                _gameWorldService.Remove(this);
                 return;
             }
 
             var len = (Position - oldPosition).Length();
             var ray = new Ray(oldPosition, Position-oldPosition);
-            foreach (
-                var collider in
-                    _gameWorldService.Entities.Query(new AABB(oldPosition, new Vector3(len + MaxSize)))
-                        .OfType<IHitable>()
-                        .Where(h => h != Caster)
-                        .Where(h => ray.Intersects(new BoundingSphere(h.Position, h.Size)) != null)
-                )
+
+            var collider =
+                _gameWorldService.Entities
+                    .Query(new AABB(oldPosition, new Vector3(len + MaxSize)))
+                    .OfType<IHitable>()
+                    .Where(h => h != Caster)
+                    .FirstOrDefault(h => ray.Intersects(new BoundingSphere(h.Position, h.Size)) != null);
+            if (collider != null)
             {
                 collider.Hit(this);
-                Game.Components.Remove(this);
+                _gameWorldService.Remove(this);
             }
 
             base.Update(gameTime);

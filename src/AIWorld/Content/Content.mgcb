@@ -299,3 +299,9 @@
 /processorParam:Quality=Best
 /build:sounds/plane_flyby.wav
 
+#begin sounds/bftune.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sounds/bftune.mp3
+

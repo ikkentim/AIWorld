@@ -1,5 +1,8 @@
+#include <a_sound>
+#include <a_drawable>
+#include "tank/common/turret"
+
 #define TURRET_SPEED                    (PI/6)
-#define MAX_TURRET_OFFSET               (PI/512)
 
 #define TURRET_POST_ROTATE_DELAY        (0.8)
 #define TURRET_POST_FIRE_DELAY          (0.8)
@@ -8,16 +11,17 @@
 #define TURRET_BARREL_SLIDE             (0.25)
 #define TURRET_CANNON_SPEED             (25)
 
-#define TURRET_STATE_IDLE               (0)
-#define TURRET_STATE_AIM                (1)
-#define TURRET_STATE_POST_FIRE          (2)
-#define TURRET_STATE_AWAIT              (4)
+new static turretState;
+new static Float:turretRotation;
+new static Float:turretTargetX;
+new static Float:turretTargetY;
+new static Float:turretDelay;
 
-new turretState = TURRET_STATE_IDLE;
-new Float:turretRotation = 0.0;
-new Float:turretTargetX;
-new Float:turretTargetY;
-new Float:turretDelay;
+TurretInit()
+{
+    turretState = TURRET_STATE_IDLE;
+    turretRotation = 0.0;
+}
 
 TurretUpdate(Float:elapsed)
 {
@@ -58,9 +62,16 @@ TurretUpdate(Float:elapsed)
         new Float:x, Float:y;
         PointToLocal(turretTargetX, turretTargetY, x, y);
 
-        new Float:targetrot = floatatan2(y, x)-turretRotation;
+        new Float:currentRotation = turretRotation;
+        new Float:targetRotation = floatatan2(y, x);
 
-        turretRotation += fclamp(-TURRET_SPEED * elapsed, TURRET_SPEED * elapsed, targetrot);
+        //if(floatabs(currentRotation - ))
+        if(currentRotation < 0) currentRotation += PI * 2;
+        if(targetRotation < 0) targetRotation += PI * 2;
+
+        new Float:offset = targetRotation - currentRotation;
+
+        turretRotation += fclamp(-TURRET_SPEED * elapsed, TURRET_SPEED * elapsed, offset);
 
         SetMeshRotation("head", 0, turretRotation, 0);
         SetMeshRotation("barrel", 0, turretRotation, 0);
@@ -68,46 +79,51 @@ TurretUpdate(Float:elapsed)
 
 }
 
-stock TurretStopAiming()
+public TurretGetState_()
 {
-    if(TurretIsAiming())
-        turretState ^= TURRET_STATE_AIM;
+    return turretState;
 }
 
-stock TurretIsReady()
+public TurretSetState_(value)
 {
-    return !(turretState & TURRET_STATE_POST_FIRE);
+    return turretState = value;
 }
 
-stock TurretIsAiming()
+public TurretIsAimingAt_(Float:targetx, Float:targety, Float:targetoffset)
 {
-    return !!(turretState & TURRET_STATE_AIM);
-}
+    new Float:x,
+        Float:y,
+        Float:cx,
+        Float:cy,
+        Float:length;
 
-stock TurretIsAimingAt(Float:targetx, Float:targety)
-{
-    new Float:x, Float:y;
+    // Calculate the local point of the target.
     PointToLocal(targetx, targety, x, y);
 
-    new Float:targetrot = floatatan2(y, x)-turretRotation;
+    // Calculate the length of the target vector.
+    length = fdist(0, 0, x, y);
 
-    return targetrot > -MAX_TURRET_OFFSET && targetrot < MAX_TURRET_OFFSET;
+    // Calculate the aiming vector with the same length as the target vector.
+    cx = floatcos(turretRotation) * length;
+    cy = floatsin(turretRotation) * length;
+
+    return fdist(x, y, cx, cy) < targetoffset;
 }
 
-stock TurretAim(Float:targetx, Float:targety)
+public TurretAim_(Float:targetx, Float:targety)
 {
-    turretTargetX=targetx;
-    turretTargetY=targety;
+    turretTargetX = targetx;
+    turretTargetY = targety;
     turretState |= TURRET_STATE_AIM;
 }
 
-stock TurretFire()
+public TurretFire_()
 {
-    if(TurretIsReady())
+    if(!(turretState & TURRET_STATE_POST_FIRE) &&
+        GetVar("ammo") > 0) // Ready for firing...
     {
         turretDelay = TURRET_POST_FIRE_DELAY + TURRET_POST_FIRE_EXTRA_DELAY;
         turretState |= TURRET_STATE_POST_FIRE | TURRET_STATE_AWAIT;
-
 
         // Notify everyone
         CallLocalFunction("OnTankFired", "ff", turretTargetX, turretTargetY);
@@ -125,6 +141,11 @@ stock TurretFire()
 
         new Float:vx, Float:vy;
         VectorToWorld(hx, hy, vx, vy);
-        SpawnProjectile("models/cannon", 0.1, 1.0, x, 0.45, y, vx * TURRET_CANNON_SPEED, vy * TURRET_CANNON_SPEED, 0.01, 0.01, 0.01);
+        SpawnProjectile("models/cannon", 30.0, 1.0, x, 0.45, y, vx * TURRET_CANNON_SPEED, vy * TURRET_CANNON_SPEED, 0.01, 0.01, 0.01);
+
+        SetVar("ammo", GetVar("ammo") - 1);
+        return true;
     }
+
+    return false;
 }

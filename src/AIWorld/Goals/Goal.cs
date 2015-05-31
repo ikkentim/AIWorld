@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AIWorld.Entities;
 using AIWorld.Fuzzy;
 using AIWorld.Scripting;
@@ -68,7 +69,10 @@ namespace AIWorld.Goals
         {
             if (_isActive && _onExit != null)
                 Agent.TryExecute(_onExit);
-            
+
+            while(Count > 0)
+                Peek().Terminate();
+
             if (Terminated != null)
                 Terminated(this, e);
         }

@@ -24,8 +24,8 @@
         Float:.rotation
     ]
 
-new carepackages[MAX_CAREPACKAGES][CarepackageDescription];
-new Float:carepackageETA = 5.0;
+new static carepackages[MAX_CAREPACKAGES][CarepackageDescription];
+new static Float:carepackageETA = 5.0;
 
 public OnPickUpCarepackage(entityid, carepackageid)
 {
@@ -76,12 +76,12 @@ CarepackagesUpdate(Float:elapsed)
 
                 SetWorldObjectTranslation(carepackages[i].id, 0, air * CAREPACKAGE_DROP_HEIGHT * (1 / 0.05/*scale*/), 0);
                 SetWorldObjectRotation(carepackages[i].id, 0, carepackages[i].rotation - air * carepackages[i].dropRotationEffect, 0);
-                //SetWorldObjectRotation//carepackages[i].dropRotationEffect
+
                 if(carepackages[i].time >= CAREPACKAGE_DROP_TIME)
                 {
                     new Float:x, Float:y;
                     GetEntityPosition(carepackages[i].id, x, y);
-                    PlaySound("sounds/crate_drop", 0.4, x, y);
+                    PlaySound("sounds/crate_drop", 1.0, x, y);
                     carepackages[i].dropping = false;
                     carepackages[i].active = true;
                 }
@@ -112,7 +112,7 @@ CarepackagesUpdate(Float:elapsed)
                         CAREPACKAGE_DROP_ROTATION_MAX);
 
                 // Show to user
-                PlaySound("sounds/plane_flyby", 0.6, x, y);
+                PlaySound("sounds/plane_flyby", 1.0, x, y);
                 chatprintf(COLOR_RED, "A carepackage was dropped!");
 
                 break;

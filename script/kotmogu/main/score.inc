@@ -1,7 +1,7 @@
 #include <a_drawable>
 
-new Drawable:alies_score;
-new Drawable:axis_score;
+new static Drawable:alies_score;
+new static Drawable:axis_score;
 
 ScoreInit()
 {

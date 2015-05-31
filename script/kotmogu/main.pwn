@@ -16,7 +16,7 @@ main()
 
     chatprintf(COLOR_RED, "Started Temple of Kotmogu simulation.");
 
-    //PlayAmbience("sounds/ambient", true, 0.015);
+    //PlayAmbience("sounds/bftune", true, 0.005);
     SetBackgroundColor(0x00000000);
 
     ScoreInit();

@@ -1,4 +1,4 @@
-new Drawable:zones[4*4];
+new static Drawable:zones[4*4];
 
 DebugInit()
 {

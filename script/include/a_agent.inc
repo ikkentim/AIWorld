@@ -323,6 +323,8 @@ native AddGoal(const scriptname[], const format[]='''', {Float,_}:...);
 \** ************************************************************************ **/
 native GetGoalCount(includingSubgoals=1);
 
+native ResetGoals();
+
 /** ************************************************************************ **\
 <summary>Sets the sound effect played at the position of this agent.</summary>
 <param name="sound">Path to the sound effect.</param>
@@ -350,7 +352,7 @@ native VectorToWorld(Float:x, Float:y, &Float:vx, &Float:vy);
 
 native CallLocalFunction(const function[], const format[], {Float,_}:...);
 
-native SpawnProjectile(const name[], Float:size, Float:life,
+native SpawnProjectile(const name[], Float:damage, Float:life,
     Float:x, Float:y, Float:z,
     Float:hx, Float:hy, Float:sx = 1.0, Float:sy = 1.0, Float:sz = 1.0,
     Float:rx = 0.0, Float:ry = 0.0, Float:rz = 0.0, Float:tx = 0.0,
@@ -361,7 +363,7 @@ native SetVarFloat(const key[], Float:value);
 native SetVarstring(const key[], value[]);
 native DeleteVar(const key[]);
 native GetVar(const key[]);
-native GetVarFloat(const key[]);
+native Float:GetVarFloat(const key[]);
 native GetVarString(const key[], value[], len);
 
 /** ************************************************************************ **\

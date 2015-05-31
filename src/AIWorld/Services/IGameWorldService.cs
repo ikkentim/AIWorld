@@ -27,6 +27,7 @@ namespace AIWorld.Services
         QuadTree Entities { get; }
         Graph this[string key] { get; }
         void Add(IEntity entity);
+        void Remove(IEntity entity);
         void Add(QuadPlane plane);
         bool CreateGraph(string name);
     }

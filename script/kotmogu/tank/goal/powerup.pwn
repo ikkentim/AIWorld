@@ -1,9 +1,14 @@
+/*
+ * This goal tries to get to a more powerful area.
+ *
+ */
 #include <a_goal>
 #include "../../common/area"
 #include "../common/status"
 
-new SB:seek;
-new targetPower;
+new static
+    SB:seek,
+    targetPower;
 
 main() { }
 

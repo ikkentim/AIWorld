@@ -159,7 +159,7 @@ native SetAgentVarFloat(agentid, const key[], Float:value);
 native SetAgentVarstring(agentid, const key[], value[]);
 native DeleteAgentVar(agentid, const key[]);
 native GetAgentVar(agentid, const key[]);
-native GetAgentVarFloat(agentid, const key[]);
+native Float:GetAgentVarFloat(agentid, const key[]);
 native GetAgentVarString(agentid, const key[], value[], len);
 
 native SetGVar(const key[], value);
@@ -167,7 +167,7 @@ native SetGVarFloat(const key[], Float:value);
 native SetGVarstring(const key[], value[]);
 native DeleteGVar(const key[]);
 native GetGVar(const key[]);
-native GetGVarFloat(const key[]);
+native Float:GetGVarFloat(const key[]);
 native GetGVarString(const key[], value[], len);
 
 native CallPublicFunction(const function[], const format[], {Float,_}:...);

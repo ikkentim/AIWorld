@@ -1,20 +1,22 @@
 #include <a_fuzzy>
+#include "../../common/carepackages"
 
-new Fuzzy:health;
-new Fuzzy:area_power;
-new Fuzzy:ammo;
-new Fuzzy:carepackage;
-new Fuzzy:orb;
-new Fuzzy:have_orb;
-new Fuzzy:orbs;
-new Fuzzy:enemy_orbs;
+new static
+    Fuzzy:health,
+    Fuzzy:area_power,
+    Fuzzy:ammo,
+    Fuzzy:carepackage,
+    Fuzzy:orb,
+    Fuzzy:have_orb,
+    Fuzzy:orbs,
+    Fuzzy:enemy_orbs,
 
-new Fuzzy:orb_desirability;
-new Fuzzy:powerup_desirability;
-new Fuzzy:carepackage_desirability;
-new Fuzzy:defend_desirability;
-new Fuzzy:atack_desirability;
-new Fuzzy:hold_desirability;
+    Fuzzy:orb_desirability,
+    Fuzzy:powerup_desirability,
+    Fuzzy:carepackage_desirability,
+    Fuzzy:defend_desirability,
+    Fuzzy:atack_desirability,
+    Fuzzy:hold_desirability;
 
 stock AddDesirabilitySet(Fuzzy:variable)
 {
@@ -119,16 +121,20 @@ stock LoadFuzzy()
     AddFuzzyRule("IF very few orbs AND doesnt have_orb THEN undesirable defend_desirability");
 
     // atack_desirability
-    AddFuzzyRule("IF many enemy_orbs THEN very_desirable atack_desirability");
+    /*AddFuzzyRule("IF many enemy_orbs THEN very_desirable atack_desirability");
     AddFuzzyRule("IF few enemy_orbs THEN desirable atack_desirability");
-    AddFuzzyRule("IF very few enemy_orbs THEN undesirable atack_desirability");
+    AddFuzzyRule("IF very few enemy_orbs THEN undesirable atack_desirability");*/
+
+    AddFuzzyRule("IF many enemy_orbs THEN very_desirable atack_desirability");
+    AddFuzzyRule("IF few enemy_orbs THEN very_desirable atack_desirability");
+    AddFuzzyRule("IF very few enemy_orbs THEN desirable atack_desirability");
 
     // hold_desirability
     AddFuzzyRule("IF high area_power AND does have_orb THEN desirable hold_desirability");
 }
 
 
-SetFuzzyVariables()
+stock SetFuzzyVariables()
 {
     new Float:x, Float:y, Float:ax, Float:ay,
         Float:carepackage_distance=1000000,
@@ -167,3 +173,16 @@ SetFuzzyVariables()
     ? GetGVar("orbs_axis")
     : GetGVar("orbs_alies")));
 }
+
+stock Float:GetOrbDesirability()
+    return Defuzzify(orb_desirability);
+stock Float:GetPowerupDesirability()
+    return Defuzzify(powerup_desirability);
+stock Float:GetCarepackageDesirability()
+    return Defuzzify(carepackage_desirability);
+stock Float:GetDefendDesirability()
+    return Defuzzify(defend_desirability);
+stock Float:GetAtackDesirability()
+    return Defuzzify(atack_desirability);
+stock Float:GetHoldDesirability()
+    return Defuzzify(hold_desirability);
