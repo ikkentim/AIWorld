@@ -65,5 +65,18 @@ namespace AIWorld.Helpers
         {
             return Math.Abs(vector.X) + Math.Abs(vector.Y) + Math.Abs(vector.Z);
         }
+
+        public static Vector2 ToVector2XY(this Vector3 vector)
+        {
+            return new Vector2(vector.X, vector.Y);
+        }
+        public static Vector2 ToVector2XZ(this Vector3 vector)
+        {
+            return new Vector2(vector.X, vector.Z);
+        }
+        public static Vector3 ToVector3(this Vector2 vector)
+        {
+            return new Vector3(vector, 0);
+        }
     }
 }
