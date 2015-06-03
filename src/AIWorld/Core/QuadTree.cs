@@ -24,7 +24,7 @@ namespace AIWorld
 {
     public class QuadTree : IEnumerable<IEntity>
     {
-        private const int Capacity = 5;
+        private const int Capacity = 16;
         private readonly IEntity[] _entities = new IEntity[Capacity];
         private int _count;
         private QuadTree[] _parts;
@@ -108,6 +108,18 @@ namespace AIWorld
             if (Parts == null) yield break;
 
             foreach (var e in Parts.Where(p => p.Boundaries.IntersectsWith(box)).SelectMany(p => p.Query(box)))
+                yield return e;
+        }
+
+        public virtual IEnumerable<IEntity> Query(params AABB[] boxes)
+        {
+            for (var i = 0; i < _count; i++)
+                if (boxes.Any(b => b.ContainsPoint(_entities[i].Position)))
+                    yield return _entities[i];
+
+            if (Parts == null) yield break;
+
+            foreach (var e in Parts.Where(p => boxes.Any(p.Boundaries.IntersectsWith)).SelectMany(p => p.Query(boxes)))
                 yield return e;
         }
 

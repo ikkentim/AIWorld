@@ -13,6 +13,8 @@ main()
 
 public OnUpdate(Float:elapsed)
 {
+    if(GetSubgoalCount()) return;
+    
     SetFuzzyVariables();
 
     new Float:want_orb = GetOrbDesirability();

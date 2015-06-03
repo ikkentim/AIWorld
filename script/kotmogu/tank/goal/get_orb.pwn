@@ -6,6 +6,7 @@
 
 #include "../common/status"
 #include "../common/combat"
+#include "../common/movement"
 
 new static
     SB:seek,
@@ -34,6 +35,8 @@ public OnEnter()
 
 public OnUpdate(Float:elapsed)
 {
+    if(GetSubgoalCount()) return;
+
     if(AttackIfEnemyNearby()) return;
 
     if(GetAgentVar(targetid, "team") != 0)

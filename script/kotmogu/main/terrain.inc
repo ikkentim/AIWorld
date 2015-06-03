@@ -10,7 +10,7 @@ TerrainInit()
 
 #define SCALE_TREE          (0.75)
 
-#define SIZE_TREE           (2.00)
+#define SIZE_TREE           (1.80)
 #define SIZE_SUPERMARKET    (0.70)
 #define SIZE_HOUSE01        (0.45)
 #define SIZE_HOUSE02        (0.45)

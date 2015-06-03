@@ -18,6 +18,10 @@
 \** ************************************************************************ **/
 native AddSubgoal(const scriptname[], const format[]='''', {Float,_}:...);
 
+native GetSubgoalCount();
+
+native TerminateSubgoals();
+
 /** ************************************************************************ **\
 <summary>Terminates this goal.</summary>
 <returns>This function does not return a specific value.</returns>

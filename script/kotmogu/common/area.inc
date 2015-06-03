@@ -1,6 +1,6 @@
 
 /*
-| Map is divided into multiple areas
+| Map is divided into multiple areas:
 | -10,-10 ~ 10,10   Power 4
 | -30,-30 ~ 30,30   Power 3
 | -50,-50 ~ 50,50   Power 2
@@ -10,7 +10,9 @@
 
 stock GetAreaPower(Float:x, Float:y)
 {
-    #define POWER_BOUNDS(%1,%2,%3,%4,%5); if(x>=%1 && y>=%2 && x<=%3 && y<=%4){ return %5; }
+    #define POWER_BOUNDS(%1,%2,%3,%4,%5); if(x>=%1 && y>=%2 && x<=%3 && y<=%4) \
+        { return %5; }
+        
     POWER_BOUNDS(-10,-10, 10, 10, 4);
     POWER_BOUNDS(-30,-30, 30, 30, 3);
     POWER_BOUNDS(-50,-50, 50, 50, 2);
@@ -22,7 +24,8 @@ stock GetNearestAreaForPower(Float:x, Float:y, power, &Float:ox, &Float:oy)
 {
     // TODO: This currently only works if you want to power up.
     // If you want to power down it will give faulty results, except for power 0
-
+    // At the moment of writing this code there is however no need for powering
+    // down the areas.
     switch(power)
     {
         case 0: {

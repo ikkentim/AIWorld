@@ -32,6 +32,8 @@ public OnEnter()
 
 public OnUpdate(Float:elapsed)
 {
+    if(GetSubgoalCount()) return;
+
     // Check exit states
     if(!IsReadyForCombat())
     {

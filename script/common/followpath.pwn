@@ -6,6 +6,8 @@ main() { }
 
 public OnUpdate(Float:elapsed)
 {
+    if(GetSubgoalCount()) return;
+        
     new Float:nextx, Float:nexty;
 
     // Check whether there is any point left in the path stack and store its

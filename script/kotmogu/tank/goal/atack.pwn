@@ -43,6 +43,8 @@ public OnEnter()
 
 public OnUpdate(Float:elapsed)
 {
+    if(GetSubgoalCount()) return;
+
     if(AttackIfEnemyNearby())
     {
         UpdateStatus("Entering combat mode");

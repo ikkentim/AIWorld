@@ -42,6 +42,8 @@ public OnEnter()
 
 public OnUpdate(Float:elapsed)
 {
+    if(GetSubgoalCount()) return;
+
     total_time += elapsed;
 
     if(AttackIfEnemyNearby())

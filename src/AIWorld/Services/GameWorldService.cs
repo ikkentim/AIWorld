@@ -233,15 +233,23 @@ namespace AIWorld.Services
                 for (var y = minY; y <= maxY; y += offset)
                 {
                     var point = new Vector3(x, 0, y);
-                    if (IsPointOccupied(point, 0, true)) continue;
+
+                    var entities = Entities.Query(new AABB(point,
+                        new Vector3(offset + Entity.MaxSize)))
+                        .Where(e => !(e is IMovingEntity))
+                        .Where(e => e.IsSolid)
+                        .ToArray();
 
                     foreach (
                         var p in
                             offsets.Select(o => o + point)
-                                .Where(
-                                    p =>
-                                        p.X >= minX && p.X <= maxX && p.Z >= minY && p.Z <= maxY &&
-                                        !IsPointOccupied(p, Vector3.Distance(point, p), true))
+                                .Where(p => p.X >= minX && p.X <= maxX && p.Z >= minY && p.Z <= maxY)
+                                .Where(p =>
+                                {
+                                    var ray = new Ray(point, Vector3.Normalize(p - point));
+                                    return entities
+                                        .All(e => ray.Intersects(new BoundingSphere(e.Position, e.Size)) == null);
+                                })
                         )
                         graph.Add(point, p);
                 }
@@ -249,6 +257,46 @@ namespace AIWorld.Services
             return graph.Keys.Count - init;
         }
 
+        [ScriptingFunction]
+        public bool CastRay(float x1, float y1, float x2, float y2, float stepSize, out int hitid, out float hitdistance,
+            CellPtr ignoredEntitiesPtr, int ignoredEntitiesLength)
+        {
+            IEnumerable<int> ignoredEntities = new int[0];
+            if (ignoredEntitiesLength > 0)
+                ignoredEntities = Enumerable.Range(0, ignoredEntitiesLength).Select(i => ignoredEntitiesPtr[i].AsInt32());
+
+            var start = new Vector3(x1, 0, y1);
+            var end = new Vector3(x2, 0, y2);
+
+            var direction = Vector3.Normalize(end - start);
+            var step = direction*stepSize;
+            var length = Vector3.Distance(end, start);
+
+            var boxes =
+                Enumerable.Range(0, (int) Math.Ceiling(length/stepSize))
+                    .Select(i => new AABB(start + step*i, new Vector3(Entity.MaxSize))).ToArray();
+
+            var entities = Entities.Query(boxes)
+                .Where(e => e.IsSolid)
+                .Where(e => ignoredEntities.Contains(e.Id));
+
+            var ray = new Ray(start, direction);
+        
+            hitdistance = 0;
+            hitid = -1;
+            foreach (var entity in entities)
+            {
+                var hit = ray.Intersects(new BoundingSphere(entity.Position, entity.Size));
+
+                if (hit == null || (hitid != -1 && hitdistance < hit))
+                    continue;
+
+                hitid = entity.Id;
+                hitdistance = hit.Value;
+            }
+
+            return hitid != -1;
+        }
         #endregion
 
         #region API - Camera

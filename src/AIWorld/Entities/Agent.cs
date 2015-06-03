@@ -935,7 +935,7 @@ namespace AIWorld.Entities
             return _path.Count > l;
         }
 
-        //TODO: Add path smoothening function
+        //TODO: Add path smoothening functionality.
 
         /// <summary>
         ///     Clears the path stack.
@@ -966,13 +966,11 @@ namespace AIWorld.Entities
             var scriptname = arguments[0].AsString();
 
             if (_goals.Count > 0)
-            {
                 _goals.Peek().Pause();
-            }
 
             var goal = new Goal(this, scriptname);
             _goals.Push(goal);
-            goal.Terminated += goal_Terminated;
+            goal.Terminated += GoalTerminated;
 
             if (arguments.Length > 2)
                 DefaultFunctions.SetVariables(goal, arguments, 1);
@@ -1080,16 +1078,20 @@ namespace AIWorld.Entities
 
             var result = 0;
 
-            // Call in top goal
+            // Decend the goals stacks.
             if (_goals.Count > 0)
             {
-                var goal = _goals.Peek().GetActiveGoal() as Goal;
+                var goal = _goals.Peek() as Goal;
 
-                if (goal != null)
+                while (goal != null)
                 {
+                    // Attempt to call the function on the goal. The return value of the goal deepest down the tree
+                    // with the function implemented will be used.
                     var goalRetval = DefaultFunctions.CallFunctionOnScript(goal.Script, _consoleService, arguments);
                     if (goalRetval != null)
                         result = goalRetval.Value;
+
+                    goal = goal.Count == 0 ? null : goal.Peek() as Goal;
                 }
             }
 
@@ -1237,10 +1239,17 @@ namespace AIWorld.Entities
             Script.Release(oldKeys);
         }
 
-        private void goal_Terminated(object sender, EventArgs e)
+        private void GoalTerminated(object sender, EventArgs e)
         {
+            // Sanity check.
+            if (_goals.Count == 0) return;
+
+            // Assuming the terminated goal is on top of the stack; Pop the goal of the stack.
+            _goals.Pop();
+
+            // If there are any remaining goals, activate the next.
             if (_goals.Count != 0)
-                _goals.Pop();
+                _goals.Peek().Activate();
         }
 
         #endregion

@@ -81,6 +81,9 @@ native GetDrawGraphs();
 
 native IsPointOccupied(Float:x, Float:y, Float:range = 0.0);
 
+native CastRay(Float:x1, Float:y1, Float:x2, Float:y2, Float:stepSize, &hitid,
+    &Float:hitdistance, ignoredentities[], len = sizeof ignoredentities);
+
 /** ************************************************************************ **\
 <summary>Sets the target position of the camera.</summary>
 <param name="x">Sets the x-coordinate of the target position.</param>

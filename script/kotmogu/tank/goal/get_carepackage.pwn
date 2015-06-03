@@ -9,6 +9,7 @@
 #include "../../common/carepackages"
 #include "../common/status"
 #include "../common/combat"
+#include "../common/movement"
 
 #define CAREPACKAGE_RANGE   (2.0)
 
@@ -42,6 +43,8 @@ public OnEnter()
 
 public OnUpdate(Float:elapsed)
 {
+    if(GetSubgoalCount()) return;
+
     if(AttackIfEnemyNearby()) return;
 
     new Float:x, Float:y;

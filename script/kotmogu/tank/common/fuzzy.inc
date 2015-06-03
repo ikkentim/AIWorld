@@ -91,7 +91,7 @@ stock LoadFuzzy()
     // powerup_desirability
     AddFuzzyRule("IF medium area_power AND does have_orb THEN desirable powerup_desirability");
     AddFuzzyRule("IF low area_power AND does have_orb THEN very_desirable powerup_desirability");
-    AddFuzzyRule("IF doesnt have_orb THEN undesirable powerup_desirability");
+    /*AddFuzzyRule("IF doesnt have_orb THEN undesirable powerup_desirability");*/
 
     // carepackage_desirability
     AddFuzzyRule("IF low health AND far carepackage THEN desirable carepackage_desirability");
@@ -121,13 +121,9 @@ stock LoadFuzzy()
     AddFuzzyRule("IF very few orbs AND doesnt have_orb THEN undesirable defend_desirability");
 
     // atack_desirability
-    /*AddFuzzyRule("IF many enemy_orbs THEN very_desirable atack_desirability");
-    AddFuzzyRule("IF few enemy_orbs THEN desirable atack_desirability");
-    AddFuzzyRule("IF very few enemy_orbs THEN undesirable atack_desirability");*/
-
-    AddFuzzyRule("IF many enemy_orbs THEN very_desirable atack_desirability");
-    AddFuzzyRule("IF few enemy_orbs THEN very_desirable atack_desirability");
-    AddFuzzyRule("IF very few enemy_orbs THEN desirable atack_desirability");
+    AddFuzzyRule("IF many enemy_orbs AND doesnt have_orb THEN very_desirable atack_desirability");
+    AddFuzzyRule("IF few enemy_orbs AND doesnt have_orb THEN desirable atack_desirability");
+    AddFuzzyRule("IF very few enemy_orbs AND doesnt have_orb THEN undesirable atack_desirability");
 
     // hold_desirability
     AddFuzzyRule("IF high area_power AND does have_orb THEN desirable hold_desirability");
@@ -142,7 +138,8 @@ stock SetFuzzyVariables()
 
     GetPosition(x, y);
 
-    new crateid = FindNearestWorldObject(x, y, "models/ammocrate");
+
+    new crateid = GetNearestPackage(x, y);
     if(crateid >= 0)
     {
         GetEntityPosition(crateid, ax, ay);

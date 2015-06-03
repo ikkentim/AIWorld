@@ -33,7 +33,9 @@ namespace AIWorld.Goals
         private readonly AMXPublic _onExit;
         private readonly AMXPublic _onIncomingMessage;
         private readonly string _scriptName;
-        private bool _isActive;
+        private bool _isRunning;
+
+        #region Constructors
 
         public Goal(Agent agent, string scriptName)
         {
@@ -57,7 +59,13 @@ namespace AIWorld.Goals
             _onIncomingMessage = Script.FindPublic("OnIncomingMessage");
         }
 
+        #endregion
+
+        #region Properties of Goal
+
         public Agent Agent { get; private set; }
+
+        #endregion
 
         #region Implementation of IScripted
 
@@ -65,24 +73,33 @@ namespace AIWorld.Goals
 
         #endregion
 
-        protected void OnTerminated(EventArgs e)
+        #region Methods of Goal
+
+        /// <summary>
+        /// Raises the <see cref="E:Terminated" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        protected virtual void OnTerminated(EventArgs e)
         {
-            if (_isActive && _onExit != null)
+            // If the goal was running (not paused) exit the goal.
+            if (_isRunning && _onExit != null)
                 Agent.TryExecute(_onExit);
 
-            while(Count > 0)
+            // Terminate all sub goals.
+            while (Count > 0)
                 Peek().Terminate();
 
+            // Raise the Terminated event.
             if (Terminated != null)
                 Terminated(this, e);
         }
 
         private void GoalTerminated(object sender, EventArgs e)
         {
-            // Sanity check
+            // Sanity check.
             if (Count == 0) return;
 
-            // Remove the goal from the stack.
+            // Assuming the terminated goal is on top of the stack; Pop the goal of the stack.
             Pop();
 
             // If there are any remaining goals, activate the next.
@@ -90,71 +107,75 @@ namespace AIWorld.Goals
                 Peek().Activate();
         }
 
+        #endregion
+
+        #region API
+
         [ScriptingFunction]
         public void AddSubgoal(AMXArgumentList arguments)
         {
+            // Check the arguments.
             if (arguments.Length < 1) return;
 
             var scriptname = arguments[0].AsString();
 
+            // Create the goal with te specified scriptname.
             var goal = new Goal(Agent, scriptname);
-            goal.Terminated += GoalTerminated;
-            Push(goal);
 
+            // Add eventual variables to the goal.
             if (arguments.Length > 2)
                 DefaultFunctions.SetVariables(goal, arguments, 1);
 
-            goal.Activate();
+            AddSubgoal(goal);
         }
+
+        [ScriptingFunction]
+        public bool GetSubgoalCount()
+        {
+            return Count > 0;
+        }
+
+        [ScriptingFunction]
+        public void TerminateSubgoals()
+        {
+            while (Count > 0)
+                Peek().Terminate();
+        }
+        #endregion
 
         #region Implementation of IGoal
 
         public void Pause()
         {
-            if (_isActive)
-            {
-                _isActive = false;
+            if (!_isRunning) return;
 
-                if (_onExit != null)
-                    Agent.TryExecute(_onExit);
-            }
-            else
-            {
-                if (Count > 0)
-                {
-                    Peek().Pause();
-                }
-            }
+            _isRunning = false;
+
+            if (_onExit != null)
+                Agent.TryExecute(_onExit);
+
+            if (Count > 0)
+                Peek().Pause();
         }
 
         public void Process(GameTime gameTime)
         {
-            // If this goal has subgoals, process the next.
-            if (Count > 0)
+            // If the goal wasn't running before now, call the OnEnter function.
+            if (!_isRunning)
             {
-                if (_isActive && _onExit != null)
-                {
-                    _isActive = false;
-                    Agent.TryExecute(_onExit);
-                }
-                else
-                {
-                    Peek().Process(gameTime);
-                }
-            }
-            else if (_onUpdate != null)
-            {
-                if (!_isActive && _onEnter != null)
-                {
-                    _isActive = true;
+                _isRunning = true;
+
+                if (_onEnter != null)
                     Agent.TryExecute(_onEnter);
-                }
-                else
-                {
-                    Script.Push((float)gameTime.ElapsedGameTime.TotalSeconds);
-                    Agent.TryExecute(_onUpdate);
-                }
             }
+
+            // Call the Update function.
+            if (_onUpdate != null)
+                Agent.TryExecute(_onUpdate);
+
+            // Update the top goal on the stack.
+            if(Count > 0)
+                Peek().Process(gameTime);
         }
 
         public void Activate()
@@ -170,29 +191,20 @@ namespace AIWorld.Goals
 
         public void AddSubgoal(IGoal goal)
         {
+            // If there is a goal on the stack, pause it.
+            if (Count > 0)
+                Peek().Pause();
+
             // Activate and store the goal.
             goal.Terminated += GoalTerminated;
             Push(goal);
             goal.Activate();
         }
 
-        public IGoal GetActiveGoal()
-        {
-            return Count > 0 ? Peek().GetActiveGoal() : this;
-        }
-
         [ScriptingFunction]
         public string Name
         {
             get { return _scriptName; }
-        }
-
-        public string CurrentName
-        {
-            get
-            {
-                return Count > 0 ? Peek().CurrentName : Name;
-            }
         }
 
         public event EventHandler Terminated;
@@ -203,18 +215,17 @@ namespace AIWorld.Goals
 
         public void HandleMessage(int message, int contents)
         {
-            // If this goal has subgoals, handle message in the next.
-            if (Count > 0)
-            {
-                Peek().HandleMessage(message, contents);
-            }
-            else if (_onIncomingMessage != null)
+            if (_onIncomingMessage != null)
             {
                 // Call the goal's.
                 Script.Push(contents);
                 Script.Push(message);
                 Agent.TryExecute(_onIncomingMessage);
             }
+
+            // If this goal has subgoals, handle message in the next.
+            if (Count > 0)
+                Peek().HandleMessage(message, contents);
         }
 
         #endregion

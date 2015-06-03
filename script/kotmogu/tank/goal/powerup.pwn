@@ -5,6 +5,7 @@
 #include <a_goal>
 #include "../../common/area"
 #include "../common/status"
+#include "../common/movement"
 
 new static
     SB:seek,
@@ -34,6 +35,8 @@ public OnEnter()
 
 public OnUpdate(Float:elapsed)
 {
+    if(GetSubgoalCount()) return;
+
     new Float:x, Float:y;
     GetPosition(x, y);
 
