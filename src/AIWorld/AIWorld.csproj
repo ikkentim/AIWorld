@@ -114,9 +114,9 @@
     <Compile Include="Steering\ArriveSteeringBehavior.cs" />
     <Compile Include="Steering\AvoidObstaclesSteeringBehavior.cs" />
     <Compile Include="Steering\CohesionSteeringBehavior.cs" />
-    <Compile Include="Steering\CohesionSteeringByVarBehavior.cs" />
-    <Compile Include="Steering\CohesionSteeringByVarFloatBehavior.cs" />
-    <Compile Include="Steering\CohesionSteeringByVarStringBehavior.cs" />
+    <Compile Include="Steering\CohesionByVarSteeringBehavior.cs" />
+    <Compile Include="Steering\CohesionByVarFloatSteeringBehavior.cs" />
+    <Compile Include="Steering\CohesionByVarStringSteeringBehavior.cs" />
     <Compile Include="Steering\EvadeByVarFloatSteeringBehavior.cs" />
     <Compile Include="Steering\EvadeByVarSteeringBehavior.cs" />
     <Compile Include="Steering\EvadeByVarStringSteeringBehavior.cs" />
@@ -179,7 +179,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AMXWrapper\AMXWrapper.csproj">

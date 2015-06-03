@@ -52,16 +52,31 @@ namespace AIWorld.Steering
                 .Where(a => KeyValue.Equals(a.GetVarObject(Key)))
                 .Where(a => Vector3.DistanceSquared(_agent.Position, a.Position) < _rangeSquared))
             {
-                avgHeading += agent.Heading;
+                avgHeading += agent.Velocity;
                 count++;
             }
 
             if (count <= 0) return Vector3.Zero;
 
             avgHeading /= count;
-            avgHeading -= _agent.Heading;
+            avgHeading -= _agent.Velocity;
 
             return avgHeading;
+        }
+
+        #endregion
+
+        #region Overrides of Object
+
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>
+        /// A string that represents the current object.
+        /// </returns>
+        public override string ToString()
+        {
+            return "Alignment";
         }
 
         #endregion

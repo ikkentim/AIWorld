@@ -35,6 +35,11 @@ namespace AIWorld.Entities
         float Size { get; }
 
         /// <summary>
+        ///     Gets a value indicating whether this instance is solid.
+        /// </summary>
+        bool IsSolid { get; }
+
+        /// <summary>
         ///     Gets or sets the identifier.
         /// </summary>
         int Id { get; set; }

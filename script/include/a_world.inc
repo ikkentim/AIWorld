@@ -79,6 +79,8 @@ native SetDrawGraphs(toggle);
 \** ************************************************************************ **/
 native GetDrawGraphs();
 
+native IsPointOccupied(Float:x, Float:y, Float:range = 0.0);
+
 /** ************************************************************************ **\
 <summary>Sets the target position of the camera.</summary>
 <param name="x">Sets the x-coordinate of the target position.</param>

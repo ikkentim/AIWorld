@@ -1,7 +1,9 @@
-#define FIRE_RANGE      (25.0)
-#define MIN_COMBAT_HEALTH    (5.0)
 #include <a_goal>
+
 #include "../common/team"
+
+#define FIRE_RANGE          (25.0)
+#define MIN_COMBAT_HEALTH   (5.0)
 
 stock IsReadyForCombat()
     return GetVar("ammo") > 0;
@@ -23,8 +25,9 @@ stock GetEnemyInFireRange()
         Float:y;
 
     GetPosition(x, y);
-    new id = FindNearestAgentByVar(x, y, FIRE_RANGE, "team", GetOpponent(), "kotmogu/tank");
-    return id;
+
+    return FindNearestAgentByVar(x, y, FIRE_RANGE, "team", GetOpponent(),
+        "kotmogu/tank");
 }
 
 stock GetNearestEnemy()
@@ -33,5 +36,7 @@ stock GetNearestEnemy()
         Float:y;
 
     GetPosition(x, y);
-    return FindNearestAgentByVar(x, y, 9999, "team", GetOpponent(), "kotmogu/tank");
+
+    return FindNearestAgentByVar(x, y, 9999, "team", GetOpponent(),
+        "kotmogu/tank");
 }

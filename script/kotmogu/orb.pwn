@@ -23,7 +23,8 @@ main()
 {
     SetVar("carier", -1);
     SetVar("team", 0);
-    SetSize(0);
+    SetSize(2);
+    SetIsSolid(false);
 
     model = CreateDrawableLineSphere(1, 1, 1, 0.1, COLOR_YELLOW, COLOR_YELLOW);
     ShowDrawable(model);

@@ -38,8 +38,8 @@ namespace AIWorld.Services
 
         private const int ChatMaxMessages = 6;
         private const float ChatFontScale = .75f;
-        private const float ChatShadowOffset = 2.5f;
-        private const float ChatShadowColorScale = .3f;
+        private const float ChatShadowOffset = 1.75f;
+        private const float ChatShadowColorScale = .5f;
         private const float ChatTextMargin = 4.0f;
         private const float ChatMaxWidth = .5f;
         private const float ChatVisibleTime = 8.5f;
@@ -357,11 +357,6 @@ namespace AIWorld.Services
                     var alpha = Math.Min(fadeInAlpha, fadeOutAlpha);
 
                     var color = msg.Color*alpha;
-//                    color.R = (byte)(color.R * alpha);
-//                    color.G = (byte)(color.G * alpha);
-//                    color.B = (byte)(color.B * alpha);
-//
-//                    color.A = (byte)(color.A * alpha);
 
                     var shadowColor = color;
                     shadowColor.R = (byte)(color.R * ChatShadowColorScale);

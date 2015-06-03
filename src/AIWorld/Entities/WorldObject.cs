@@ -44,7 +44,7 @@ namespace AIWorld.Entities
         /// <param name="meshes">The meshes.</param>
         public WorldObject(Game game, string modelName, float size, Vector3 position, Vector3 rotation,
             Vector3 translation,
-            Vector3 scale, IEnumerable<string> meshes)
+            Vector3 scale, bool isSolid, IEnumerable<string> meshes)
             : base(game)
         {
             ModelName = modelName;
@@ -52,6 +52,7 @@ namespace AIWorld.Entities
             var model = game.Content.Load<Model>(modelName);
             Rotation = rotation;
             Translation = translation;
+            IsSolid = isSolid;
             Scale = scale;
             Size = size;
             _meshes = meshes.Any()
@@ -81,6 +82,10 @@ namespace AIWorld.Entities
         /// <param name="gameTime">The game time.</param>
         public override void Draw(GameTime gameTime)
         {
+            var vpos = Vector3.Transform(Position, _cameraService.View);
+            if (vpos.Z > 0)
+                return;
+
             foreach (var mesh in _meshes)
             {
                 foreach (var effect in mesh.Effects.Cast<BasicEffect>())
@@ -119,9 +124,10 @@ namespace AIWorld.Entities
             return false;
         }
 
-        public void Hit(Projectile projectile)
+        public bool Hit(Projectile projectile)
         {
             // Just drop the projectile. Keep object intact.
+            return true;
         }
 
         #endregion

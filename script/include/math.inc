@@ -55,3 +55,5 @@ stock Float:fdist(Float:x1, Float:y1, Float:x2, Float:y2)
 
 stock random2(min, max)
     return min + random(max-min);
+
+native timestamp(&year, &month, &day, &hour, &minute, &second, &milisecond);

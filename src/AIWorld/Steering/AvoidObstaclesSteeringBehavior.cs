@@ -24,11 +24,12 @@ namespace AIWorld.Steering
 {
     public class AvoidObstaclesSteeringBehavior : ISteeringBehavior
     {
-        //private const float MinimumDetectionBoxLength = 0.75f;
         private const float MinimumDetectionBoxLengthSizeMultiplier = 1.9f;
-        //private const float AproxMaxObjectSize = 1.0f;
+
         private const float BreakingWeight = 0.005f*0.001f;
+
         private readonly Agent _agent;
+
         private readonly IGameWorldService _gameWorldService;
 
         public AvoidObstaclesSteeringBehavior(Agent agent)
@@ -55,7 +56,7 @@ namespace AIWorld.Steering
 
             var entities =
                 _gameWorldService.Entities.Query(new AABB(_agent.Position, new Vector3(bLength + Entity.MaxSize)))
-                    .Where(e => e != _agent && (e.Position - _agent.Position).Length() < e.Size + bLength);
+                    .Where(e => e.IsSolid && e != _agent && (e.Position - _agent.Position).Length() < e.Size + bLength);
 
             IEntity closest = null;
             var closestDistance = float.MaxValue;
@@ -94,6 +95,21 @@ namespace AIWorld.Steering
                 Transform.VectorToWorldSpace(_agent.Heading, Vector3.Up, _agent.Side,
                     new Vector3((closest.Size - localPositionOfClosestPoint.X)*BreakingWeight, 0,
                         closest.Size - localPositionOfClosestPoint.Z*multiplier));
+        }
+
+        #endregion
+
+        #region Overrides of Object
+
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>
+        /// A string that represents the current object.
+        /// </returns>
+        public override string ToString()
+        {
+            return "AvoidObstacles";
         }
 
         #endregion

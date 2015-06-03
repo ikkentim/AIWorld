@@ -36,3 +36,15 @@ native memcpy(dest[], const source[], index=0, numbytes, maxlength=sizeof dest);
 
 stock bool: strequal(const string1[], const string2[], bool:ignorecase=false, length=cellmax)
     return strcmp(string1, string2, ignorecase, length) == 0;
+
+// Custom implementation
+native format(dest[], size=sizeof dest, const format[], {Float,_}:...);
+
+stock strrepeat(dest[], size = sizeof dest, char, count)
+{
+    new i = 0;
+    for( ; i < count && i < size - 1 ; i++)
+        dest[i] = char;
+        
+    dest[i] = '\0';
+}

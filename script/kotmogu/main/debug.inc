@@ -1,3 +1,5 @@
+#include <a_drawable>
+
 new static Drawable:zones[4*4];
 
 DebugInit()

@@ -17,7 +17,7 @@ using System;
 
 namespace AIWorld.Steering
 {
-    [AttributeUsage(AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Property, Inherited = true)]
     public class SteeringBehaviorArgumentAttribute : Attribute
     {
         public SteeringBehaviorArgumentAttribute()

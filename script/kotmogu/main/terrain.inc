@@ -1,4 +1,5 @@
 #include <a_drawable>
+#include <a_world>
 
 TerrainInit()
 {
@@ -7,10 +8,21 @@ TerrainInit()
 }
 
 
-#define SIZE_TREE           (0.25)
+#define SCALE_TREE          (0.75)
+
+#define SIZE_TREE           (2.00)
 #define SIZE_SUPERMARKET    (0.70)
 #define SIZE_HOUSE01        (0.45)
 #define SIZE_HOUSE02        (0.45)
+
+#define BORDER_WIDTH        (100.0)
+#define BORDER_TREE_COUNT   (200)
+#define BORDER_SLACK        (50)
+
+#define BORDER_LEFT         (-100)
+#define BORDER_RIGHT        (100)
+#define BORDER_BOTTOM       (-100)
+#define BORDER_TOP          (100)
 
 stock CreateCollisionSphere(Float:x, Float:y, Float:radius) <debug>
 {
@@ -43,8 +55,8 @@ stock CreateRandomTree(Float:x, Float:y)
     }
 
     CreateCollisionSphere(x, y, SIZE_TREE);
-    AddGameObject("models/trees", SIZE_TREE, x, y, 0.2, 0.2, 0.2,
-        0, frandom(-PI, PI), 0, -meshidx * 5, 0, 0, mesh);
+    AddGameObject("models/trees", SIZE_TREE, x, y, SCALE_TREE, SCALE_TREE,
+        SCALE_TREE, 0, frandom(-PI, PI), 0, -meshidx * 5, 0, 0, true, mesh);
 }
 
 stock CreateHouse01(Float:x, Float:y, Float:angle)
@@ -68,9 +80,51 @@ stock CreateSupermarket(Float:x, Float:y, Float:angle)
         0, angle, 0, 0, 0, 0.8);
 }
 
+FillSectionWithTrees(Float:minX, Float:maxX, Float:minY,Float:maxY, count,
+    slack)
+{
+    new Float:x,
+        Float:y;
+    for(new i=0;i<count;i++)
+    {
+        x = frandom(minX, maxX);
+        y = frandom(minY, maxY);
+
+        if(!IsPointOccupied(x, y, SIZE_TREE))
+            CreateRandomTree(x, y);
+        else
+        {
+            if(slack > 0)
+                slack--;
+            else
+                i--;
+        }
+    }
+}
+
 CreateObjects()
 {
-    CreateRandomTree(1,1);
+    FillSectionWithTrees(-5, 5, -5, 5, 40, 40);
+
+    FillSectionWithTrees(-50, -10, -50, -10, 40, 40);
+    FillSectionWithTrees(10, 50, 10, 50, 40, 40);
+
+    FillSectionWithTrees(BORDER_LEFT, BORDER_RIGHT,
+        BORDER_BOTTOM, BORDER_TOP, 40, 40);
+
+    FillSectionWithTrees(BORDER_LEFT - BORDER_WIDTH, BORDER_RIGHT,
+        BORDER_BOTTOM - BORDER_WIDTH, BORDER_BOTTOM,
+        BORDER_TREE_COUNT, BORDER_SLACK);//b
+    FillSectionWithTrees(BORDER_LEFT, BORDER_RIGHT + BORDER_WIDTH,
+        BORDER_TOP, BORDER_TOP + BORDER_WIDTH,
+        BORDER_TREE_COUNT, BORDER_SLACK);//t
+
+    FillSectionWithTrees(BORDER_LEFT - BORDER_WIDTH, BORDER_LEFT,
+        BORDER_BOTTOM, BORDER_TOP + BORDER_WIDTH,
+        BORDER_TREE_COUNT, BORDER_SLACK);//l
+    FillSectionWithTrees(BORDER_RIGHT, BORDER_RIGHT + BORDER_WIDTH,
+        BORDER_BOTTOM - BORDER_WIDTH, BORDER_TOP,
+        BORDER_TREE_COUNT, BORDER_SLACK);//r
 
     /*CreateHouse02(3.9, 2.5, DEG2RAD(-90));
     CreateHouse01(4.5, 8.5, DEG2RAD(90));

@@ -37,6 +37,7 @@ public OnEnter()
 
     GetEntityPosition(targetid, targetx, targety);
     seek = AddSeek(0.5, targetx, targety);
+    ToggleMovementBehaviors(true);
 }
 
 public OnUpdate(Float:elapsed)
@@ -84,4 +85,5 @@ public OnPickUpCarepackage(entityid, carepackageid)
 public OnExit()
 {
     RemoveSteeringBehavior(seek);
+    ToggleMovementBehaviors(false);
 }

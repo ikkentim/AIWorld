@@ -36,6 +36,11 @@ namespace AIWorld.Entities
         #region Implementation of IEntity
 
         /// <summary>
+        ///     Gets a value indicating whether this instance is solid.
+        /// </summary>
+        public virtual bool IsSolid { get; set; }
+
+        /// <summary>
         ///     Gets or sets the identifier.
         /// </summary>
         public virtual int Id { get; set; }

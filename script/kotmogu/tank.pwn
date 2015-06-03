@@ -4,9 +4,11 @@
 #include "../includes/utils"
 
 #include "common/carepackages"
+#include "tank/common/team"
 #include "tank/turret"
 #include "tank/status"
-#include "tank/common/team"
+#include "tank/movement"
+#include "tank/debug"
 
 // Public (setup) variables
 public team;
@@ -30,6 +32,8 @@ public team;
 
 #define RESPAWN_TIME    (15.0)
 
+#define SINK_DEPTH      (0.55)
+
 new Float:deathTime,
     Float:spawnx,
     Float:spawny,
@@ -44,16 +48,16 @@ InitVariables()
     SetVar("orb", -1);
 
     TurretInit();
+    MovementSet();
 
     AddGoal("kotmogu/tank/goal/think");
-
-    //AddAvoidObstacles(0.9);
 }
 
 UnsetVariables()
 {
     deathTime = 0.0;
 
+    MovementUnset();
     SetVar("team", 0);
     SetVarFloat("health", 0.0);
     ResetGoals();
@@ -63,7 +67,6 @@ main()
 {
     InitVariables();
 
-
     // Set agent properties
     SetModel("models/tank");
     SetSize(SIZE);
@@ -71,6 +74,7 @@ main()
     SetMaxSpeed(MAX_SPEED);
     SetMass(MASS);
     SetTargetRange(TARGET_RANGE);
+    SetIsSolid(true);
 
     // Set model data
     SetMeshVisible("body", true);
@@ -85,6 +89,7 @@ main()
         COLOR_BLACK, COLOR_BLACK);
     ShowDrawable(collisionBox);
 
+
     // Create the name label
     name = CreateDrawableText3D(0,0,0, GetTeamColor(), "fonts/consolas",
         "Tank");
@@ -92,6 +97,7 @@ main()
     ShowDrawable(name);
 
     StatusInit();
+    DebugInit();
 
     GetPosition(spawnx, spawny);
 }
@@ -103,16 +109,29 @@ public OnUpdate(Float:elapsed)
     GetPosition(x, y);
     SetDrawablePosition(collisionBox, x, 0, y);
 
+    SetDrawableColor(name, GetTeamColor());
     SetDrawablePosition(name, x, 0.5, y);
 
     if(GetVar("team") == 0)
     {
         deathTime += elapsed;
 
+        // Animate death.
         if(deathTime > RESPAWN_TIME)
         {
+            SetMeshTranslation("body", 0, 0, 0);
+            SetMeshTranslation("head", 0, 0, 0);
+            SetMeshTranslation("barrel", 0, 0, 0);
+
             InitVariables();
             SetPosition(spawnx, spawny);
+        }
+        else
+        {
+            new Float:depth = (deathTime / RESPAWN_TIME) * SINK_DEPTH;
+            SetMeshTranslation("body", 0, -depth, 0);
+            SetMeshTranslation("head", 0, -depth, 0);
+            SetMeshTranslation("barrel", 0, -depth, 0);
         }
     }
     else
@@ -122,19 +141,34 @@ public OnUpdate(Float:elapsed)
     }
 
     StatusUpdate(elapsed);
+    DebugUpdate();
 }
 
 public OnClicked(button, Float:x, Float:y)
 {
+    DebugOnClicked();
+
     Focus();
-    return 1;
+    return true;
 }
 
 public OnHit(hitid, Float:damage)
 {
-    new Float:health = GetVarFloat("health") - damage;
-    SetVarFloat("health", health);
+    new Float:x,
+        Float:y,
+        Float:health;
 
+    if(!GetTeam())
+        return false;
+
+    // Get the position and health of the tank.
+    GetPosition(x, y);
+    health = GetVarFloat("health");
+
+    // Update the health of the tank based on the damage.
+    SetVarFloat("health", health -= damage);
+
+    PlaySound("sounds/turret_impact", 0.8, x, y);
     chatprintf(COLOR_ORANGE, "Hit for %f => %f.", damage, health);
 
     if(health <= 0)
@@ -143,4 +177,6 @@ public OnHit(hitid, Float:damage)
         UnsetVariables();
         UpdateStatus("Died!");
     }
+
+    return true;
 }

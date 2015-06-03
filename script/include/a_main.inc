@@ -41,7 +41,7 @@ The path to the model to draw at the objects position.
 native AddGameObject(const modelname[], Float:size, Float:x, Float:y,
     Float:sx=1.0, Float:sy=1.0, Float:sz=1.0, Float:rx=0.0, Float:ry=0.0,
     Float:rz=0.0, Float:tx=0.0, Float:ty=0.0, Float:tz=0.0,
-    const meshes[]='''');
+    isSolid=true, const meshes[]='''');
 
 //TODO: add docs
 native RemoveEntity(id);

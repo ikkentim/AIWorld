@@ -9,7 +9,7 @@ ScoreInit()
     SetGVar("score_axis", 0);
 
     alies_score = CreateDrawableText2D(5,5, COLOR_RED, "fonts/consolas", "Alies: 0");
-    axis_score = CreateDrawableText2D(5,25, COLOR_BLUE, "fonts/consolas", "Axis: 0");
+    axis_score = CreateDrawableText2D(5,25, COLOR_YELLOW, "fonts/consolas", "Axis: 0");
     ShowDrawable(alies_score);
     ShowDrawable(axis_score);
 }

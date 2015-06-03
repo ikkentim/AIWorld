@@ -2,17 +2,17 @@ using AIWorld.Entities;
 
 namespace AIWorld.Steering
 {
-    public class CohesionSteeringByVarStringBehavior : CohesionSteeringBehavior
+    public class CohesionByVarFloatSteeringBehavior : CohesionSteeringBehavior
     {
-        public CohesionSteeringByVarStringBehavior(Agent agent)
+        public CohesionByVarFloatSteeringBehavior(Agent agent)
             : base(agent)
         {
         }
 
         [SteeringBehaviorArgument(2)]
-        public string Value
+        public float Value
         {
-            get { return (string)KeyValue; }
+            get { return (float)KeyValue; }
             set { KeyValue = value; }
         }
     }

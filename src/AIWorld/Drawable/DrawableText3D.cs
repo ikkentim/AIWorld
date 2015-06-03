@@ -62,7 +62,7 @@ namespace AIWorld.Drawable
             // Ensure the drawing position is within the viewport and in front of the camera.
             if (!(drawPosition.X >= 0) || !(drawPosition.Y >= 0) ||
                 !(drawPosition.X <= drawingService.Game.GraphicsDevice.Viewport.Width) ||
-                !(drawPosition.Y <= drawingService.Game.GraphicsDevice.Viewport.Height) || !(drawPosition.Z < 1))
+                !(drawPosition.Y <= drawingService.Game.GraphicsDevice.Viewport.Height) || drawPosition.Z >= 1)
                 return;
 
             // Measure the string for aligning the drawing position.

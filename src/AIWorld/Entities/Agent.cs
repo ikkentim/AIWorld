@@ -201,6 +201,7 @@ namespace AIWorld.Entities
         /// <summary>
         ///     Gets the velocity.
         /// </summary>
+        [ScriptingFunction]
         public Vector3 Velocity { get; private set; }
 
         /// <summary>
@@ -245,15 +246,17 @@ namespace AIWorld.Entities
 
         #region Implementation of Ihittable
 
-        public void Hit(Projectile projectile)
+        public bool Hit(Projectile projectile)
         {
             if (projectile == null) throw new ArgumentNullException("projectile");
             if (_onHit != null)
             {
                 Script.Push(projectile.Damage);
                 Script.Push(projectile.Caster.Id);
-                _onHit.Execute();
+                return _onHit.Execute() != 0;
             }
+
+            return true;
         }
 
         #endregion
@@ -411,6 +414,12 @@ namespace AIWorld.Entities
         public override Vector3 Position { get; set; }
 
         /// <summary>
+        ///     Gets a value indicating whether this instance is solid.
+        /// </summary>
+        [ScriptingFunction]
+        public override bool IsSolid { get; set; }
+
+        /// <summary>
         ///     Gets or sets the size.
         /// </summary>
         [ScriptingFunction]
@@ -429,7 +438,7 @@ namespace AIWorld.Entities
             Script.Push(e.Position.Z);
             Script.Push(e.Position.X);
             Script.Push(e.Button);
-            return _onClicked.Execute() == 1;
+            return _onClicked.Execute() != 0;
         }
 
         #endregion
@@ -511,12 +520,24 @@ namespace AIWorld.Entities
 
             Velocity = Velocity.Truncate(MaxSpeed);
 
-            Position += Velocity*deltaTime;
-
-            if (Velocity.LengthSquared() > 0.00001)
+            if (float.IsNaN(Velocity.X) || float.IsNaN(Velocity.Y) || float.IsNaN(Velocity.Z))
             {
-                Heading = Vector3.Normalize(Velocity);
-                Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
+                _consoleService.WriteLine(Color.Red, "ERROR: Velocity is NaN. Resetting to zero.");
+                _consoleService.WriteLine(Color.Red,
+                    string.Format("[{1}]Steering behaviors active: {0}", string.Join(", ", _steeringBehaviors.Select(w => w.Behavior)), ScriptName));
+                
+                Velocity = Vector3.Zero;
+                
+            }
+            else
+            {
+                Position += Velocity*deltaTime;
+
+                if (Velocity.LengthSquared() > 0.00001)
+                {
+                    Heading = Vector3.Normalize(Velocity);
+                    Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
+                }
             }
         }
 
@@ -800,6 +821,18 @@ namespace AIWorld.Entities
         }
 
         [ScriptingFunction]
+        public bool GetSteeringBehaviorName(int index, out float weight, CellPtr retval, int len)
+        {
+            weight = 0;
+            if (_steeringBehaviors.Count() <= index || 0 > index) return false;
+
+            var element = _steeringBehaviors.ElementAt(index);
+            weight = element.Weight;
+            AMX.SetString(retval, _steeringBehaviors.ElementAt(index).Behavior.ToString(), false, len);
+            return true;
+        }
+
+        [ScriptingFunction]
         public int GetSteeringBehaviorsCount()
         {
             return _steeringBehaviors.Count();
@@ -955,7 +988,7 @@ namespace AIWorld.Entities
         /// <returns>The goal count.</returns>
         private int GetGoalCount(IGoal goal, bool includingSubgoals)
         {
-            return includingSubgoals ? goal.Sum(g => GetGoalCount(g, includingSubgoals)) : 1;
+            return includingSubgoals ? goal.Sum(g => GetGoalCount(g, includingSubgoals)) + 1 : 1;
         }
 
         /// <summary>
@@ -974,8 +1007,69 @@ namespace AIWorld.Entities
         {
             while(_goals.Count > 0)
                 _goals.Peek().Terminate();
-            
-            _goals.Clear();
+        }
+
+        private string GetGoalName(IGoal goal, ref int index)
+        {
+            if (index == 0) return goal.Name;
+            index--;
+
+            foreach (var subgoal in goal.Reverse())
+            {
+                var name = GetGoalName(subgoal, ref index);
+                if (index == 0)
+                    return name;
+            }
+
+            return goal.Name;
+        }
+
+        [ScriptingFunction]
+        public bool GetGoalName(int index, CellPtr retval, int len)
+        {
+            string name = null;
+            var any = false;
+            foreach (var g in _goals.Reverse())
+            {
+                any = true;
+                name = GetGoalName(g, ref index);
+                if (index == 0)
+                    break;
+            }
+
+            if (any && index <= 0)
+                AMX.SetString(retval, name ?? string.Empty, false, len);
+
+            return index <= 0;
+        }
+
+        private int GetGoalDepth(IGoal goal, ref int index, int currentDepth)
+        {
+            if (index == 0) return currentDepth;
+            index--;
+
+            foreach (var subgoal in goal.Reverse())
+            {
+                var depth = GetGoalDepth(subgoal, ref index, currentDepth+ 1);
+                if (index == 0)
+                    return depth;
+            }
+
+            return -1;
+        }
+
+        [ScriptingFunction]
+        public int GetGoalDepth(int index)
+        {
+            int depth = -1;
+            foreach (var g in _goals.Reverse())
+            {
+                depth = GetGoalDepth(g, ref index, 0);
+                if (index == 0)
+                    return depth;
+            }
+
+            return index < 0 ? depth : -1;
         }
 
         [ScriptingFunction]

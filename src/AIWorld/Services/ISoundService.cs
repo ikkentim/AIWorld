@@ -18,7 +18,7 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
 {
-    public interface ISoundService : IScriptingNatives
+    public interface ISoundService : IScriptingNatives, IGameComponent
     {
         bool PlaySound(string sound, float volume, Vector3 position);
     }

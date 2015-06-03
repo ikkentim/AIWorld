@@ -29,7 +29,7 @@ namespace AIWorld.Entities
         /// <param name="meshes">The meshes.</param>
         public Projectile(Game game, IEntity caster, string modelName, float damage, float lifeTime, Vector3 position, Vector3 rotation,
             Vector3 translation, Vector3 scale, Vector3 velocity, IEnumerable<string> meshes)
-            : base(game, modelName, 0, position, rotation, translation, scale, meshes)
+            : base(game, modelName, 0, position, rotation, translation, scale, false, meshes)
         {
             if (caster == null) throw new ArgumentNullException("caster");
             _gameWorldService = game.Services.GetService<IGameWorldService>();
@@ -66,19 +66,18 @@ namespace AIWorld.Entities
             }
 
             var len = (Position - oldPosition).Length();
-            var ray = new Ray(oldPosition, Position-oldPosition);
+            var ray = new Ray(new Vector3(oldPosition.X, 0, oldPosition.Z), Position-oldPosition);
 
             var collider =
                 _gameWorldService.Entities
                     .Query(new AABB(oldPosition, new Vector3(len + MaxSize)))
                     .OfType<IHitable>()
+                    .Where(h => h.IsSolid)
                     .Where(h => h != Caster)
-                    .FirstOrDefault(h => ray.Intersects(new BoundingSphere(h.Position, h.Size)) != null);
+                    .FirstOrDefault(h => ray.Intersects(new BoundingSphere(h.Position, h.Size)) != null && h.Hit(this));
+
             if (collider != null)
-            {
-                collider.Hit(this);
                 _gameWorldService.Remove(this);
-            }
 
             base.Update(gameTime);
         }

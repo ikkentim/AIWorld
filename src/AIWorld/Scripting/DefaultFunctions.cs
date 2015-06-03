@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text.RegularExpressions;
 using AIWorld.Services;
 using AMXWrapper;
@@ -211,6 +212,54 @@ namespace AIWorld.Scripting
         public float DistanceSquared(float x1, float y1, float x2, float y2)
         {
             return (new Vector2(x1, y1) - new Vector2(x2, y2)).LengthSquared();
+        }
+
+
+        [ScriptingFunction("timestamp")]
+        public int GetTimeStamp(out int year, out int month, out int day, out int hour, out int minute, out int second,
+            out int milisecond)
+        {
+            var date = DateTime.Now;
+            year = date.Year;
+            month = date.Month;
+            day = date.Day;
+            hour = date.Hour;
+            minute = date.Minute;
+            second = date.Second;
+            milisecond = date.Millisecond;
+
+            int result = year;
+            unchecked
+            {
+                result *= 12;
+                result += month;
+                result *= 31;
+                result += day;
+                result *= 24;
+                result += hour;
+                result *= 60;
+                result += minute;
+                result *= 60;
+                result += second;
+                result *= 1000;
+                result += milisecond;
+            }
+
+            return result;
+        }
+
+        [ScriptingFunction("format")]
+        public int Format(AMXArgumentList arguments)
+        {
+            if (arguments.Length < 3) return -1;
+
+            CellPtr dest = arguments[0];
+            int size = arguments[1].AsInt32();
+
+            var result = FormatString(arguments, 2);
+            AMX.SetString(dest, result, false, size);
+
+            return result.Length;
         }
     }
 }

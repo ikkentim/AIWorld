@@ -1,4 +1,6 @@
+#include <a_sound>
 #include <math>
+
 #include "common/carepackages"
 
 #define MAX_CAREPACKAGES                    (10)
@@ -35,7 +37,7 @@ public OnPickUpCarepackage(entityid, carepackageid)
         if(carepackages[i].id == carepackageid && carepackages[i].active)
         {
             carepackages[i].active = false;
-            logprintf(-1, "REMOVED WORLD OBJECT %d :: %d", carepackageid, RemoveWorldObject(carepackageid));
+            RemoveWorldObject(carepackageid);
         }
 }
 
@@ -99,8 +101,12 @@ CarepackagesUpdate(Float:elapsed)
                 new Float:x = frandom(CAREPACKAGE_MIN_X, CAREPACKAGE_MAX_X),
                     Float:y = frandom(CAREPACKAGE_MIN_Y, CAREPACKAGE_MAX_Y);
 
-                //TODO: Check space occupied.
-
+                // Check if space is occupied
+                if(IsPointOccupied(x, y, 1))
+                {
+                    // Try again next update.
+                    return;
+                }
                 // Fill carepackage data
                 carepackages[i].id = AddGameObject("models/ammocrate", 0,
                     x, y, CAREPACKAGE_SCALE, CAREPACKAGE_SCALE, CAREPACKAGE_SCALE);

@@ -50,7 +50,26 @@ namespace AIWorld.Steering
                     .Where(a => KeyValue.Equals(a.GetVarObject(Key)))
                     .Where(a => Vector3.DistanceSquared(_agent.Position, a.Position) < _rangeSquared)
                     .Select(agent => _agent.Position - agent.Position)
-                    .Aggregate(Vector3.Zero, (current, toAgent) => current + Vector3.Normalize(toAgent)/toAgent.Length());
+                    .Aggregate(Vector3.Zero, (current, toAgent) =>
+                    {
+                        var length = toAgent.Length();
+                        return length == 0 ? Vector3.Zero : current + Vector3.Normalize(toAgent)/length;
+                    });
+        }
+
+        #endregion
+
+        #region Overrides of Object
+
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>
+        /// A string that represents the current object.
+        /// </returns>
+        public override string ToString()
+        {
+            return "Separation";
         }
 
         #endregion

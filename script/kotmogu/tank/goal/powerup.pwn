@@ -29,6 +29,7 @@ public OnEnter()
     UpdateStatus("Powering up!");
     logprintf(-1, "Powering up to %f, %f %d", x, y, targetPower);
     seek = AddSeek(0.5, x, y);
+    ToggleMovementBehaviors(true);
 }
 
 public OnUpdate(Float:elapsed)
@@ -46,4 +47,5 @@ public OnUpdate(Float:elapsed)
 public OnExit()
 {
     RemoveSteeringBehavior(seek);
+    ToggleMovementBehaviors(false);
 }

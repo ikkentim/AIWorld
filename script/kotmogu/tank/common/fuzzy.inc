@@ -176,13 +176,18 @@ stock SetFuzzyVariables()
 
 stock Float:GetOrbDesirability()
     return Defuzzify(orb_desirability);
+
 stock Float:GetPowerupDesirability()
     return Defuzzify(powerup_desirability);
+
 stock Float:GetCarepackageDesirability()
     return Defuzzify(carepackage_desirability);
+
 stock Float:GetDefendDesirability()
     return Defuzzify(defend_desirability);
+
 stock Float:GetAtackDesirability()
     return Defuzzify(atack_desirability);
+
 stock Float:GetHoldDesirability()
     return Defuzzify(hold_desirability);

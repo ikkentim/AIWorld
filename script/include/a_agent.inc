@@ -25,6 +25,12 @@ native GetPosition(&Float:x, &Float:y);
 
 native SetPosition(Float:x, Float:y);
 
+native GetVelocity(&Float:x, &Float:y);
+
+native SetIsSolid(toggle);
+
+native GetIsSolid();
+
 /** ************************************************************************ **\
 <summary>Gets the direction this agent is facing.</summary>
 <param name="x">

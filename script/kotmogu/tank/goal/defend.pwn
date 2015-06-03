@@ -3,16 +3,27 @@
  *
  */
 #include <a_goal>
+
 #include "../common/status"
+#include "../common/combat"
+#include "../common/movement"
 
 new static
     Float:total_time,
-    targetid;
+    targetid,
+    SB:pursuit,
+    hasbeenincombat;
 
 main() { }
 
 public OnEnter()
 {
+    if(hasbeenincombat)
+    {
+        Terminate();
+        return;
+    }
+
     new Float:x, Float:y;
     GetPosition(x, y);
     targetid = FindNearestAgentByVar(x, y, 1000, "team", GetVar("team"), "kotmogu/orb");
@@ -25,15 +36,20 @@ public OnEnter()
     }
 
     UpdateStatus("Going to defend my team!");
-    AddOffsetPursuit(0.3, targetid, -1.5, 0);
+    pursuit = AddOffsetPursuit(0.3, targetid, -1.5, 0);
+    ToggleMovementBehaviors(true);
 }
 
 public OnUpdate(Float:elapsed)
 {
     total_time += elapsed;
 
-    // TODO: Tail teammate
-    // TODO: Check for death
+    if(AttackIfEnemyNearby())
+    {
+        UpdateStatus("Entering combat mode");
+        hasbeenincombat=true;
+        return;
+    }
 
     if(total_time > 60)
     {
@@ -46,4 +62,10 @@ public OnUpdate(Float:elapsed)
         Terminate();
         return;
     }
+}
+
+public OnExit()
+{
+    RemoveSteeringBehavior(pursuit);
+    ToggleMovementBehaviors(false);
 }

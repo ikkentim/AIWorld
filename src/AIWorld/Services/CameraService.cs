@@ -28,10 +28,11 @@ namespace AIWorld.Services
         public const float MaxCameraSpeed = 10.0f;
         public const float CameraSpeed = 500.0f;
         public const float DefaultZoom = 3;
-        public const float MinZoom = 1;
-        public const float MaxZoom = 15;
+        public const float MinZoom = 1f;
+        public const float MaxZoom = 25;
         public const float CameraTargetOffset = 0.35f;
-        public const float CameraHeightOffset = 0.1f;
+        public const float CameraHeightOffset = -1.00f;
+        public const float CameraHorizontalOffset = 2.8f;
         private float _aspectRatio;
         private IEntity _target;
         private Vector3 _velocity;
@@ -78,7 +79,7 @@ namespace AIWorld.Services
 
             _velocity = ((TargetPosition - Position) * CameraSpeed).Truncate((TargetPosition - Position).Length());
 
-            LimitVelocity(ref _undirectedVelocity, _zoom);
+            LimitVelocity(ref _undirectedVelocity, Math.Max(1,_zoom));
             LimitVelocity(ref _velocity, 15);
 
             _undirectedVelocity -= _undirectedVelocity*5.0f*(float) gameTime.ElapsedGameTime.TotalSeconds;
@@ -133,7 +134,7 @@ namespace AIWorld.Services
 
         public void AddVelocity(Vector3 acceleration)
         {
-            _undirectedVelocity += acceleration * _zoom * 50;
+            _undirectedVelocity += acceleration * Math.Max(1, _zoom) * 50;
         }
 
         public void Move(float deltaRotation, float deltaZoom)
@@ -148,9 +149,9 @@ namespace AIWorld.Services
         {
             var realCameraTarget = Position + new Vector3(0, CameraTargetOffset, 0);
             var cameraPosition = realCameraTarget +
-                                 new Vector3((float) Math.Cos(Rotation) * 2.8f,
-                                     _zoom/3 + CameraTargetOffset + CameraHeightOffset,
-                                     (float)Math.Sin(Rotation) * 2.8f) * _zoom;
+                                 new Vector3((float)Math.Cos(Rotation) * CameraHorizontalOffset,
+                                     _zoom + CameraTargetOffset + CameraHeightOffset,
+                                     (float)Math.Sin(Rotation) * CameraHorizontalOffset) * _zoom;
 
             // Also update listener data
             _audioListener.Position = cameraPosition;

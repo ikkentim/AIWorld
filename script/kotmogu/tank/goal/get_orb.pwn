@@ -29,12 +29,13 @@ public OnEnter()
 
     GetEntityPosition(targetid, x, y);
     seek = AddSeek(0.5, x, y);
+    ToggleMovementBehaviors(true);
 }
 
 public OnUpdate(Float:elapsed)
 {
     if(AttackIfEnemyNearby()) return;
-    
+
     if(GetAgentVar(targetid, "team") != 0)
     {
         if(GetVar("orb") >= 0)
@@ -53,4 +54,5 @@ public OnUpdate(Float:elapsed)
 public OnExit()
 {
     RemoveSteeringBehavior(seek);
+    ToggleMovementBehaviors(false);
 }

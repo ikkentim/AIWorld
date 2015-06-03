@@ -36,8 +36,7 @@ namespace AIWorld.Scripting
         /// <param name="name">The name.</param>
         public ScriptBox(string name) : base(string.Format("{0}.amx", name))
         {
-            LoadLibrary(AMXDefaultLibrary.Core | AMXDefaultLibrary.Float | AMXDefaultLibrary.String |
-                        AMXDefaultLibrary.Time);
+            LoadLibrary(AMXDefaultLibrary.Core | AMXDefaultLibrary.Float | AMXDefaultLibrary.String);
 
             Register(DefaultFunctions);
 

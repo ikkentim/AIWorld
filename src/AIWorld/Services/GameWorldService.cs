@@ -174,17 +174,17 @@ namespace AIWorld.Services
             return true;
         }
 
-        public bool IsPointOccupied(Vector3 point)
+        public bool IsPointOccupied(Vector3 point, float range = 0, bool onlySolid = false)
         {
             return
-                Entities.Query(new AABB(point, new Vector3(WorldObject.MaxSize)))
-                    .Any(e => (e.Position - point).Length() < e.Size);
+                Entities.Query(new AABB(point, new Vector3(WorldObject.MaxSize + range)))
+                .Any(e => (!onlySolid || e.IsSolid) && (e.Position - point).Length() < e.Size + range);
         }
 
         [ScriptingFunction]
-        public bool IsPointOccupied(float x, float y)
+        public bool IsPointOccupied(float x, float y, float range = 0)
         {
-            return IsPointOccupied(new Vector3(x, 0, y));
+            return IsPointOccupied(new Vector3(x, 0, y), range);
         }
 
         [ScriptingFunction]
@@ -233,13 +233,15 @@ namespace AIWorld.Services
                 for (var y = minY; y <= maxY; y += offset)
                 {
                     var point = new Vector3(x, 0, y);
-                    if (IsPointOccupied(point)) continue;
+                    if (IsPointOccupied(point, 0, true)) continue;
 
                     foreach (
                         var p in
                             offsets.Select(o => o + point)
                                 .Where(
-                                    p => p.X >= minX && p.X <= maxX && p.Z >= minY && p.Z <= maxY && !IsPointOccupied(p))
+                                    p =>
+                                        p.X >= minX && p.X <= maxX && p.Z >= minY && p.Z <= maxY &&
+                                        !IsPointOccupied(p, Vector3.Distance(point, p), true))
                         )
                         graph.Add(point, p);
                 }
@@ -645,15 +647,16 @@ namespace AIWorld.Services
 
             _basicEffect.CurrentTechnique.Passes[0].Apply();
 
+            // Draw each graph at a different height level.
             var height = new Vector3(0, 0.1f, 0);
+            const float drawDistance = 35*35;
             foreach (var graph in _graphsByName.Values)
             {
                 foreach (var node in graph.Values)
-                {
-                    foreach (var n in node)
-                        DrawLine(node.Position + height, n.Target.Position + height, Color.Red, Color.GreenYellow);
-                }
-
+                    foreach (var edge in node)
+                        if (Vector3.DistanceSquared(_cameraService.TargetPosition, node.Position) < drawDistance)
+                            DrawLine(node.Position + height, edge.Target.Position + height, Color.Red, Color.GreenYellow);
+                
                 height.Y += 0.2f;
             }
         }

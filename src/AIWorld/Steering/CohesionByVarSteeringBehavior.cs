@@ -2,9 +2,9 @@ using AIWorld.Entities;
 
 namespace AIWorld.Steering
 {
-    public class CohesionSteeringByVarBehavior : CohesionSteeringBehavior
+    public class CohesionByVarSteeringBehavior : CohesionSteeringBehavior
     {
-        public CohesionSteeringByVarBehavior(Agent agent)
+        public CohesionByVarSteeringBehavior(Agent agent)
             : base(agent)
         {
         }

@@ -6,6 +6,7 @@
 
 #include "../common/status"
 #include "../common/combat"
+#include "../common/movement"
 
 new static
     SB:seek = SB:-1,
@@ -36,6 +37,7 @@ public OnEnter()
 
     GetEntityPosition(targetid, x, y);
     seek = AddSeek(0.5, x, y);
+    ToggleMovementBehaviors(true);
 }
 
 
@@ -73,4 +75,5 @@ public OnExit()
     if(_:seek != -1)
         RemoveSteeringBehavior(seek);
     seek = SB:-1;
+    ToggleMovementBehaviors(false);
 }

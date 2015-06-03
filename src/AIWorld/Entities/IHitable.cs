@@ -8,6 +8,6 @@ namespace AIWorld.Entities
 {
     interface IHitable : IEntity
     {
-        void Hit(Projectile projectile);
+        bool Hit(Projectile projectile);
     }
 }

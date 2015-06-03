@@ -1,30 +1,33 @@
 #include <string>
 #include <a_main>
 #include <a_world>
-#include <a_sound>
+#include <math>
 
 #include "main/carepackages"
-#include "main/terrain"
-#include "main/score"
 #include "main/debug"
-
-new orbs[4];
+#include "main/score"
+#include "main/terrain"
 
 main()
 {
-    //state debug;
-
     chatprintf(COLOR_RED, "Started Temple of Kotmogu simulation.");
 
+    // To enable debug information, uncomment the following line:
+    /*state debug;*/
+
+    // Set the scene
     //PlayAmbience("sounds/bftune", true, 0.02);
     SetBackgroundColor(0x00000000);
 
     ScoreInit();
     DebugInit();
+
+
+    CreateAgents();
+
     TerrainInit();
 
     CreateGroundGraph();
-    CreateAgents();
 }
 
 public OnUpdate(Float:elapsed)
@@ -35,43 +38,45 @@ public OnUpdate(Float:elapsed)
 
 public OnKeyStateChanged(newKeys[], oldKeys[])
 {
+    // Draw graphs while F9 is pressed.
     SetDrawGraphs(IsKeyDown(newKeys, KEY_F9));
 }
-
+public OnMouseClick(button, Float:x, Float:y)
+{
+    if(button == 1)
+        CallPublicFunction("OnTankSelected", "d", -1);
+}
 CreateGroundGraph()
 {
-    // Create and fill a 'ground' graph and fill it automatically
+    // Create and fill a 'ground' graph and fill it automatically.
     CreateGraph("ground");
-    new nodes = FillGraph("ground", -2, -2, 6, 6, 0.3);
+    new tmp,
+        start,
+        nodes;
+    start = timestamp(tmp, tmp, tmp,tmp, tmp, tmp, tmp);
+    nodes = FillGraph("ground", -100, -100, 100, 100, 1.75);
 
-    logprintf(COLOR_MAGENTA, "Filled graph 'ground' with %d nodes.", nodes);
+    logprintf(COLOR_MAGENTA,
+        "Filled graph 'ground' with %d nodes in %f seconds.", nodes,
+        float(timestamp(tmp, tmp, tmp,tmp, tmp, tmp, tmp) - start) / 1000);
 }
 
 CreateAgents()
 {
-    orbs[0] = AddAgent("kotmogu/orb", -60, 0);
-    orbs[1] = AddAgent("kotmogu/orb", 60, 0);
-    orbs[2] = AddAgent("kotmogu/orb", 0, -60);
-    orbs[3] = AddAgent("kotmogu/orb", 0, 60);
+    // Spawn the orb agents.
+    AddAgent("kotmogu/orb", -60, 0);
+    AddAgent("kotmogu/orb", 60, 0);
+    AddAgent("kotmogu/orb", 0, -60);
+    AddAgent("kotmogu/orb", 0, 60);
 
-    /*AddAgent("kotmogu/tank", -100, -100, "team", 1);
-    AddAgent("kotmogu/tank", -100, -95, "team", 1);
-    AddAgent("kotmogu/tank", -100, -90, "team", 1);
-    AddAgent("kotmogu/tank", -100, -85, "team", 1);
-    AddAgent("kotmogu/tank", -100, -80, "team", 1);
-
-    AddAgent("kotmogu/tank", 80, 100, "team", 2);
-    AddAgent("kotmogu/tank", 85, 100, "team", 2);
-    AddAgent("kotmogu/tank", 90, 100, "team", 2);
-    AddAgent("kotmogu/tank", 95, 100, "team", 2);
-    AddAgent("kotmogu/tank", 100, 100, "team", 2);*/
-
+    // Spawn team 1.
     AddAgent("kotmogu/tank", -70, -70, "team", 1);
     AddAgent("kotmogu/tank", -70, -65, "team", 1);
     AddAgent("kotmogu/tank", -70, -60, "team", 1);
     AddAgent("kotmogu/tank", -70, -55, "team", 1);
     AddAgent("kotmogu/tank", -70, -50, "team", 1);
 
+    // Spawn team 2.
     AddAgent("kotmogu/tank", 50, 70, "team", 2);
     AddAgent("kotmogu/tank", 55, 70, "team", 2);
     AddAgent("kotmogu/tank", 60, 70, "team", 2);

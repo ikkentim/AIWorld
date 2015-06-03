@@ -145,6 +145,7 @@ namespace AIWorld
             Components.Add(_gameWorldService);
             Components.Add(_drawingService);
             Components.Add(_particleService);
+            Components.Add(_soundService);
 
             // Set up the script and let it handle further setup.
             try
@@ -445,11 +446,11 @@ namespace AIWorld
         }
 
         [ScriptingFunction]
-        public int AddGameObject(string name, float size, float x, float y, float sx, float sy, float sz,float rx, float ry, float rz, float tx, float ty, float tz,  string meshes)
+        public int AddGameObject(string name, float size, float x, float y, float sx, float sy, float sz,float rx, float ry, float rz, float tx, float ty, float tz, bool isSolid,  string meshes)
         {
             // Create the entity and return the id.
             var obj = new WorldObject(this, name, size, new Vector3(x, 0, y), new Vector3(rx, ry, rz),
-                new Vector3(tx, ty, tz), new Vector3(sx, sy, sz),
+                new Vector3(tx, ty, tz), new Vector3(sx, sy, sz), isSolid,
                 meshes.Split(',').Select(v => v.Trim()).Where(v => v.Length > 0));
 
             _gameWorldService.Add(obj);
