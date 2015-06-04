@@ -71,7 +71,7 @@ For the assignment of *Artificial Intelligence for Games* I've decided to build
 a full simulation engine in which simulations can be programmed using a
 scripting language. The scripting language which can be used is the
 [Pawn Language] which has been developed by Thiadmer Riemersma and is written
-in C. The Pawn language has been using by various gaming related projects, such
+in C. The Pawn language has been used by various gaming related projects, such
 as the SourceMod and San Andreas Multiplayer game modifications. Since my
 project is written in C# and the Pawn abstract machine is written in C, I've
 written a wrapper for it.
@@ -421,7 +421,7 @@ ShortestPath(start, finish)
 }
 ```
 
-This algorithm build the following path with the algorithm:
+The algorithm has, for example, built the following path:
 
 ![](https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/graph_in_action.jpg)
 
