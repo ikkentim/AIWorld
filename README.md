@@ -151,7 +151,7 @@ projectiles. When creating a world object there is an option to specify which
 meshes of the model should be visible and to supply a rotation, scale and
 translation matrix.
 
-![image:entities][image:entities]
+![image:entities](https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/Entities.png)
 Scripting
 ---------
 
@@ -264,7 +264,7 @@ script, where *[classname]* is the name of the class of the steering behavior.
 If the class name ends with `SteeringBehavior`, it will be omitted from the
 function name.
 
-![image:steering][image:steering]
+![](https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/Steering.png)
 
 The different steering behaviors are combined by multiplying the calculated
 force by the weight, summing these values and then truncating it to the maximum
@@ -422,7 +422,7 @@ ShortestPath(start, finish)
 
 This algorithm build the following path with the algorithm:
 
-![image:graph_in_action][image:graph_in_action]
+![](https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/graph_in_action.jpg)
 
 The blue line is the path the algorithm has generated.
 
@@ -619,6 +619,3 @@ https://github.com/wangchen/Programming-Game-AI-by-Example-src
 [Pawn Language]: http://www.compuphase.com/pawn/pawn.htm
 [Temple of Kotmogu]: http://us.battle.net/wow/en/game/pvp/battlegrounds/temple-of-kotmogu
 
-[image:steering]: https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/Steering.png
-[image:entities]: https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/Entities.png
-[image:graph_in_action]: https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/graph_in_action.jpg
