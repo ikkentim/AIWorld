@@ -19,13 +19,15 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld.Drawable
 {
-    public class DrawableLine : IDrawable3D, IDrawableHasPosition, IDrawableHasSecondPosition, IDrawableHasColor, IDrawableHasSecondColor
+    public class DrawableLine : IDrawable3D, IDrawableHasPosition, IDrawableHasSecondPosition, IDrawableHasColor,
+        IDrawableHasSecondColor
     {
+        private readonly BasicEffect _basicEffect;
         private readonly ICameraService _cameraService;
         private readonly VertexPositionColor[] _vertices;
-        private readonly BasicEffect _basicEffect;
 
-        public DrawableLine(ICameraService cameraService, GraphicsDevice graphicsDevice, Vector3 position, Vector3 secondPosition, Color color, Color secondColor)
+        public DrawableLine(ICameraService cameraService, GraphicsDevice graphicsDevice, Vector3 position,
+            Vector3 secondPosition, Color color, Color secondColor)
         {
             _cameraService = cameraService;
             _vertices = new[]
@@ -41,16 +43,16 @@ namespace AIWorld.Drawable
             set { _vertices[0].Color = value; }
         }
 
-        public Color SecondColor
-        {
-            get { return _vertices[1].Color; }
-            set { _vertices[1].Color = value; }
-        }
-
         public Vector3 Position
         {
             get { return _vertices[0].Position; }
             set { _vertices[0].Position = value; }
+        }
+
+        public Color SecondColor
+        {
+            get { return _vertices[1].Color; }
+            set { _vertices[1].Color = value; }
         }
 
         public Vector3 SecondPosition

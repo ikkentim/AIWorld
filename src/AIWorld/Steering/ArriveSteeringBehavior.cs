@@ -29,11 +29,11 @@ namespace AIWorld.Steering
 
         public Agent Agent { get; private set; }
 
-        [SteeringBehaviorArgument(0)]
-        public Vector3 Target { get; set; }
-
         [SteeringBehaviorArgument(1)]
         public float DecelerationSpeed { get; set; }
+
+        [SteeringBehaviorArgument(0)]
+        public Vector3 Target { get; set; }
 
         #region Implementation of ISteeringBehavior
 
@@ -44,7 +44,7 @@ namespace AIWorld.Steering
 
             if (distance > 0.00001)
             {
-                var speed = distance / (DecelerationSpeed);
+                var speed = distance/(DecelerationSpeed);
                 speed = Math.Min(speed, Agent.MaxSpeed);
                 var desiredVelocity = toTarget*speed/distance;
 
@@ -59,10 +59,10 @@ namespace AIWorld.Steering
         #region Overrides of Object
 
         /// <summary>
-        /// Returns a string that represents the current object.
+        ///     Returns a string that represents the current object.
         /// </summary>
         /// <returns>
-        /// A string that represents the current object.
+        ///     A string that represents the current object.
         /// </returns>
         public override string ToString()
         {

@@ -23,6 +23,7 @@ namespace AIWorld.Entities
         ///     Gets the velocity.
         /// </summary>
         Vector3 Velocity { get; }
+
         /// <summary>
         ///     Gets the mass.
         /// </summary>

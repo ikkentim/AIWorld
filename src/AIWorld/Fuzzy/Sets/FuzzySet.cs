@@ -1,4 +1,4 @@
-// FuzzyLogic
+// AIWorld
 // Copyright 2015 Tim Potze
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,12 +61,12 @@ namespace AIWorld.Fuzzy.Sets
 
         public override void AddRule(FuzzyRule rule)
         {
-            if(Variable == null)
+            if (Variable == null)
                 throw new Exception("Set not bound to variable");
 
             Variable.Add(rule);
         }
-        #endregion
 
+        #endregion
     }
 }

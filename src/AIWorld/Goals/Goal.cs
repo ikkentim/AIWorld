@@ -15,7 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using AIWorld.Entities;
 using AIWorld.Fuzzy;
 using AIWorld.Scripting;
@@ -28,10 +27,10 @@ namespace AIWorld.Goals
 {
     public class Goal : Stack<IGoal>, IGoal, IScripted, IDisposable
     {
-        private readonly AMXPublic _onUpdate;
         private readonly AMXPublic _onEnter;
         private readonly AMXPublic _onExit;
         private readonly AMXPublic _onIncomingMessage;
+        private readonly AMXPublic _onUpdate;
         private readonly string _scriptName;
         private bool _isRunning;
 
@@ -68,18 +67,66 @@ namespace AIWorld.Goals
 
         #endregion
 
+        #region Implementation of IDisposable
+
+        /// <summary>
+        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            if (Script != null)
+                Script.Dispose();
+            Script = null;
+        }
+
+        #endregion
+
+        #region Implementation of IMessageHandler
+
+        public void HandleMessage(int message, int contents)
+        {
+            if (_onIncomingMessage != null)
+            {
+                // Call the goal's.
+                Script.Push(contents);
+                Script.Push(message);
+                Agent.TryExecute(_onIncomingMessage);
+            }
+
+            // If this goal has subgoals, handle message in the next.
+            if (Count > 0)
+                Peek().HandleMessage(message, contents);
+        }
+
+        #endregion
+
         #region Implementation of IScripted
 
         public ScriptBox Script { get; private set; }
 
         #endregion
 
+        #region Overrides of Object
+
+        /// <summary>
+        ///     Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>
+        ///     A string that represents the current object.
+        /// </returns>
+        public override string ToString()
+        {
+            return base.ToString() + "{" + Name + "}";
+        }
+
+        #endregion
+
         #region Methods of Goal
 
         /// <summary>
-        /// Raises the <see cref="E:Terminated" /> event.
+        ///     Raises the <see cref="E:Terminated" /> event.
         /// </summary>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
         protected virtual void OnTerminated(EventArgs e)
         {
             // If the goal was running (not paused) exit the goal.
@@ -138,6 +185,7 @@ namespace AIWorld.Goals
             while (Count > 0)
                 Peek().Terminate();
         }
+
         #endregion
 
         #region Implementation of IGoal
@@ -171,7 +219,7 @@ namespace AIWorld.Goals
                 Agent.TryExecute(_onUpdate);
 
             // Update the top goal on the stack.
-            if(Count > 0)
+            if (Count > 0)
                 Peek().Process(gameTime);
         }
 
@@ -205,54 +253,6 @@ namespace AIWorld.Goals
         }
 
         public event EventHandler Terminated;
-
-        #endregion
-
-        #region Implementation of IMessageHandler
-
-        public void HandleMessage(int message, int contents)
-        {
-            if (_onIncomingMessage != null)
-            {
-                // Call the goal's.
-                Script.Push(contents);
-                Script.Push(message);
-                Agent.TryExecute(_onIncomingMessage);
-            }
-
-            // If this goal has subgoals, handle message in the next.
-            if (Count > 0)
-                Peek().HandleMessage(message, contents);
-        }
-
-        #endregion
-
-        #region Implementation of IDisposable
-
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        public void Dispose()
-        {
-            if(Script != null)
-                Script.Dispose();
-            Script = null;
-        }
-
-        #endregion
-
-        #region Overrides of Object
-
-        /// <summary>
-        /// Returns a string that represents the current object.
-        /// </summary>
-        /// <returns>
-        /// A string that represents the current object.
-        /// </returns>
-        public override string ToString()
-        {
-            return base.ToString() + "{" + Name + "}";
-        }
 
         #endregion
     }

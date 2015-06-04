@@ -15,10 +15,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text.RegularExpressions;
 using AIWorld.Services;
 using AMXWrapper;
@@ -68,7 +66,8 @@ namespace AIWorld.Scripting
 
         public static int? CallFunctionOnScript(ScriptBox script, IConsoleService consoleService,
             AMXArgumentList arguments)
-        { // name,format,...
+        {
+            // name,format,...
             if (arguments.Length < 2)
                 return null;
 
@@ -123,7 +122,7 @@ namespace AIWorld.Scripting
         }
 
         /// <summary>
-        /// Formats a string.
+        ///     Formats a string.
         /// </summary>
         /// <param name="arguments">The arguments.</param>
         /// <param name="formatIndex">Index of the format.</param>
@@ -161,7 +160,7 @@ namespace AIWorld.Scripting
         }
 
         /// <summary>
-        /// Gets a random floating point value.
+        ///     Gets a random floating point value.
         /// </summary>
         /// <returns>Random floating point value.</returns>
         [ScriptingFunction("frand")]
@@ -179,15 +178,17 @@ namespace AIWorld.Scripting
         [ScriptingFunction("floatsin2")]
         public float FloatSin2(float a)
         {
-            return (float)Math.Sin(a);
+            return (float) Math.Sin(a);
         }
+
         [ScriptingFunction("floatcos2")]
         public float FloatCos2(float a)
         {
-            return (float)Math.Cos(a);
+            return (float) Math.Cos(a);
         }
+
         /// <summary>
-        /// Gets the distance between the specified points..
+        ///     Gets the distance between the specified points..
         /// </summary>
         /// <param name="x1">The x1.</param>
         /// <param name="y1">The y1.</param>
@@ -201,7 +202,7 @@ namespace AIWorld.Scripting
         }
 
         /// <summary>
-        /// Gets the squared distance between the specified points.
+        ///     Gets the squared distance between the specified points.
         /// </summary>
         /// <param name="x1">The x1.</param>
         /// <param name="y1">The y1.</param>
@@ -213,7 +214,6 @@ namespace AIWorld.Scripting
         {
             return (new Vector2(x1, y1) - new Vector2(x2, y2)).LengthSquared();
         }
-
 
         [ScriptingFunction("timestamp")]
         public int GetTimeStamp(out int year, out int month, out int day, out int hour, out int minute, out int second,

@@ -14,10 +14,8 @@
 // limitations under the License.
 
 using System;
-using System.Diagnostics;
 using AIWorld.Entities;
 using AIWorld.Helpers;
-using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 
@@ -33,12 +31,12 @@ namespace AIWorld.Services
         public const float CameraTargetOffset = 0.35f;
         public const float CameraHeightOffset = -1.00f;
         public const float CameraHorizontalOffset = 2.8f;
+        private readonly AudioListener _audioListener;
         private float _aspectRatio;
         private IEntity _target;
-        private Vector3 _velocity;
         private Vector3 _undirectedVelocity;
+        private Vector3 _velocity;
         private float _zoom = DefaultZoom;
-        private readonly AudioListener _audioListener;
 
         public CameraService(Game game) : base(game)
         {
@@ -46,7 +44,6 @@ namespace AIWorld.Services
 
             Projection = Matrix.Identity;
             _audioListener = new AudioListener {Up = Vector3.Up};
-
         }
 
         public Vector3 Position { get; set; }
@@ -56,15 +53,45 @@ namespace AIWorld.Services
             get { return _zoom; }
         }
 
-        public AudioListener AudioListener 
-        { 
-            get  { return _audioListener; } 
+        public AudioListener AudioListener
+        {
+            get { return _audioListener; }
         }
 
         public float Rotation { get; private set; }
         public Matrix View { get; private set; }
         public Matrix Projection { get; private set; }
         public Vector3 TargetPosition { get; set; }
+
+        public void SetTarget(IEntity target)
+        {
+            if ((_target = target) != null)
+            {
+                _undirectedVelocity = Vector3.Zero;
+                TargetPosition = target.Position;
+            }
+        }
+
+        public void SetTarget(Vector3 target)
+        {
+            _undirectedVelocity = Vector3.Zero;
+
+            _target = null;
+            TargetPosition = target;
+        }
+
+        public void AddVelocity(Vector3 acceleration)
+        {
+            _undirectedVelocity += acceleration*Math.Max(1, _zoom)*50;
+        }
+
+        public void Move(float deltaRotation, float deltaZoom)
+        {
+            _zoom += deltaZoom;
+            Rotation += deltaRotation;
+
+            _zoom = MathHelper.Clamp(_zoom + deltaZoom, MinZoom, MaxZoom);
+        }
 
         public override void Update(GameTime gameTime)
         {
@@ -77,9 +104,9 @@ namespace AIWorld.Services
 
             if (_target != null) TargetPosition = _target.Position;
 
-            _velocity = ((TargetPosition - Position) * CameraSpeed).Truncate((TargetPosition - Position).Length());
+            _velocity = ((TargetPosition - Position)*CameraSpeed).Truncate((TargetPosition - Position).Length());
 
-            LimitVelocity(ref _undirectedVelocity, Math.Max(1,_zoom));
+            LimitVelocity(ref _undirectedVelocity, Math.Max(1, _zoom));
             LimitVelocity(ref _velocity, 15);
 
             _undirectedVelocity -= _undirectedVelocity*5.0f*(float) gameTime.ElapsedGameTime.TotalSeconds;
@@ -105,58 +132,28 @@ namespace AIWorld.Services
         {
             if (velocity == Vector3.Zero) return;
 
-            if (velocity.Length() > MaxCameraSpeed * zoom)
+            if (velocity.Length() > MaxCameraSpeed*zoom)
             {
                 velocity.Normalize();
-                velocity *= MaxCameraSpeed * zoom;
+                velocity *= MaxCameraSpeed*zoom;
             }
 
             if (velocity.LengthSquared() < 0.00001)
                 velocity = Vector3.Zero;
         }
 
-        public void SetTarget(IEntity target)
-        {
-            if ((_target = target) != null)
-            {
-                _undirectedVelocity = Vector3.Zero;
-                TargetPosition = target.Position;
-            }
-        }
-
-        public void SetTarget(Vector3 target)
-        {
-            _undirectedVelocity=Vector3.Zero;
-            
-            _target = null;
-            TargetPosition = target;
-        }
-
-        public void AddVelocity(Vector3 acceleration)
-        {
-            _undirectedVelocity += acceleration * Math.Max(1, _zoom) * 50;
-        }
-
-        public void Move(float deltaRotation, float deltaZoom)
-        {
-            _zoom += deltaZoom;
-            Rotation += deltaRotation;
-
-            _zoom = MathHelper.Clamp(_zoom + deltaZoom, MinZoom, MaxZoom);
-        }
-
         private void CalculateView()
         {
             var realCameraTarget = Position + new Vector3(0, CameraTargetOffset, 0);
             var cameraPosition = realCameraTarget +
-                                 new Vector3((float)Math.Cos(Rotation) * CameraHorizontalOffset,
+                                 new Vector3((float) Math.Cos(Rotation)*CameraHorizontalOffset,
                                      _zoom + CameraTargetOffset + CameraHeightOffset,
-                                     (float)Math.Sin(Rotation) * CameraHorizontalOffset) * _zoom;
+                                     (float) Math.Sin(Rotation)*CameraHorizontalOffset)*_zoom;
 
             // Also update listener data
             _audioListener.Position = cameraPosition;
             _audioListener.Forward = Vector3.Normalize(realCameraTarget - cameraPosition);
-      
+
             View = Matrix.CreateLookAt(cameraPosition, realCameraTarget, Vector3.Up);
         }
     }

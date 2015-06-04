@@ -1,4 +1,4 @@
-﻿// FuzzyLogic
+﻿// AIWorld
 // Copyright 2015 Tim Potze
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +15,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using AIWorld.Fuzzy.Sets;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld.Fuzzy
 {
     public class FuzzyVariable
     {
+        private readonly List<FuzzyRule> _rules = new List<FuzzyRule>();
         private readonly Dictionary<string, FuzzySet> _sets = new Dictionary<string, FuzzySet>();
-        private List<FuzzyRule> _rules = new List<FuzzyRule>();
         private float _maxRange;
         private float _minRange;
 
@@ -54,8 +52,6 @@ namespace AIWorld.Fuzzy
 
         public void Fuzzify(float value)
         {
-            
-
             foreach (var set in _sets)
             {
                 if (value < _minRange || value > _maxRange)

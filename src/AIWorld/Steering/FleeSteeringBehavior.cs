@@ -15,7 +15,6 @@
 
 using System;
 using AIWorld.Entities;
-using AIWorld.Helpers;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Steering
@@ -37,7 +36,7 @@ namespace AIWorld.Steering
 
         public virtual Vector3 Calculate(GameTime gameTime)
         {
-            return Vector3.Normalize(_agent.Position - Target) * _agent.MaxSpeed - _agent.Velocity;
+            return Vector3.Normalize(_agent.Position - Target)*_agent.MaxSpeed - _agent.Velocity;
         }
 
         #endregion
@@ -45,10 +44,10 @@ namespace AIWorld.Steering
         #region Overrides of Object
 
         /// <summary>
-        /// Returns a string that represents the current object.
+        ///     Returns a string that represents the current object.
         /// </summary>
         /// <returns>
-        /// A string that represents the current object.
+        ///     A string that represents the current object.
         /// </returns>
         public override string ToString()
         {

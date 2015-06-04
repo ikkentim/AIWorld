@@ -15,7 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using AIWorld.Core;
 using AIWorld.Events;
@@ -38,62 +37,6 @@ namespace AIWorld.Entities
     /// </summary>
     public class Agent : Entity, IMovingEntity, IScripted, IMessageHandler, IHitable
     {
-        #region Fields
-
-        #region Fields - Services
-
-        private readonly ICameraService _cameraService;
-        private readonly IConsoleService _consoleService;
-        private readonly IGameWorldService _gameWorldService;
-
-        #endregion
-
-        #region Fields - Logic stacks and containers
-
-        private readonly Stack<IGoal> _goals = new Stack<IGoal>();
-        private readonly Stack<Node> _path = new Stack<Node>();
-        private readonly Dictionary<string,object> _variables = new Dictionary<string, object>(); 
-        private readonly Pool<WeightedSteeringBehavior> _steeringBehaviors =
-            new Pool<WeightedSteeringBehavior>();
-
-        #endregion
-
-        #region Fields - Scipting callbacks
-
-        private readonly AMXPublic _onClicked;
-        private readonly AMXPublic _onHit;
-        private readonly AMXPublic _onIncomingMessage;
-        private readonly AMXPublic _onKeyStateChanged;
-        private readonly AMXPublic _onMouseClick;
-        private readonly AMXPublic _onUpdate;
-
-        #endregion
-
-        #region Fields - Scripting logic
-
-        private float _targetRange;
-        private float _targetRangeSquared;
-
-        #endregion
-
-        #region Fields - Rendering
-
-        private readonly Dictionary<ModelMesh, MeshData> _meshInfo = new Dictionary<ModelMesh, MeshData>();
-        private Model _model;
-        private Matrix[] _transforms;
-        #endregion
-
-        #region Fields - Audio
-
-        private readonly BasicEffect _basicEffect;
-        private AudioEmitter _audioEmitter;
-        private SoundEffect _soundEffect;
-        private SoundEffectInstance _soundEffectInstance;
-
-        #endregion
-
-        #endregion
-
         #region Constructors
 
         /// <summary>
@@ -135,7 +78,8 @@ namespace AIWorld.Entities
 
             // Load script
             Script = new ScriptBox(scriptName);
-            Script.Register(this, _gameWorldService, _consoleService, drawingService, soundService, new FuzzyModule(_consoleService));
+            Script.Register(this, _gameWorldService, _consoleService, drawingService, soundService,
+                new FuzzyModule(_consoleService));
             SteeringBehaviorsContainer.Register(this, Script);
 
             // Load scripting callbacks
@@ -155,6 +99,124 @@ namespace AIWorld.Entities
         {
             get { return _steeringBehaviors; }
         }
+
+        #endregion
+
+        #region Subclasses
+
+        private class MeshData
+        {
+            private Vector3 _rotation;
+            private Vector3 _scale;
+            private Vector3 _translation;
+
+            public MeshData(Vector3 translation, Vector3 rotation, Vector3 scale)
+            {
+                _rotation = rotation;
+                _scale = scale;
+                _translation = translation;
+                CalculateMatrix();
+            }
+
+            public bool IsVisible { get; set; }
+
+            public Vector3 Translation
+            {
+                get { return _translation; }
+                set
+                {
+                    _translation = value;
+                    CalculateMatrix();
+                }
+            }
+
+            public Vector3 Scale
+            {
+                get { return _scale; }
+                set
+                {
+                    _scale = value;
+                    CalculateMatrix();
+                }
+            }
+
+            public Vector3 Rotation
+            {
+                get { return _rotation; }
+                set
+                {
+                    _rotation = value;
+                    CalculateMatrix();
+                }
+            }
+
+            public Matrix Matrix { get; private set; }
+
+            private void CalculateMatrix()
+            {
+                Matrix = Matrix.CreateRotationX(Rotation.X)*Matrix.CreateRotationY(Rotation.Y)*
+                         Matrix.CreateRotationZ(Rotation.Z)*Matrix.CreateScale(Scale)*
+                         Matrix.CreateTranslation(Translation);
+            }
+        }
+
+        #endregion
+
+        #region Fields
+
+        #region Fields - Services
+
+        private readonly ICameraService _cameraService;
+        private readonly IConsoleService _consoleService;
+        private readonly IGameWorldService _gameWorldService;
+
+        #endregion
+
+        #region Fields - Logic stacks and containers
+
+        private readonly Stack<IGoal> _goals = new Stack<IGoal>();
+        private readonly Stack<Node> _path = new Stack<Node>();
+        private readonly Dictionary<string, object> _variables = new Dictionary<string, object>();
+
+        private readonly Pool<WeightedSteeringBehavior> _steeringBehaviors =
+            new Pool<WeightedSteeringBehavior>();
+
+        #endregion
+
+        #region Fields - Scipting callbacks
+
+        private readonly AMXPublic _onClicked;
+        private readonly AMXPublic _onHit;
+        private readonly AMXPublic _onIncomingMessage;
+        private readonly AMXPublic _onKeyStateChanged;
+        private readonly AMXPublic _onMouseClick;
+        private readonly AMXPublic _onUpdate;
+
+        #endregion
+
+        #region Fields - Scripting logic
+
+        private float _targetRange;
+        private float _targetRangeSquared;
+
+        #endregion
+
+        #region Fields - Rendering
+
+        private readonly Dictionary<ModelMesh, MeshData> _meshInfo = new Dictionary<ModelMesh, MeshData>();
+        private Model _model;
+        private Matrix[] _transforms;
+
+        #endregion
+
+        #region Fields - Audio
+
+        private readonly BasicEffect _basicEffect;
+        private AudioEmitter _audioEmitter;
+        private SoundEffect _soundEffect;
+        private SoundEffectInstance _soundEffectInstance;
+
+        #endregion
 
         #endregion
 
@@ -190,7 +252,7 @@ namespace AIWorld.Entities
         /// <param name="color2">The color2.</param>
         private void DrawLine(Vector3 point1, Vector3 point2, Color color1, Color color2)
         {
-            var vertices = new[] { new VertexPositionColor(point1, color1), new VertexPositionColor(point2, color2) };
+            var vertices = new[] {new VertexPositionColor(point1, color1), new VertexPositionColor(point2, color2)};
             GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
 
@@ -522,10 +584,10 @@ namespace AIWorld.Entities
             {
                 _consoleService.WriteLine(Color.Red, "ERROR: Velocity is NaN. Resetting to zero.");
                 _consoleService.WriteLine(Color.Red,
-                    string.Format("[{1}]Steering behaviors active: {0}", string.Join(", ", _steeringBehaviors.Select(w => w.Behavior)), ScriptName));
-                
+                    string.Format("[{1}]Steering behaviors active: {0}",
+                        string.Join(", ", _steeringBehaviors.Select(w => w.Behavior)), ScriptName));
+
                 Velocity = Vector3.Zero;
-                
             }
             else
             {
@@ -620,7 +682,7 @@ namespace AIWorld.Entities
             _model.CopyAbsoluteBoneTransformsTo(_transforms);
         }
 
-        MeshData GetMeshData(string mesh)
+        private MeshData GetMeshData(string mesh)
         {
             var key = _meshInfo.Select(p => p.Key).FirstOrDefault(k => k.Name == mesh);
 
@@ -631,7 +693,7 @@ namespace AIWorld.Entities
                 if (key == null)
                     return null;
 
-                return _meshInfo[key] = new MeshData(Vector3.Zero,Vector3.Zero, Vector3.One);
+                return _meshInfo[key] = new MeshData(Vector3.Zero, Vector3.Zero, Vector3.One);
             }
 
             return _meshInfo[key];
@@ -709,7 +771,7 @@ namespace AIWorld.Entities
         /// <returns>True if within range; False otherwise.</returns>
         public bool IsInRangeOfPoint(Vector3 point, float range)
         {
-            return Vector3.DistanceSquared(point, Position) < range * range;
+            return Vector3.DistanceSquared(point, Position) < range*range;
         }
 
         /// <summary>
@@ -841,6 +903,7 @@ namespace AIWorld.Entities
         {
             return _steeringBehaviors.Count();
         }
+
         #endregion
 
         #region API - Pathing
@@ -1007,7 +1070,7 @@ namespace AIWorld.Entities
         [ScriptingFunction]
         public void ResetGoals()
         {
-            while(_goals.Count > 0)
+            while (_goals.Count > 0)
                 _goals.Peek().Terminate();
         }
 
@@ -1058,7 +1121,7 @@ namespace AIWorld.Entities
 
             foreach (var subgoal in goal.Reverse())
             {
-                var depth = GetGoalDepth(subgoal, ref index, currentDepth+ 1);
+                var depth = GetGoalDepth(subgoal, ref index, currentDepth + 1);
                 if (index == 0)
                     return depth;
             }
@@ -1112,12 +1175,15 @@ namespace AIWorld.Entities
 
             return result;
         }
+
         #endregion
 
         #region API - Actions
 
         [ScriptingFunction]
-        public int SpawnProjectile(string name, float damage, float lifeTime, float x, float y, float z, float hx, float hy, float sx, float sy, float sz, float rx, float ry, float rz, float tx, float ty, float tz, string meshes)
+        public int SpawnProjectile(string name, float damage, float lifeTime, float x, float y, float z, float hx,
+            float hy, float sx, float sy, float sz, float rx, float ry, float rz, float tx, float ty, float tz,
+            string meshes)
         {
             // Create the entity and return the id.
             var obj = new Projectile(Game, this, name, damage, lifeTime, new Vector3(x, y, z), new Vector3(rx, ry, rz),
@@ -1162,7 +1228,7 @@ namespace AIWorld.Entities
         {
             if (!_variables.ContainsKey(key) || !(_variables[key] is int))
                 return 0;
-            return (int)_variables[key];
+            return (int) _variables[key];
         }
 
         public object GetVarObject(string key)
@@ -1176,7 +1242,7 @@ namespace AIWorld.Entities
             if (!_variables.ContainsKey(key) || !(_variables[key] is float))
                 return 0;
 
-            return (float)_variables[key];
+            return (float) _variables[key];
         }
 
 
@@ -1256,65 +1322,6 @@ namespace AIWorld.Entities
 
             // Assuming the terminated goal is on top of the stack; Pop the goal of the stack.
             _goals.Pop();
-        }
-
-        #endregion
-
-        #region Subclasses
-
-        private class MeshData
-        {
-            private Vector3 _translation;
-            private Vector3 _scale;
-            private Vector3 _rotation;
-
-            public MeshData(Vector3 translation, Vector3 rotation, Vector3 scale)
-            {
-                _rotation = rotation;
-                _scale = scale;
-                _translation = translation;
-                CalculateMatrix();
-            }
-
-            public bool IsVisible { get; set; }
-            public Vector3 Translation
-            {
-                get { return _translation; }
-                set
-                {
-                    _translation = value;
-                    CalculateMatrix();
-                }
-            }
-
-            public Vector3 Scale
-            {
-                get { return _scale; }
-                set
-                {
-                    _scale = value;
-                    CalculateMatrix();
-                }
-            }
-
-            public Vector3 Rotation
-            {
-                get { return _rotation; }
-                set
-                {
-                    _rotation = value;
-                    CalculateMatrix();
-                }
-            }
-
-            public Matrix Matrix { get; private set; }
-
-            private void CalculateMatrix()
-            {
-                Matrix = Matrix.CreateRotationX(Rotation.X) * Matrix.CreateRotationY(Rotation.Y) *
-                         Matrix.CreateRotationZ(Rotation.Z) * Matrix.CreateScale(Scale) *
-                         Matrix.CreateTranslation(Translation);
-            }
         }
 
         #endregion

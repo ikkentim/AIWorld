@@ -35,6 +35,30 @@ namespace AIWorld
     /// </summary>
     public class Simulation : Game, IScripted
     {
+        #region Constructors
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Simulation" /> class.
+        /// </summary>
+        public Simulation(string scriptName)
+        {
+            // Store the script we want to start for later use.
+            if ((_scriptName = scriptName) == null)
+                throw new ArgumentNullException("scriptName");
+
+            _graphics = new GraphicsDeviceManager(this);
+            Content.RootDirectory = "Content";
+            IsMouseVisible = true;
+        }
+
+        #endregion
+
+        #region Implementation of IScripted
+
+        public ScriptBox Script { get; private set; }
+
+        #endregion
+
         #region Fields
 
         #region Fields - Constants - Scrolling
@@ -94,30 +118,6 @@ namespace AIWorld
 
         #endregion
 
-        #region Constructors
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="Simulation" /> class.
-        /// </summary>
-        public Simulation(string scriptName)
-        {
-            // Store the script we want to start for later use.
-            if ((_scriptName = scriptName) == null)
-                throw new ArgumentNullException("scriptName");
-   
-            _graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";
-            IsMouseVisible = true;
-        }
-
-        #endregion
-
-        #region Implementation of IScripted
-
-        public ScriptBox Script { get; private set; }
-
-        #endregion
-
         #region Events of Simulation
 
         public event EventHandler<MouseClickEventArgs> MouseClick;
@@ -135,10 +135,11 @@ namespace AIWorld
             // Register various services.
             Services.AddService(typeof (IConsoleService), _consoleService = new ConsoleService(this));
             Services.AddService(typeof (ICameraService), _cameraService = new CameraService(this));
-            Services.AddService(typeof(IGameWorldService), _gameWorldService = new GameWorldService(this, _cameraService, _consoleService));
-            Services.AddService(typeof(IDrawingService), _drawingService = new DrawingService(this, _cameraService));
-            Services.AddService(typeof(IParticleService), _particleService = new ParticleService(this));
-            Services.AddService(typeof(ISoundService), _soundService = new SoundService(this, _cameraService));
+            Services.AddService(typeof (IGameWorldService),
+                _gameWorldService = new GameWorldService(this, _cameraService, _consoleService));
+            Services.AddService(typeof (IDrawingService), _drawingService = new DrawingService(this, _cameraService));
+            Services.AddService(typeof (IParticleService), _particleService = new ParticleService(this));
+            Services.AddService(typeof (ISoundService), _soundService = new SoundService(this, _cameraService));
 
             Components.Add(_consoleService);
             Components.Add(_cameraService);
@@ -173,7 +174,7 @@ namespace AIWorld
             Script = null;
 
             // Unload all compolents and services.
-            foreach(var c in Components.OfType<IDisposable>())
+            foreach (var c in Components.OfType<IDisposable>())
                 c.Dispose();
             Components.Clear();
 
@@ -185,7 +186,7 @@ namespace AIWorld
 
             _soundEffects.Clear();
             _soundEffectInstances.Clear();
-      
+
             _gameWorldService = null;
             _cameraService = null;
             _consoleService = null;
@@ -194,8 +195,8 @@ namespace AIWorld
             Services.RemoveService(typeof (ICameraService));
             Services.RemoveService(typeof (IGameWorldService));
             Services.RemoveService(typeof (IDrawingService));
-            Services.RemoveService(typeof(IParticleService));
-            Services.RemoveService(typeof(ISoundService));
+            Services.RemoveService(typeof (IParticleService));
+            Services.RemoveService(typeof (ISoundService));
 
             GC.Collect();
         }
@@ -454,7 +455,8 @@ namespace AIWorld
         }
 
         [ScriptingFunction]
-        public int AddGameObject(string name, float size, float x, float y, float sx, float sy, float sz,float rx, float ry, float rz, float tx, float ty, float tz, bool isSolid,  string meshes)
+        public int AddGameObject(string name, float size, float x, float y, float sx, float sy, float sz, float rx,
+            float ry, float rz, float tx, float ty, float tz, bool isSolid, string meshes)
         {
             // Create the entity and return the id.
             var obj = new WorldObject(this, name, size, new Vector3(x, 0, y), new Vector3(rx, ry, rz),
@@ -551,6 +553,7 @@ namespace AIWorld
         {
             _awaitNewScriptName = script;
         }
+
         #endregion
 
         #region Event Raisers

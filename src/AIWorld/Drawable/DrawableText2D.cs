@@ -20,7 +20,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld.Drawable
 {
-    public class DrawableText2D : IDrawable2D, IDrawableHasPosition, IDrawableHasScale, IDrawableHasText, IDrawableHasColor, IDrawableHasFont
+    public class DrawableText2D : IDrawable2D, IDrawableHasPosition, IDrawableHasScale, IDrawableHasText,
+        IDrawableHasColor, IDrawableHasFont
     {
         private Vector2 _position;
 
@@ -57,6 +58,12 @@ namespace AIWorld.Drawable
 
         #endregion
 
+        #region Implementation of IDrawableHasScale
+
+        public Vector2 Scale { get; set; }
+
+        #endregion
+
         #region Implementation of IDrawableHasText
 
         public string Text { get; set; }
@@ -71,12 +78,6 @@ namespace AIWorld.Drawable
         {
             spriteBatch.DrawString(Font, Text, _position, Color, 0, Vector2.Zero, Scale, SpriteEffects.None, 0);
         }
-
-        #endregion
-
-        #region Implementation of IDrawableHasScale
-
-        public Vector2 Scale { get; set; }
 
         #endregion
     }

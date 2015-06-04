@@ -16,7 +16,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting;
 using AIWorld.Helpers;
 using Microsoft.Xna.Framework;
 
@@ -24,6 +23,9 @@ namespace AIWorld.Core
 {
     public class Graph : Dictionary<Vector3, Node>
     {
+        private readonly Dictionary<Tuple<Vector3, Vector3>, IEnumerable<Node>> _pathCache =
+            new Dictionary<Tuple<Vector3, Vector3>, IEnumerable<Node>>();
+
         public void Add(Vector3 vector1, Vector3 vector2)
         {
             var node1 = ContainsKey(vector1) ? this[vector1] : this[vector1] = new Node(vector1);
@@ -56,8 +58,6 @@ namespace AIWorld.Core
         {
             return ShortestPathAStar(start, finish);
         }
-
-        private Dictionary<Tuple<Vector3, Vector3>, IEnumerable<Node>> _pathCache = new Dictionary<Tuple<Vector3, Vector3>, IEnumerable<Node>>();
 
         public IEnumerable<Node> ShortestPathAStar(Vector3 start, Vector3 finish)
         {
@@ -102,7 +102,7 @@ namespace AIWorld.Core
                 foreach (var edge in current)
                 {
                     var alt = current.Distance + edge.Distance;
-  
+
                     if (alt < edge.Target.Distance)
                     {
                         edge.Target.Distance = alt;
@@ -114,6 +114,7 @@ namespace AIWorld.Core
 
             return result;
         }
+
         private IEnumerable<Node> ShortestPathDijkstra(Vector3 start, Vector3 finish)
         {
             var nodes = new List<Node>(Values);

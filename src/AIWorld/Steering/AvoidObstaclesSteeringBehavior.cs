@@ -24,7 +24,6 @@ namespace AIWorld.Steering
 {
     public class AvoidObstaclesSteeringBehavior : ISteeringBehavior
     {
-
         private readonly Agent _agent;
         private readonly IGameWorldService _gameWorldService;
 
@@ -40,12 +39,12 @@ namespace AIWorld.Steering
 
         [SteeringBehaviorArgument(1)]
         public float BreakingWeight { get; set; }
-   
+
         private float DetectionBoxLength
         {
             get
             {
-                return MinimumDetectionBoxLength + (_agent.Velocity.Length() / _agent.MaxSpeed) * MinimumDetectionBoxLength;
+                return MinimumDetectionBoxLength + (_agent.Velocity.Length()/_agent.MaxSpeed)*MinimumDetectionBoxLength;
             }
         }
 

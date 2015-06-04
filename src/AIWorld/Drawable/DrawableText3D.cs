@@ -1,5 +1,19 @@
+// AIWorld
+// Copyright 2015 Tim Potze
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 using System;
-using System.Diagnostics;
 using AIWorld.Helpers;
 using AIWorld.Services;
 using Microsoft.Xna.Framework;
@@ -44,6 +58,12 @@ namespace AIWorld.Drawable
 
         #endregion
 
+        #region Implementation of IDrawableHasScale
+
+        public Vector2 Scale { get; set; }
+
+        #endregion
+
         #region Implementation of IDrawableHasText
 
         public string Text { get; set; }
@@ -74,12 +94,6 @@ namespace AIWorld.Drawable
                 drawPosition.ToVector2XY() - measuredSize*Scale*new Vector2(0.5f, 1),
                 Color, 0, Vector2.Zero, Scale, SpriteEffects.None, 0);
         }
-
-        #endregion
-
-        #region Implementation of IDrawableHasScale
-
-        public Vector2 Scale { get; set; }
 
         #endregion
     }

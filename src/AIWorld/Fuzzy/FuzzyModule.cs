@@ -15,7 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AIWorld.Fuzzy.Sets;
@@ -134,7 +133,7 @@ namespace AIWorld.Fuzzy
                     return null;
                 }
 
-                var fuzzyVariable = _variables.Where(v => v!= null).FirstOrDefault(v => v.Item1 == keyword);
+                var fuzzyVariable = _variables.Where(v => v != null).FirstOrDefault(v => v.Item1 == keyword);
 
                 if (fuzzyVariable == null)
                 {

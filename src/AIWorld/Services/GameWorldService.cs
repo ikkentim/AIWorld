@@ -15,7 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using AIWorld.Core;
 using AIWorld.Entities;
@@ -23,7 +22,6 @@ using AIWorld.Planes;
 using AIWorld.Scripting;
 using AMXWrapper;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld.Services
@@ -35,14 +33,13 @@ namespace AIWorld.Services
         private readonly IConsoleService _consoleService;
         private readonly BoundlessQuadTree _entities = new BoundlessQuadTree();
         private readonly Dictionary<string, Graph> _graphsByName = new Dictionary<string, Graph>();
-        private readonly Dictionary<string, object> _variables = new Dictionary<string, object>(); 
+        private readonly Dictionary<string, object> _variables = new Dictionary<string, object>();
         private int _entityId;
-
-        public Simulation Simulation { get; private set; }
 
         #region Constructors
 
-        public GameWorldService(Simulation simulation, ICameraService cameraService, IConsoleService consoleService) : base(simulation)
+        public GameWorldService(Simulation simulation, ICameraService cameraService, IConsoleService consoleService)
+            : base(simulation)
         {
             if (simulation == null) throw new ArgumentNullException("simulation");
             if (cameraService == null) throw new ArgumentNullException("cameraService");
@@ -55,10 +52,58 @@ namespace AIWorld.Services
 
         #endregion
 
+        public Simulation Simulation { get; private set; }
+
+        #region Methods of GameWorldService
+
+        /// <summary>
+        ///     Draws a line between the specified points in the specified color.
+        /// </summary>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <param name="color1">The color1.</param>
+        /// <param name="color2">The color2.</param>
+        private void DrawLine(Vector3 point1, Vector3 point2, Color color1, Color color2)
+        {
+            var vertices = new[] {new VertexPositionColor(point1, color1), new VertexPositionColor(point2, color2)};
+            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
+        }
+
+        #endregion
+
+        #region Overrides of DrawableGameComponent
+
+        public override void Draw(GameTime gameTime)
+        {
+            if (!DrawGraphs) return;
+
+            _basicEffect.VertexColorEnabled = true;
+            _basicEffect.World = Matrix.Identity;
+            _basicEffect.View = _cameraService.View;
+            _basicEffect.Projection = _cameraService.Projection;
+
+            _basicEffect.CurrentTechnique.Passes[0].Apply();
+
+            // Draw each graph at a different height level.
+            var height = new Vector3(0, 0.1f, 0);
+            const float drawDistance = 35*35;
+            foreach (var graph in _graphsByName.Values)
+            {
+                foreach (var node in graph.Values)
+                    foreach (var edge in node)
+                        if (Vector3.DistanceSquared(_cameraService.TargetPosition, node.Position) < drawDistance)
+                            DrawLine(node.Position + height, edge.Target.Position + height, Color.Red, Color.GreenYellow);
+
+                height.Y += 0.2f;
+            }
+        }
+
+        #endregion
+
         #region Overrides of GameComponent
 
         /// <summary>
-        /// Shuts down the component.
+        ///     Shuts down the component.
         /// </summary>
         protected override void Dispose(bool disposing)
         {
@@ -126,23 +171,6 @@ namespace AIWorld.Services
 
         #endregion
 
-        #region Methods of GameWorldService
-
-        /// <summary>
-        ///     Draws a line between the specified points in the specified color.
-        /// </summary>
-        /// <param name="point1">The point1.</param>
-        /// <param name="point2">The point2.</param>
-        /// <param name="color1">The color1.</param>
-        /// <param name="color2">The color2.</param>
-        private void DrawLine(Vector3 point1, Vector3 point2, Color color1, Color color2)
-        {
-            var vertices = new[] { new VertexPositionColor(point1, color1), new VertexPositionColor(point2, color2) };
-            GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
-        }
-
-        #endregion
-
         #region API
 
         #region API - Debugging
@@ -178,7 +206,7 @@ namespace AIWorld.Services
         {
             return
                 Entities.Query(new AABB(point, new Vector3(WorldObject.MaxSize + range)))
-                .Any(e => (!onlySolid || e.IsSolid) && (e.Position - point).Length() < e.Size + range);
+                    .Any(e => (!onlySolid || e.IsSolid) && (e.Position - point).Length() < e.Size + range);
         }
 
         [ScriptingFunction]
@@ -263,7 +291,8 @@ namespace AIWorld.Services
         {
             IEnumerable<int> ignoredEntities = new int[0];
             if (ignoredEntitiesLength > 0)
-                ignoredEntities = Enumerable.Range(0, ignoredEntitiesLength).Select(i => ignoredEntitiesPtr[i].AsInt32());
+                ignoredEntities = Enumerable.Range(0, ignoredEntitiesLength)
+                    .Select(i => ignoredEntitiesPtr[i].AsInt32());
 
             var start = new Vector3(x1, 0, y1);
             var end = new Vector3(x2, 0, y2);
@@ -281,7 +310,7 @@ namespace AIWorld.Services
                 .Where(e => ignoredEntities.Contains(e.Id));
 
             var ray = new Ray(start, direction);
-        
+
             hitdistance = 0;
             hitid = -1;
             foreach (var entity in entities)
@@ -297,6 +326,7 @@ namespace AIWorld.Services
 
             return hitid != -1;
         }
+
         #endregion
 
         #region API - Camera
@@ -368,6 +398,7 @@ namespace AIWorld.Services
             worldObject.Scale = new Vector3(x, y, z);
             return true;
         }
+
         [ScriptingFunction]
         public bool SetWorldObjectRotation(int id, float x, float y, float z)
         {
@@ -378,6 +409,7 @@ namespace AIWorld.Services
             worldObject.Rotation = new Vector3(x, y, z);
             return true;
         }
+
         [ScriptingFunction]
         public bool SetWorldObjectTranslation(int id, float x, float y, float z)
         {
@@ -397,8 +429,9 @@ namespace AIWorld.Services
             if (worldObject == null) return false;
 
             Remove(worldObject);
-            return true; 
+            return true;
         }
+
         #endregion
 
         #region API - Agent
@@ -408,7 +441,7 @@ namespace AIWorld.Services
         {
             return _entities.Query(new AABB(new Vector3(x, 0, y), new Vector3(range)))
                 .OfType<Agent>()
-                .Where(a => Vector3.DistanceSquared(new Vector3(x, 0, y), a.Position) < range * range)
+                .Where(a => Vector3.DistanceSquared(new Vector3(x, 0, y), a.Position) < range*range)
                 .Where(a => string.IsNullOrEmpty(scriptName) || a.ScriptName == scriptName)
                 .Where(predicate)
                 .OrderBy(a => Vector3.DistanceSquared(a.Position, new Vector3(x, 0, y)));
@@ -440,7 +473,8 @@ namespace AIWorld.Services
         }
 
         [ScriptingFunction]
-        public int FindNearestAgentByVarString(float x, float y, float range, string key, string value, string scriptName)
+        public int FindNearestAgentByVarString(float x, float y, float range, string key, string value,
+            string scriptName)
         {
             return FindNearestAgent(x, y, range, scriptName, a => a.GetVarString(key) == value);
         }
@@ -459,7 +493,8 @@ namespace AIWorld.Services
         }
 
         [ScriptingFunction]
-        public int GetNearestAgentsByVar(float x, float y, float range, string key, int value, string scriptName, CellPtr array, int length)
+        public int GetNearestAgentsByVar(float x, float y, float range, string key, int value, string scriptName,
+            CellPtr array, int length)
         {
             if (length < 0)
                 return 0;
@@ -472,26 +507,30 @@ namespace AIWorld.Services
         }
 
         [ScriptingFunction]
-        public int GetNearestAgentsByVarFloat(float x, float y, float range, string key, float value, string scriptName, CellPtr array, int length)
+        public int GetNearestAgentsByVarFloat(float x, float y, float range, string key, float value, string scriptName,
+            CellPtr array, int length)
         {
             if (length < 0)
                 return 0;
 
             var idx = 0;
-            foreach (var agent in GetNearestAgents(x, y, range, scriptName, a => a.GetVarFloat(key) == value).Take(length))
+            foreach (
+                var agent in GetNearestAgents(x, y, range, scriptName, a => a.GetVarFloat(key) == value).Take(length))
                 array[idx] = agent.Id;
 
             return idx;
         }
 
         [ScriptingFunction]
-        public int GetNearestAgentsByVarString(float x, float y, float range, string key, string value, string scriptName, CellPtr array, int length)
+        public int GetNearestAgentsByVarString(float x, float y, float range, string key, string value,
+            string scriptName, CellPtr array, int length)
         {
             if (length < 0)
                 return 0;
 
             var idx = 0;
-            foreach (var agent in GetNearestAgents(x, y, range, scriptName, a => a.GetVarString(key) == value).Take(length))
+            foreach (
+                var agent in GetNearestAgents(x, y, range, scriptName, a => a.GetVarString(key) == value).Take(length))
                 array[idx] = agent.Id;
 
             return idx;
@@ -588,7 +627,7 @@ namespace AIWorld.Services
         {
             if (!_variables.ContainsKey(key) || !(_variables[key] is int))
                 return 0;
-            return (int)_variables[key];
+            return (int) _variables[key];
         }
 
         [ScriptingFunction]
@@ -597,7 +636,7 @@ namespace AIWorld.Services
             if (!_variables.ContainsKey(key) || !(_variables[key] is float))
                 return 0;
 
-            return (float)_variables[key];
+            return (float) _variables[key];
         }
 
         [ScriptingFunction]
@@ -608,7 +647,7 @@ namespace AIWorld.Services
 
             if (--length <= 0) return -1;
 
-            var value = (string)_variables[key];
+            var value = (string) _variables[key];
             AMX.SetString(retval, value.Length > length ? value.Substring(0, length) : value, false);
 
             return value.Length;
@@ -679,35 +718,6 @@ namespace AIWorld.Services
         }
 
         #endregion
-
-        #endregion
-
-        #region Overrides of DrawableGameComponent
-
-        public override void Draw(GameTime gameTime)
-        {
-            if (!DrawGraphs) return;
-
-            _basicEffect.VertexColorEnabled = true;
-            _basicEffect.World = Matrix.Identity;
-            _basicEffect.View = _cameraService.View;
-            _basicEffect.Projection = _cameraService.Projection;
-
-            _basicEffect.CurrentTechnique.Passes[0].Apply();
-
-            // Draw each graph at a different height level.
-            var height = new Vector3(0, 0.1f, 0);
-            const float drawDistance = 35*35;
-            foreach (var graph in _graphsByName.Values)
-            {
-                foreach (var node in graph.Values)
-                    foreach (var edge in node)
-                        if (Vector3.DistanceSquared(_cameraService.TargetPosition, node.Position) < drawDistance)
-                            DrawLine(node.Position + height, edge.Target.Position + height, Color.Red, Color.GreenYellow);
-                
-                height.Y += 0.2f;
-            }
-        }
 
         #endregion
     }

@@ -15,11 +15,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using AIWorld.Core;
 using AIWorld.Drawable;
-using AIWorld.Helpers;
 using AIWorld.Scripting;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -29,11 +27,11 @@ namespace AIWorld.Services
     public class DrawingService : DrawableGameComponent, IDrawingService
     {
         private readonly ICameraService _cameraService;
+        private readonly Pool<IDrawablePart> _drawables = new Pool<IDrawablePart>();
         private readonly SortedList<int, IDrawablePart> _drawDrawables = new SortedList<int, IDrawablePart>();
         private readonly Dictionary<string, SpriteFont> _fonts = new Dictionary<string, SpriteFont>();
         private readonly SpriteBatch _spriteBatch;
         private int _currentDrawOrder;
-        private readonly Pool<IDrawablePart> _drawables = new Pool<IDrawablePart>(); 
 
         public DrawingService(Game game, ICameraService cameraService) : base(game)
         {
@@ -56,9 +54,9 @@ namespace AIWorld.Services
             var b = (colorCode >> 8*1) & 0xFF;
 
             var color = Color.White;
-            color.A = (byte)(colorCode);
-            color.R = (byte)(colorCode >> 24);
-            color.G = (byte)(colorCode >> 16);
+            color.A = (byte) (colorCode);
+            color.R = (byte) (colorCode >> 24);
+            color.G = (byte) (colorCode >> 16);
             color.B = (byte) (colorCode >> 8);
             return color;
         }
@@ -117,7 +115,8 @@ namespace AIWorld.Services
         }
 
         [ScriptingFunction]
-        public int CreateDrawableLineCylinder(float x, float y, float z, float hx, float hy, float hz, float length, float radius, uint color1, uint color2)
+        public int CreateDrawableLineCylinder(float x, float y, float z, float hx, float hy, float hz, float length,
+            float radius, uint color1, uint color2)
         {
             return
                 _drawables.Add(new DrawableLineCylinder(_cameraService, GraphicsDevice, new Vector3(x, y, z),
@@ -126,7 +125,8 @@ namespace AIWorld.Services
         }
 
         [ScriptingFunction]
-        public int CreateDrawableLineCone(float x, float y, float z, float hx, float hy, float hz, float length, float radius, uint color1, uint color2)
+        public int CreateDrawableLineCone(float x, float y, float z, float hx, float hy, float hz, float length,
+            float radius, uint color1, uint color2)
         {
             return
                 _drawables.Add(new DrawableLineCone(_cameraService, GraphicsDevice, new Vector3(x, y, z),

@@ -14,7 +14,6 @@
 // limitations under the License.
 
 using System;
-using System.Diagnostics;
 using System.Linq;
 using AIWorld.Entities;
 using AIWorld.Services;
@@ -25,12 +24,12 @@ namespace AIWorld.Steering
     public abstract class EvadeSteeringBehavior : ISteeringBehavior
     {
         private readonly Agent _agent;
+        private readonly FleeSteeringBehavior _fleeSteeringBehavior;
         private readonly IGameWorldService _gameWorldService;
         private float _range;
         private float _rangeSquared;
 
-        private readonly FleeSteeringBehavior _fleeSteeringBehavior;
-        protected EvadeSteeringBehavior(Agent agent) 
+        protected EvadeSteeringBehavior(Agent agent)
         {
             if (agent == null) throw new ArgumentNullException("agent");
             _agent = agent;
@@ -87,10 +86,10 @@ namespace AIWorld.Steering
         #region Overrides of Object
 
         /// <summary>
-        /// Returns a string that represents the current object.
+        ///     Returns a string that represents the current object.
         /// </summary>
         /// <returns>
-        /// A string that represents the current object.
+        ///     A string that represents the current object.
         /// </returns>
         public override string ToString()
         {

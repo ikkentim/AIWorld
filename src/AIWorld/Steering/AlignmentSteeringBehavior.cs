@@ -1,3 +1,18 @@
+// AIWorld
+// Copyright 2015 Tim Potze
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 using System;
 using System.Linq;
 using AIWorld.Entities;
@@ -10,9 +25,9 @@ namespace AIWorld.Steering
     {
         private readonly Agent _agent;
         private readonly IGameWorldService _gameWorldService;
+        private Vector3 _calculated;
         private float _range;
         private float _rangeSquared;
-        private Vector3 _calculated;
 
         protected AlignmentSteeringBehavior(Agent agent)
         {
@@ -28,7 +43,7 @@ namespace AIWorld.Steering
             set
             {
                 _range = value;
-                _rangeSquared = value * value;
+                _rangeSquared = value*value;
             }
         }
 
@@ -36,7 +51,6 @@ namespace AIWorld.Steering
         public string Key { get; set; }
 
         public object KeyValue { get; protected set; }
-
 
         #region Implementation of ISteeringBehavior
 
@@ -70,10 +84,10 @@ namespace AIWorld.Steering
         #region Overrides of Object
 
         /// <summary>
-        /// Returns a string that represents the current object.
+        ///     Returns a string that represents the current object.
         /// </summary>
         /// <returns>
-        /// A string that represents the current object.
+        ///     A string that represents the current object.
         /// </returns>
         public override string ToString()
         {

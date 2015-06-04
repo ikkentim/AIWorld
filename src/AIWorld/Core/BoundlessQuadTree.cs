@@ -15,7 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using AIWorld.Entities;
 using Microsoft.Xna.Framework;
@@ -50,7 +49,8 @@ namespace AIWorld
 
         public void FixPositions()
         {
-            foreach (var entity in Parts.SelectMany(part => part.RemoveEntitiesOutsideBoundaries(this).ToArray()).ToArray())
+            foreach (
+                var entity in Parts.SelectMany(part => part.RemoveEntitiesOutsideBoundaries(this).ToArray()).ToArray())
             {
                 Add(entity);
             }

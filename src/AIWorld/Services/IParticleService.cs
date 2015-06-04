@@ -19,7 +19,6 @@ namespace AIWorld.Services
 {
     internal interface IParticleService : IGameComponent
     {
-        //@TODO
     }
 
     internal class ParticleService : GameComponent, IParticleService

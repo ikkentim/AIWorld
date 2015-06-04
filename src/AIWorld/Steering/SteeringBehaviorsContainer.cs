@@ -14,7 +14,6 @@
 // limitations under the License.
 
 using System;
-using System.Diagnostics;
 using System.Linq;
 using AIWorld.Entities;
 using AIWorld.Scripting;
@@ -61,7 +60,7 @@ namespace AIWorld.Steering
                                         .First())
                                     .Index).ToArray();
 
-                    if (args.Length != 1 + properties.Sum(p => p.PropertyType == typeof(Vector3) ? 2 : 1))
+                    if (args.Length != 1 + properties.Sum(p => p.PropertyType == typeof (Vector3) ? 2 : 1))
                         return -1;
 
                     var weight = args[0].AsFloat();

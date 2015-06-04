@@ -42,7 +42,11 @@ namespace AIWorld.Core
                 this.Select(
                     edge =>
                         new Edge(
-                            new Node(edge.Target.Position) {Distance = edge.Target.Distance, Previous = edge.Target.Previous == this ? node : null},
+                            new Node(edge.Target.Position)
+                            {
+                                Distance = edge.Target.Distance,
+                                Previous = edge.Target.Previous == this ? node : null
+                            },
                             edge.Distance)));
             return node;
         }

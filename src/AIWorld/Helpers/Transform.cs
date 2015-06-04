@@ -13,18 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Helpers
 {
     /// <summary>
-    /// Contains various transformation methods.
+    ///     Contains various transformation methods.
     /// </summary>
     public static class Transform
     {
         /// <summary>
-        /// Converts point to local space.
+        ///     Converts point to local space.
         /// </summary>
         /// <param name="position">The position.</param>
         /// <param name="heading">The heading.</param>
@@ -43,7 +42,7 @@ namespace AIWorld.Helpers
         }
 
         /// <summary>
-        /// Converts vector to world space.
+        ///     Converts vector to world space.
         /// </summary>
         /// <param name="heading">The heading.</param>
         /// <param name="up">Up.</param>
@@ -59,7 +58,7 @@ namespace AIWorld.Helpers
         }
 
         /// <summary>
-        /// Converts point to world space.
+        ///     Converts point to world space.
         /// </summary>
         /// <param name="position">The position.</param>
         /// <param name="heading">The heading.</param>

@@ -102,35 +102,35 @@ namespace AIWorld.Drawable
         protected virtual void CreateCylinder()
         {
             var verts = Math.Max(RadiusMultiplier, (int) (RadiusMultiplier*Radius));
-  
-            var offs = (float)(2 * Math.PI) / verts;
+
+            var offs = (float) (2*Math.PI)/verts;
 
             Vertices = new VertexPositionColor[verts*(verts/2)*4];
             Count = verts*(verts/2)*2;
 
-            for (var r = 0; r < verts / 2; r++)
+            for (var r = 0; r < verts/2; r++)
             {
-                var matrix = Matrix.CreateRotationY(r * offs);
-                var height = (float)Math.Cos(r * offs) * Radius;
-                var multiplier = (float)Math.Sin(r * offs);
-                var color = Color.Lerp(SecondColor, Color, (float)Math.Cos(r * offs));
+                var matrix = Matrix.CreateRotationY(r*offs);
+                var height = (float) Math.Cos(r*offs)*Radius;
+                var multiplier = (float) Math.Sin(r*offs);
+                var color = Color.Lerp(SecondColor, Color, (float) Math.Cos(r*offs));
 
                 for (var i = 0; i < verts; i++)
                 {
-                    var x1 = (float)Math.Cos(i * offs) * Radius;
-                    var y1 = (float)Math.Sin(i * offs) * Radius;
+                    var x1 = (float) Math.Cos(i*offs)*Radius;
+                    var y1 = (float) Math.Sin(i*offs)*Radius;
 
-                    var x2 = (float)Math.Cos(i * offs + offs) * Radius;
-                    var y2 = (float)Math.Sin(i * offs + offs) * Radius;
+                    var x2 = (float) Math.Cos(i*offs + offs)*Radius;
+                    var y2 = (float) Math.Sin(i*offs + offs)*Radius;
 
-                    var v1 = new Vector3(y1, x1,0);
-                    var v2 = new Vector3(y2, x2,0);
+                    var v1 = new Vector3(y1, x1, 0);
+                    var v2 = new Vector3(y2, x2, 0);
 
                     var c1 = Color.Lerp(SecondColor, Color, (float) Math.Abs(i - (verts/2))/(verts/2));
                     var c2 = Color.Lerp(SecondColor, Color, (float) Math.Abs((i + 1) - (verts/2))/(verts/2));
 
                     var startidx = r*verts*4 + i*4;
-                    
+
                     // Verticals
                     Vertices[startidx + 0] = new VertexPositionColor(Position + Vector3.Transform(v1, matrix),
                         c1);
@@ -139,9 +139,9 @@ namespace AIWorld.Drawable
 
                     // Horizontals
                     Vertices[startidx + 2] = new VertexPositionColor(
-                        Position + new Vector3(x1 * multiplier, height, y1 * multiplier), color);
+                        Position + new Vector3(x1*multiplier, height, y1*multiplier), color);
                     Vertices[startidx + 3] = new VertexPositionColor(
-                        Position + new Vector3(x2 * multiplier, height, y2 * multiplier), color);
+                        Position + new Vector3(x2*multiplier, height, y2*multiplier), color);
                 }
             }
         }

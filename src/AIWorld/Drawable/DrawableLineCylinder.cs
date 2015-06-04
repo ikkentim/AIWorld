@@ -21,10 +21,10 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace AIWorld.Drawable
 {
-    public class DrawableLineCylinder : IDrawable3D, IDrawableHasPosition, IDrawableHasColor, IDrawableHasSecondColor, IDrawableHasLength, IDrawableHasRadius
+    public class DrawableLineCylinder : IDrawable3D, IDrawableHasPosition, IDrawableHasColor, IDrawableHasSecondColor,
+        IDrawableHasLength, IDrawableHasRadius
     {
         protected const int RadiusMultiplier = 16;
-
         private readonly BasicEffect _basicEffect;
         private readonly ICameraService _cameraService;
         private Color _color;
@@ -56,26 +56,6 @@ namespace AIWorld.Drawable
         protected VertexPositionColor[] Vertices { get; set; }
         protected int Count { get; set; }
 
-        public float Length
-        {
-            get { return _length; }
-            set
-            {
-                _length = value;
-                CreateCylinder();
-            }
-        }
-
-        public float Radius
-        {
-            get { return _radius; }
-            set
-            {
-                _radius = value;
-                CreateCylinder();
-            }
-        }
-
         public Vector3 Direction
         {
             get { return _direction; }
@@ -96,12 +76,32 @@ namespace AIWorld.Drawable
             }
         }
 
+        public float Length
+        {
+            get { return _length; }
+            set
+            {
+                _length = value;
+                CreateCylinder();
+            }
+        }
+
         public Vector3 Position
         {
             get { return _position; }
             set
             {
                 _position = value;
+                CreateCylinder();
+            }
+        }
+
+        public float Radius
+        {
+            get { return _radius; }
+            set
+            {
+                _radius = value;
                 CreateCylinder();
             }
         }
