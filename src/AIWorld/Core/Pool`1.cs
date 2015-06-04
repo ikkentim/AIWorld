@@ -18,7 +18,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AIWorld.Helpers
+namespace AIWorld.Core
 {
     public class Pool<T> : IEnumerable<T> where T : class
     {

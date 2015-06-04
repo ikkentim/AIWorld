@@ -29,10 +29,7 @@ public OnUpdate(Float:elapsed)
         %1 >= want_attack && %1 >= want_hold)
 
     if(BEST_DESIRABILITY(want_orb))
-    {
-        logprintf(-1, "%f %f %f %f %f %f", want_orb, want_powerup, want_carepackage, want_defend, want_attack, want_hold);
         AddSubgoal("kotmogu/tank/goal/get_orb");
-    }
     else if(BEST_DESIRABILITY(want_powerup))
         AddSubgoal("kotmogu/tank/goal/powerup");
     else if(BEST_DESIRABILITY(want_carepackage))

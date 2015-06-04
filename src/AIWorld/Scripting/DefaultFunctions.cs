@@ -27,7 +27,7 @@ using Microsoft.Xna.Framework;
 namespace AIWorld.Scripting
 {
     [SuppressMessage("ReSharper", "UnusedMember.Local")]
-    public class DefaultFunctions : IScriptingNatives
+    public class DefaultFunctions
     {
         private readonly Random _random = new Random();
 

@@ -80,7 +80,6 @@
     <Compile Include="Drawable\IDrawablePart.cs" />
     <Compile Include="Entities\Agent.cs" />
     <Compile Include="Entities\IHitable.cs" />
-    <Compile Include="Entities\MeshData.cs" />
     <Compile Include="Entities\Projectile.cs" />
     <Compile Include="Fuzzy\FuzzyModule.cs" />
     <Compile Include="Fuzzy\FuzzyRule.cs" />
@@ -101,7 +100,7 @@
     <Compile Include="Entities\IMessageHandler.cs" />
     <Compile Include="Events\KeyStateEventArgs.cs" />
     <Compile Include="Events\MouseClickEventArgs.cs" />
-    <Compile Include="Helpers\Pool`1.cs" />
+    <Compile Include="Core\Pool`1.cs" />
     <Compile Include="Services\DrawingService.cs" />
     <Compile Include="Services\IDrawingService.cs" />
     <Compile Include="Services\IParticleService.cs" />
@@ -143,7 +142,6 @@
     <Compile Include="Core\Node.cs" />
     <Compile Include="Scripting\DefaultFunctions.cs" />
     <Compile Include="Scripting\IScripted.cs" />
-    <Compile Include="Scripting\IScriptingNatives.cs" />
     <Compile Include="Scripting\ScriptBox.cs" />
     <Compile Include="Scripting\ScriptingFunctionAttribute.cs" />
     <Compile Include="Services\CameraService.cs" />

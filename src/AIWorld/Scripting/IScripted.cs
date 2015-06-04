@@ -15,7 +15,7 @@
 
 namespace AIWorld.Scripting
 {
-    public interface IScripted : IScriptingNatives
+    public interface IScripted
     {
         /// <summary>
         ///     Gets the script.

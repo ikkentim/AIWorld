@@ -49,7 +49,8 @@ namespace AIWorld.Goals
             Script.Register(this, agent, agent.Game.Services.GetService<IGameWorldService>(),
                 new FuzzyModule(agent.Game.Services.GetService<IConsoleService>()),
                 agent.Game.Services.GetService<IConsoleService>(),
-                agent.Game.Services.GetService<ISoundService>());
+                agent.Game.Services.GetService<ISoundService>(),
+                agent.Game.Services.GetService<IDrawingService>());
 
             SteeringBehaviorsContainer.Register(agent, Script);
 

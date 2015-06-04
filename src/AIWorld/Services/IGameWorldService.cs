@@ -22,7 +22,7 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
 {
-    public interface IGameWorldService : IGameComponent, IScriptingNatives, IDisposable
+    public interface IGameWorldService : IGameComponent, IDisposable
     {
         QuadTree Entities { get; }
         Graph this[string key] { get; }

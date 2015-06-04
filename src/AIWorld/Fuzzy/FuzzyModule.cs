@@ -26,7 +26,7 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Fuzzy
 {
-    public class FuzzyModule : IScriptingNatives
+    public class FuzzyModule
     {
         private readonly IConsoleService _consoleService;
         private Tuple<string, FuzzyVariable>[] _variables = new Tuple<string, FuzzyVariable>[1];

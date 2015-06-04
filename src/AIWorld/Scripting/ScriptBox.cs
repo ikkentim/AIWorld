@@ -104,7 +104,7 @@ namespace AIWorld.Scripting
             throw new ArgumentException("Invalid argument type " + info.ParameterType);
         }
 
-        public void Register(params IScriptingNatives[] instances)
+        public void Register(params object[] instances)
         {
             if (instances == null) throw new ArgumentNullException("instances");
 

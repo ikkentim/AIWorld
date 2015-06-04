@@ -18,7 +18,7 @@ using Microsoft.Xna.Framework;
 
 namespace AIWorld.Services
 {
-    public interface IDrawingService : IScriptingNatives, IGameComponent
+    public interface IDrawingService : IGameComponent
     {
     }
 }

@@ -16,7 +16,7 @@ main()
     /*state debug;*/
 
     // Set the scene
-    //PlayAmbience("sounds/bftune", true, 0.02);
+    PlayAmbience("sounds/bftune", true, 0.02);
     SetBackgroundColor(0x00000000);
 
     ScoreInit();
