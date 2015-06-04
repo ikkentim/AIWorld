@@ -24,12 +24,8 @@ namespace AIWorld.Steering
 {
     public class AvoidObstaclesSteeringBehavior : ISteeringBehavior
     {
-        private const float MinimumDetectionBoxLengthSizeMultiplier = 1.9f;
-
-        private const float BreakingWeight = 0.005f*0.001f;
 
         private readonly Agent _agent;
-
         private readonly IGameWorldService _gameWorldService;
 
         public AvoidObstaclesSteeringBehavior(Agent agent)
@@ -39,12 +35,17 @@ namespace AIWorld.Steering
             _gameWorldService = agent.Game.Services.GetService<IGameWorldService>();
         }
 
+        [SteeringBehaviorArgument(0)]
+        public float MinimumDetectionBoxLength { get; set; }
+
+        [SteeringBehaviorArgument(1)]
+        public float BreakingWeight { get; set; }
+   
         private float DetectionBoxLength
         {
             get
             {
-                return _agent.Size*MinimumDetectionBoxLengthSizeMultiplier +
-                       (_agent.Velocity.Length()/_agent.MaxSpeed)*_agent.Size*MinimumDetectionBoxLengthSizeMultiplier;
+                return MinimumDetectionBoxLength + (_agent.Velocity.Length() / _agent.MaxSpeed) * MinimumDetectionBoxLength;
             }
         }
 
@@ -102,10 +103,10 @@ namespace AIWorld.Steering
         #region Overrides of Object
 
         /// <summary>
-        /// Returns a string that represents the current object.
+        ///     Returns a string that represents the current object.
         /// </summary>
         /// <returns>
-        /// A string that represents the current object.
+        ///     A string that represents the current object.
         /// </returns>
         public override string ToString()
         {

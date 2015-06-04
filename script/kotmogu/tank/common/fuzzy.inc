@@ -15,7 +15,7 @@ new static
     Fuzzy:powerup_desirability,
     Fuzzy:carepackage_desirability,
     Fuzzy:defend_desirability,
-    Fuzzy:atack_desirability,
+    Fuzzy:attack_desirability,
     Fuzzy:hold_desirability;
 
 stock AddDesirabilitySet(Fuzzy:variable)
@@ -27,6 +27,8 @@ stock AddDesirabilitySet(Fuzzy:variable)
 
 stock LoadFuzzy()
 {
+    // TODO: Add some friendly_orb_holder_near, enemy_orb_holder_near variable
+
     health = CreateFuzzyVariable("health");
     ammo = CreateFuzzyVariable("ammo");
     area_power = CreateFuzzyVariable("area_power");
@@ -40,7 +42,7 @@ stock LoadFuzzy()
     powerup_desirability = CreateFuzzyVariable("powerup_desirability");
     carepackage_desirability = CreateFuzzyVariable("carepackage_desirability");
     defend_desirability = CreateFuzzyVariable("defend_desirability");
-    atack_desirability = CreateFuzzyVariable("atack_desirability");
+    attack_desirability = CreateFuzzyVariable("attack_desirability");
     hold_desirability = CreateFuzzyVariable("hold_desirability");
 
     AddFuzzyLeftShoulder(health, "low", 0, 30, 50);
@@ -77,7 +79,7 @@ stock LoadFuzzy()
     AddDesirabilitySet(powerup_desirability);
     AddDesirabilitySet(carepackage_desirability);
     AddDesirabilitySet(defend_desirability);
-    AddDesirabilitySet(atack_desirability);
+    AddDesirabilitySet(attack_desirability);
     AddDesirabilitySet(hold_desirability);
 
     // orb_desirability
@@ -86,12 +88,10 @@ stock LoadFuzzy()
     AddFuzzyRule("IF low ammo OR low health AND doesnt have_orb THEN undesirable orb_desirability");
     AddFuzzyRule("IF far orb AND high health AND high ammo AND doesnt have_orb THEN very very_desirable orb_desirability");
     AddFuzzyRule("IF far orb AND very few orbs AND doesnt have_orb THEN very_desirable orb_desirability");
-    AddFuzzyRule("IF no orb THEN undesirable orb_desirability");
 
     // powerup_desirability
     AddFuzzyRule("IF medium area_power AND does have_orb THEN desirable powerup_desirability");
-    AddFuzzyRule("IF low area_power AND does have_orb THEN very_desirable powerup_desirability");
-    /*AddFuzzyRule("IF doesnt have_orb THEN undesirable powerup_desirability");*/
+    AddFuzzyRule("IF low area_power AND does have_orb THEN desirable powerup_desirability");
 
     // carepackage_desirability
     AddFuzzyRule("IF low health AND far carepackage THEN desirable carepackage_desirability");
@@ -114,16 +114,15 @@ stock LoadFuzzy()
     AddFuzzyRule("IF medium ammo AND close carepackage THEN desirable carepackage_desirability");
     AddFuzzyRule("IF high ammo AND close carepackage THEN undesirable carepackage_desirability");
 
-    // TODO: Add some friendly_orb_holder_near, enemy_orb_holder_near variable
     // defend_desirability
     AddFuzzyRule("IF many orbs AND doesnt have_orb THEN very_desirable defend_desirability");
     AddFuzzyRule("IF few orbs AND doesnt have_orb THEN desirable defend_desirability");
     AddFuzzyRule("IF very few orbs AND doesnt have_orb THEN undesirable defend_desirability");
 
-    // atack_desirability
-    AddFuzzyRule("IF many enemy_orbs AND doesnt have_orb THEN very_desirable atack_desirability");
-    AddFuzzyRule("IF few enemy_orbs AND doesnt have_orb THEN desirable atack_desirability");
-    AddFuzzyRule("IF very few enemy_orbs AND doesnt have_orb THEN undesirable atack_desirability");
+    // attack_desirability
+    AddFuzzyRule("IF many enemy_orbs AND doesnt have_orb THEN very_desirable attack_desirability");
+    AddFuzzyRule("IF few enemy_orbs AND doesnt have_orb THEN desirable attack_desirability");
+    AddFuzzyRule("IF very few enemy_orbs AND doesnt have_orb THEN undesirable attack_desirability");
 
     // hold_desirability
     AddFuzzyRule("IF high area_power AND does have_orb THEN desirable hold_desirability");
@@ -183,8 +182,8 @@ stock Float:GetCarepackageDesirability()
 stock Float:GetDefendDesirability()
     return Defuzzify(defend_desirability);
 
-stock Float:GetAtackDesirability()
-    return Defuzzify(atack_desirability);
+stock Float:GetAttackDesirability()
+    return Defuzzify(attack_desirability);
 
 stock Float:GetHoldDesirability()
     return Defuzzify(hold_desirability);

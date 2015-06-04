@@ -2,12 +2,13 @@
 
 public weight = 0;      // The weight of the steering behavior.
 public arrive = true;   // If true, arrive at the last node; otherwise seek.
+
 main() { }
 
 public OnUpdate(Float:elapsed)
 {
     if(GetSubgoalCount()) return;
-        
+
     new Float:nextx, Float:nexty;
 
     // Check whether there is any point left in the path stack and store its
@@ -15,7 +16,9 @@ public OnUpdate(Float:elapsed)
     // path stack, terminate this goal.
     if(PeekPathNode(nextx, nexty))
     {
-        if(IsInTargetRangeOfPoint(nextx, nexty))
+        new Float:range = GetTargetRange() + GetSize();
+
+        if(IsInRangeOfPoint(nextx, nexty, range))
         {
             // We're already at this node. Pop it from the stack.
             PopPathNode(nextx, nexty);
@@ -25,10 +28,10 @@ public OnUpdate(Float:elapsed)
             // Add the steering behavior goal to the subgoals stack.
             if(GetPathStackSize() > 1 || !arrive)
                 AddSubgoal("common/seek", "x,y,weight", nextx, nexty,
-                weight);
+                    weight);
             else
                 AddSubgoal("common/arrive", "x,y,weight", nextx, nexty,
-                weight);
+                    weight);
         }
     }
     else

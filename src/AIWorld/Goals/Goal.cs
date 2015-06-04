@@ -101,10 +101,6 @@ namespace AIWorld.Goals
 
             // Assuming the terminated goal is on top of the stack; Pop the goal of the stack.
             Pop();
-
-            // If there are any remaining goals, activate the next.
-            if (Count != 0)
-                Peek().Activate();
         }
 
         #endregion

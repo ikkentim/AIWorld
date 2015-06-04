@@ -49,7 +49,7 @@ public OnUpdate(Float:elapsed)
         {
             new Float:tx, Float:ty;
             GetEntityPosition(tank, tx, ty);
-            if(fdist(x, y, tx, ty) < GetEntitySize(tank) + 0.2)
+            if(fdist(x, y, tx, ty) < GetEntitySize(tank) + 0.5)
             {
                 carier = tank;
                 SetVar("carier", tank);

@@ -223,19 +223,22 @@ namespace AIWorld
 
         protected override void Update(GameTime gameTime)
         {
-            base.Update(gameTime);
-
             var keyboardState = Keyboard.GetState();
             var mouseState = Mouse.GetState();
 
+            if (!IsActive)
+                return;
+
             // First things first: if F5 is pressed reboot the simulation.
-            if (IsActive && keyboardState.IsKeyDown(Keys.F5) && !_lastKeyboardState.IsKeyDown(Keys.F5))
+            if (keyboardState.IsKeyDown(Keys.F5) && !_lastKeyboardState.IsKeyDown(Keys.F5))
             {
                 _lastMouseState = mouseState;
                 _lastKeyboardState = keyboardState;
 
                 UnloadSimulation();
                 LoadSimulation();
+
+                base.Update(gameTime);
                 return;
             }
 
@@ -244,6 +247,8 @@ namespace AIWorld
             {
                 _lastMouseState = mouseState;
                 _lastKeyboardState = keyboardState;
+
+                base.Update(gameTime);
                 return;
             }
 
@@ -257,6 +262,7 @@ namespace AIWorld
 
                 UnloadSimulation();
                 LoadSimulation();
+
                 return;
             }
 
@@ -401,6 +407,8 @@ namespace AIWorld
             // Remember last status
             _lastMouseState = mouseState;
             _lastKeyboardState = keyboardState;
+
+            base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)

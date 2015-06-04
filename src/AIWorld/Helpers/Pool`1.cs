@@ -61,6 +61,11 @@ namespace AIWorld.Helpers
             return true;
         }
 
+        public void Clear()
+        {
+            _values = new T[1];
+        }
+
         #region Implementation of IEnumerable
 
         /// <summary>
@@ -86,5 +91,7 @@ namespace AIWorld.Helpers
         }
 
         #endregion
+
+ 
     }
 }

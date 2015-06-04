@@ -13,31 +13,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
 using AIWorld.Entities;
-using AIWorld.Helpers;
 using Microsoft.Xna.Framework;
 
 namespace AIWorld.Steering
 {
-    public class FleeSteeringBehavior : ISteeringBehavior
+    internal class StopSteeringBehavior : ISteeringBehavior
     {
         private readonly Agent _agent;
 
-        public FleeSteeringBehavior(Agent agent)
+        public StopSteeringBehavior(Agent agent)
         {
-            if (agent == null) throw new ArgumentNullException("agent");
             _agent = agent;
         }
 
         [SteeringBehaviorArgument]
-        public Vector3 Target { get; set; }
+        public float BreakMultiplier { get; set; }
 
         #region Implementation of ISteeringBehavior
 
-        public virtual Vector3 Calculate(GameTime gameTime)
+        public Vector3 Calculate(GameTime gameTime)
         {
-            return Vector3.Normalize(_agent.Position - Target) * _agent.MaxSpeed - _agent.Velocity;
+            return -_agent.Velocity*BreakMultiplier;
         }
 
         #endregion
@@ -52,7 +49,7 @@ namespace AIWorld.Steering
         /// </returns>
         public override string ToString()
         {
-            return "Flee";
+            return "Stop";
         }
 
         #endregion

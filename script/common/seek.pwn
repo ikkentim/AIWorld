@@ -16,11 +16,11 @@ public OnEnter()
 
 public OnUpdate(Float:elapsed)
 {
+    new Float:range = GetTargetRange() + GetSize();
+
     // If in the range of the target, terminate the goal.
-    if(IsInTargetRangeOfPoint(Float:x, Float:y))
-    {
+    if(IsInRangeOfPoint(Float:x, Float:y, range))
         Terminate();
-    }
 }
 
 public OnExit()

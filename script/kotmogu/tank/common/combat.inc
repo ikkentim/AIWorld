@@ -8,7 +8,7 @@
 stock IsReadyForCombat()
     return GetVar("ammo") > 0;
 
-stock AttackIfEnemyNearby()
+stock bool:AttackIfEnemyNearby()
 {
     if(GetEnemyInFireRange() >= 0 && IsReadyForCombat())
     {

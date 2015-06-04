@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting;
 using AIWorld.Helpers;
 using Microsoft.Xna.Framework;
 
@@ -56,25 +57,34 @@ namespace AIWorld.Core
             return ShortestPathAStar(start, finish);
         }
 
+        private Dictionary<Tuple<Vector3, Vector3>, IEnumerable<Node>> _pathCache = new Dictionary<Tuple<Vector3, Vector3>, IEnumerable<Node>>();
+
         public IEnumerable<Node> ShortestPathAStar(Vector3 start, Vector3 finish)
         {
-            
-            var nodes = new List<Node>(Values);
+            IEnumerable<Node> cached;
 
-            foreach (var n in Values) n.Distance = float.PositiveInfinity;
+            if (_pathCache.TryGetValue(new Tuple<Vector3, Vector3>(start, finish), out cached))
+                return cached;
+
+            var nodes = new List<Node>();
+            var result = new List<Node>();
+
+            nodes.Add(Values.FirstOrDefault(n => n.Position == start));
+
+            foreach (var n in Values)
+            {
+                n.Distance = float.PositiveInfinity;
+            }
 
             this[start].Distance = 0;
             this[start].Previous = null;
 
             while (nodes.Count != 0)
             {
-                var current = nodes.MinBy(n => n.Distance + (n.Position - finish).ManhattanLength())
-                ;
-
-                //var minDistance = nodes.Min(n => n.Distance);
+                var current = nodes.MinBy(n => n.Distance + (n.Position - finish).ManhattanLength());
 
                 // Start and end nodes are in different graphs
-                if (float.IsPositiveInfinity(current.Distance)) yield break;
+                if (float.IsPositiveInfinity(current.Distance)) return result;
 
                 nodes.Remove(current);
 
@@ -82,11 +92,11 @@ namespace AIWorld.Core
                 {
                     while (current.Previous != null)
                     {
-                        yield return current;
+                        result.Add(current.Clone() as Node);
                         current = current.Previous;
                     }
 
-                    yield break;
+                    return result;
                 }
 
                 foreach (var edge in current)
@@ -97,9 +107,12 @@ namespace AIWorld.Core
                     {
                         edge.Target.Distance = alt;
                         edge.Target.Previous = current;
+                        nodes.Add(edge.Target);
                     }
                 }
             }
+
+            return result;
         }
         private IEnumerable<Node> ShortestPathDijkstra(Vector3 start, Vector3 finish)
         {

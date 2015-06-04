@@ -18,6 +18,7 @@
 
 new static
     isselected,
+    isshiftdown,
     Drawable:labels[LABEL_COUNT];
 
 DebugInit()
@@ -105,6 +106,7 @@ public OnTankSelected(tankid)
     // If this tank has been selected, show the labels; otherwise hide them.
     if(tankid == GetId())
     {
+        SetDrawPath(true);
         isselected = true;
 
         for(new i = 0 ; i < LABEL_COUNT ; i++)
@@ -112,6 +114,7 @@ public OnTankSelected(tankid)
     }
     else
     {
+        SetDrawPath(false);
         isselected = false;
 
         for(new i = 0 ; i < LABEL_COUNT ; i++)
@@ -126,4 +129,37 @@ DebugOnClicked()
 
     // Notify all tanks of the change in selection.
     CallPublicFunction("OnTankSelected", "d", GetId());
+}
+
+DebugOnKeyStateChanged(newKeys[], oldKeys[])
+{
+    #pragma unused oldKeys
+
+    isshiftdown = IsKeyDown(newKeys, KEY_LEFTSHIFT);
+}
+
+DebugOnMouseClick(button, Float:x, Float:y)
+{
+    if(button == 3 && isshiftdown && isselected)
+    {
+        new Float:px,
+            Float:py;
+
+        GetPosition(px, py);
+
+
+        // Add a goal to follow the path in the path stack.
+        AddGoal("common/followpath");
+
+        // Calculate the path to the clicked position.
+        ClearPathStack();
+        PushPathNode(x, y);
+        GetClosestNode("ground", px, py, px, py);
+        GetClosestNode("ground", x, y, x, y);
+        PushPath("ground", px, py, x, y);
+
+        logprintf(-1, "Generated path from %f, %f to %f, %f using %d nodes",
+            px, py, x, y, GetPathStackSize());
+
+    }
 }

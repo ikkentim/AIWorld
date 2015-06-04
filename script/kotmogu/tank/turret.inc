@@ -9,8 +9,9 @@
 #define TURRET_POST_FIRE_EXTRA_DELAY    (1.2)
 
 #define TURRET_BARREL_SLIDE             (0.25)
-#define TURRET_CANNON_SPEED             (25)
+#define TURRET_CANNON_SPEED             (30)
 
+#define TURRET_DAMAGE                   (20.0)
 new static
     turretState,
     Float:turretRotation,
@@ -162,7 +163,7 @@ public TurretFire_()
     VectorToWorld(hx, hy, hx, hy);
 
     //Spawn the projectile.
-    SpawnProjectile("models/cannon", 45.0, 2.0, x, 0.45, y,
+    SpawnProjectile("models/cannon", TURRET_DAMAGE, 3.0, x, 0.45, y,
         hx * TURRET_CANNON_SPEED, hy * TURRET_CANNON_SPEED,
         0.01, 0.01, 0.01);
 

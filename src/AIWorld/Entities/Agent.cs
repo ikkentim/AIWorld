@@ -305,8 +305,9 @@ namespace AIWorld.Entities
             }
 
             if (_goals.Count > 0)
+            {
                 _goals.Peek().Process(gameTime);
-
+            }
             UpdatePosition(gameTime);
 
             if (_audioEmitter != null && _soundEffectInstance != null)
@@ -512,9 +513,6 @@ namespace AIWorld.Entities
             var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
             var steeringForce = CalculateSteeringForce(gameTime);
 
-            if (steeringForce == Vector3.Zero)
-                steeringForce = -Velocity;
-
             var acceleration = steeringForce/Mass;
             Velocity += acceleration*deltaTime;
 
@@ -533,7 +531,7 @@ namespace AIWorld.Entities
             {
                 Position += Velocity*deltaTime;
 
-                if (Velocity.LengthSquared() > 0.00001)
+                if (Velocity.LengthSquared() > 0.01)
                 {
                     Heading = Vector3.Normalize(Velocity);
                     Side = Heading.RotateAboutOriginY(Vector3.Zero, MathHelper.ToRadians(90));
@@ -711,7 +709,7 @@ namespace AIWorld.Entities
         /// <returns>True if within range; False otherwise.</returns>
         public bool IsInRangeOfPoint(Vector3 point, float range)
         {
-            return Vector3.Distance(point, Position) < range;
+            return Vector3.DistanceSquared(point, Position) < range * range;
         }
 
         /// <summary>
@@ -818,6 +816,12 @@ namespace AIWorld.Entities
         public bool RemoveSteeringBehavior(int handle)
         {
             return _steeringBehaviors.Remove(handle);
+        }
+
+        [ScriptingFunction]
+        public void RemoveAllSteeringBehaviors()
+        {
+            _steeringBehaviors.Clear();
         }
 
         [ScriptingFunction]
@@ -1009,13 +1013,17 @@ namespace AIWorld.Entities
 
         private string GetGoalName(IGoal goal, ref int index)
         {
-            if (index == 0) return goal.Name;
+            if (index <= 0)
+            {
+                index = -1;
+                return goal.Name;
+            }
             index--;
-
             foreach (var subgoal in goal.Reverse())
             {
                 var name = GetGoalName(subgoal, ref index);
-                if (index == 0)
+
+                if (index < 0)
                     return name;
             }
 
@@ -1030,8 +1038,10 @@ namespace AIWorld.Entities
             foreach (var g in _goals.Reverse())
             {
                 any = true;
+
                 name = GetGoalName(g, ref index);
-                if (index == 0)
+
+                if (index < 0)
                     break;
             }
 
@@ -1246,10 +1256,6 @@ namespace AIWorld.Entities
 
             // Assuming the terminated goal is on top of the stack; Pop the goal of the stack.
             _goals.Pop();
-
-            // If there are any remaining goals, activate the next.
-            if (_goals.Count != 0)
-                _goals.Peek().Activate();
         }
 
         #endregion

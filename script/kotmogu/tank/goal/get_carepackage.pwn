@@ -14,7 +14,6 @@
 #define CAREPACKAGE_RANGE   (2.0)
 
 new static
-    SB:seek,
     targetid,
     Float:targetx,
     Float:targety;
@@ -23,39 +22,52 @@ main() { }
 
 public OnEnter()
 {
-    new Float:x, Float:y;
-    GetPosition(x, y);
+    new Float:x,
+        Float:y,
+        Float:tx,
+        Float:ty;
 
+    // Find the nearest carepackage based on the position of the tank.
+    GetPosition(x, y);
     targetid = GetNearestPackage(x, y);
     if(targetid < 0)
     {
-        logprintf(COLOR_RED,"ERROR: Tried to get carepackage but there is no carepackage.");
+        logprintf(COLOR_RED,"ERROR: Tried to get carepackage but there is no \
+        carepackage.");
         Terminate();
         return;
     }
+    GetEntityPosition(targetid, targetx, targety);
 
+    // Log a message to the console.
     UpdateStatus("Going to carepackage");
 
-    GetEntityPosition(targetid, targetx, targety);
-    seek = AddSeek(0.5, targetx, targety);
-    ToggleMovementBehaviors(true);
+    // Calculate the path to the carepackage.
+    PushPathNode(targetx, targety);
+    GetClosestNode("ground", x, y, x, y);
+    GetClosestNode("ground", targetx, targety, tx, ty);
+    PushPath("ground", x, y, tx, ty);
+
+    // Add a subgoal to follow the path in the path stack.
+    AddSubgoal("common/followpath");
 }
 
 public OnUpdate(Float:elapsed)
 {
-    if(GetSubgoalCount()) return;
+    // TODO: Check for enemies, stop following the path and combat the enemy.
 
-    if(AttackIfEnemyNearby()) return;
-
-    new Float:x, Float:y;
-    GetPosition(x, y);
-
-    if(fdist(x, y, targetx, targety) <= CAREPACKAGE_RANGE)
+    // If the tank is within range of the carepackage.
+    if(IsInRangeOfPoint(targetx, targety, CAREPACKAGE_RANGE))
     {
         new ammo,
+            Float:x,
+            Float:y,
             Float:health;
 
-        // Generate random carepackage contents
+        GetPosition(x, y);
+
+        // Generate random carepackage contents and add it to the inventory of
+        // this tank.
         GetCarepackageContents(ammo, health);
 
         if(ammo > 0)
@@ -71,6 +83,7 @@ public OnUpdate(Float:elapsed)
             SetVarFloat("health", fmin(GetVarFloat("health") + health, 100));
         }
 
+        // Remove the carepackage from the game and terminate this goal.
         RemoveCarepackage(targetid);
         Terminate();
     }
@@ -78,15 +91,18 @@ public OnUpdate(Float:elapsed)
 
 public OnPickUpCarepackage(entityid, carepackageid)
 {
+    // If someone else has picked up the carepackage, terminate the goal.
     if(entityid != GetId())
     {
-        logprintf(-1, "Someone was beaten to a carepackage");
+        logprintf(-1, "Someone was beaten to a carepackage.");
         Terminate();
     }
 }
 
 public OnExit()
 {
-    RemoveSteeringBehavior(seek);
-    ToggleMovementBehaviors(false);
+    // Drop the calculated path from the stack in case the tank has reached the
+    // carepackage before is has reached the target of the path or if the tank
+    // was beaten to the orb.
+    ClearPathStack();
 }

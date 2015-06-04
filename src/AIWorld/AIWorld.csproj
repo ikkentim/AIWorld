@@ -134,6 +134,7 @@
     <Compile Include="Steering\SeparationSteeringBehavior.cs" />
     <Compile Include="Steering\SteeringBehaviorArgumentAttribute.cs" />
     <Compile Include="Steering\SteeringBehaviorsContainer.cs" />
+    <Compile Include="Steering\StopSteeringBehavior.cs" />
     <Compile Include="Steering\WanderSteeringBehavior.cs" />
     <Compile Include="Steering\WeightedSteeringBehavior.cs" />
     <Compile Include="Helpers\Transform.cs" />

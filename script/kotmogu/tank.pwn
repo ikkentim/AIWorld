@@ -4,6 +4,7 @@
 #include "../includes/utils"
 
 #include "common/carepackages"
+#include "tank/common/movement"
 #include "tank/common/team"
 #include "tank/turret"
 #include "tank/status"
@@ -25,10 +26,10 @@ public team;
 */
 
 #define SIZE            (0.50)
-#define MAX_FORCE       (20)
-#define MAX_SPEED       (5.5)
-#define MASS            (1.2)
-#define TARGET_RANGE    (1)
+#define MAX_FORCE       (35)
+#define MAX_SPEED       (2.5)
+#define MASS            (0.85)
+#define TARGET_RANGE    (0.75)
 
 #define RESPAWN_TIME    (15.0)
 
@@ -37,31 +38,7 @@ public team;
 new Float:deathTime,
     Float:spawnx,
     Float:spawny,
-    Drawable:collisionBox,
     Drawable:name;
-
-InitVariables()
-{
-    SetVar("team", team);
-    SetVarFloat("health", 100.0);
-    SetVar("ammo", 25);
-    SetVar("orb", -1);
-
-    TurretInit();
-    MovementSet();
-
-    AddGoal("kotmogu/tank/goal/think");
-}
-
-UnsetVariables()
-{
-    deathTime = 0.0;
-
-    MovementUnset();
-    SetVar("team", 0);
-    SetVarFloat("health", 0.0);
-    ResetGoals();
-}
 
 main()
 {
@@ -84,12 +61,6 @@ main()
     SetMeshVisible("barrel", true);
     SetMeshScale("barrel", 0.2, 0.2, 0.2);
 
-    // Enable debug box
-    collisionBox = CreateDrawableLineCylinder(0, 0, 0, 0, 1, 0, 0.5, SIZE,
-        COLOR_BLACK, COLOR_BLACK);
-    ShowDrawable(collisionBox);
-
-
     // Create the name label
     name = CreateDrawableText3D(0,0,0, GetTeamColor(), "fonts/consolas",
         "Tank");
@@ -102,12 +73,38 @@ main()
     GetPosition(spawnx, spawny);
 }
 
+InitVariables()
+{
+    RemoveAllSteeringBehaviors();
+    SetVar("team", team);
+    SetVarFloat("health", 100.0);
+    SetVar("ammo", 25);
+    SetVar("orb", -1);
+
+    TurretInit();
+    MovementSet();
+
+    ToggleMovementBehaviors(true);
+
+    AddGoal("kotmogu/tank/goal/think");
+}
+
+UnsetVariables()
+{
+    deathTime = 0.0;
+
+    MovementUnset();
+    SetVar("team", 0);
+    SetVarFloat("health", 0.0);
+    ResetGoals();
+    RemoveAllSteeringBehaviors();
+    AddStop(1.0, 0.7);
+}
+
 public OnUpdate(Float:elapsed)
 {
-    // Update debug box
     new Float:x, Float:y;
     GetPosition(x, y);
-    SetDrawablePosition(collisionBox, x, 0, y);
 
     SetDrawableColor(name, GetTeamColor());
     SetDrawablePosition(name, x, 0.5, y);
@@ -150,6 +147,16 @@ public OnClicked(button, Float:x, Float:y)
 
     Focus();
     return true;
+}
+
+public OnKeyStateChanged(newKeys[], oldKeys[])
+{
+    DebugOnKeyStateChanged(newKeys, oldKeys);
+}
+
+public OnMouseClick(button, Float:x, Float:y)
+{
+    DebugOnMouseClick(button, x, y);
 }
 
 public OnHit(hitid, Float:damage)

@@ -3,6 +3,8 @@
 #endif
 #define _agent_included
 
+#define INVALID_STEERING_BEHAVIOR   (SB:-1)
+
 /** ************************************************************************ **\
 <summary>Gets the id of this agent.</summary>
 <returns>The id of this agent.</returns>
@@ -27,9 +29,9 @@ native SetPosition(Float:x, Float:y);
 
 native GetVelocity(&Float:x, &Float:y);
 
-native SetIsSolid(toggle);
+native SetIsSolid(bool:toggle);
 
-native GetIsSolid();
+native bool:GetIsSolid();
 
 /** ************************************************************************ **\
 <summary>Gets the direction this agent is facing.</summary>
@@ -51,7 +53,7 @@ native GetHeading(&Float:x, &Float:y);
 </returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native ClearPathStack();
+native bool:ClearPathStack();
 
 /** ************************************************************************ **\
 <summary>Pops a node from the traversing path stack.</summary>
@@ -66,7 +68,7 @@ native ClearPathStack();
 </returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native PopPathNode(&Float:x, &Float:y);
+native bool:PopPathNode(&Float:x, &Float:y);
 
 /** ************************************************************************ **\
 <summary>Pushes a node to the traversing path stack.</summary>
@@ -90,7 +92,7 @@ native PushPathNode(Float:x, Float:y);
 </returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native PeekPathNode(&Float:x, &Float:y);
+native bool:PeekPathNode(&Float:x, &Float:y);
 
 /** ************************************************************************ **\
 <summary>
@@ -108,7 +110,8 @@ native PeekPathNode(&Float:x, &Float:y);
 </returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native PushPath(const name[], Float:xstart, Float:ystart, Float:xend, Float:yend);
+native bool:PushPath(const name[], Float:xstart, Float:ystart, Float:xend,
+    Float:yend);
 
 /** ************************************************************************ **\
 <summary>Gets the number of nodes in the path stack.</summary>
@@ -129,7 +132,7 @@ native SetModel(const value[]);
 
 //TODO: Add documentation
 native ResetMeshData();
-native SetMeshVisible(const mesh[], toggle);
+native SetMeshVisible(const mesh[], bool:toggle);
 native SetMeshTranslation(const mesh[], Float:x, Float:y, Float:z);
 native SetMeshScale(const mesh[], Float:x, Float:y, Float:z);
 native SetMeshRotation(const mesh[], Float:x, Float:y, Float:z);
@@ -211,7 +214,7 @@ native Float:GetTargetRange();
 
 // TODO: Add docs
 native SB:AddArrive(Float:weight, Float:x, Float:y, Float:deceleration = 1.3);
-native SB:AddAvoidObstacles(Float:weight);
+native SB:AddAvoidObstacles(Float:weight, Float:boxLength, Float:breakWeight);
 native SB:AddExplore(Float:weight, Float:width, Float:height);
 native SB:AddFlee(Float:weight, Float:x, Float:y);
 native SB:AddSeek(Float:weight, Float:x, Float:y);
@@ -244,6 +247,10 @@ native SB:AddPursuit(Float:weight, evaderid);
 
 native SB:AddOffsetPursuit(Float:weight, leaderid, Float:ox, Float:oy);
 
+native SB:AddStop(Float:weight, Float:breakmultiplier);
+
+native RemoveAllSteeringBehaviors();
+
 /** ************************************************************************ **\
 <summary>
     Removes the steering behavior with the specified key from the queue.
@@ -254,7 +261,7 @@ native SB:AddOffsetPursuit(Float:weight, leaderid, Float:ox, Float:oy);
 <returns>True if successful; False otherwise (i.e. key was not found).</returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native RemoveSteeringBehavior(SB:behaviorid);
+native bool:RemoveSteeringBehavior(SB:behaviorid);
 
 /** ************************************************************************ **\
 <summary>
@@ -269,7 +276,7 @@ native RemoveSteeringBehavior(SB:behaviorid);
 </returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native IsInRangeOfPoint(Float:x, Float:y, Float:range);
+native bool:IsInRangeOfPoint(Float:x, Float:y, Float:range);
 
 /** ************************************************************************ **\
 <summary>
@@ -299,14 +306,14 @@ native Float:GetDistanceToPoint(Float:x, Float:y);
 <returns>This function does not return a specific value.</returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native SetDrawPath(toggle);
+native SetDrawPath(bool:toggle);
 
 /** ************************************************************************ **\
 <summary>Gets whether path is being drawn.</summary>
 <returns>If true path will be drawn; False otherwise.</returns>
 <remarks>This function can only be used within an agent script.</remarks>
 \** ************************************************************************ **/
-native GetDrawPath();
+native bool:GetDrawPath();
 
 /** ************************************************************************ **\
 <summary>Adds a goal to this agent.</summary>

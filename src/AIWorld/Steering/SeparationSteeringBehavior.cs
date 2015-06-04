@@ -12,6 +12,7 @@ namespace AIWorld.Steering
         private readonly IGameWorldService _gameWorldService;
         private float _range;
         private float _rangeSquared;
+        private Vector3 _calculated;
 
         protected SeparationSteeringBehavior(Agent agent)
         {
@@ -43,7 +44,7 @@ namespace AIWorld.Steering
         {
             if (KeyValue == null) return Vector3.Zero;
 
-            return
+            return _calculated = 
                 _gameWorldService.Entities.Query(new AABB(_agent.Position, new Vector3(Range)))
                     .OfType<Agent>()
                     .Where(a => a != _agent)
@@ -69,7 +70,7 @@ namespace AIWorld.Steering
         /// </returns>
         public override string ToString()
         {
-            return "Separation";
+            return string.Format("Separation ({0},{1})", _calculated.X, _calculated.Z);
         }
 
         #endregion

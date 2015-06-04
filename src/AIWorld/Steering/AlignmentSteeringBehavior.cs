@@ -12,6 +12,7 @@ namespace AIWorld.Steering
         private readonly IGameWorldService _gameWorldService;
         private float _range;
         private float _rangeSquared;
+        private Vector3 _calculated;
 
         protected AlignmentSteeringBehavior(Agent agent)
         {
@@ -48,7 +49,7 @@ namespace AIWorld.Steering
 
             foreach (var agent in _gameWorldService.Entities.Query(new AABB(_agent.Position, new Vector3(Range)))
                 .OfType<Agent>()
-                .Where(a => a != _agent)
+                //.Where(a => a != _agent)
                 .Where(a => KeyValue.Equals(a.GetVarObject(Key)))
                 .Where(a => Vector3.DistanceSquared(_agent.Position, a.Position) < _rangeSquared))
             {
@@ -61,7 +62,7 @@ namespace AIWorld.Steering
             avgHeading /= count;
             avgHeading -= _agent.Velocity;
 
-            return avgHeading;
+            return _calculated = avgHeading;
         }
 
         #endregion
@@ -76,7 +77,7 @@ namespace AIWorld.Steering
         /// </returns>
         public override string ToString()
         {
-            return "Alignment";
+            return string.Format("Alignment ({0},{1})", _calculated.X, _calculated.Z);
         }
 
         #endregion

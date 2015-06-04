@@ -5,7 +5,7 @@
 
 stock TurretStopAiming()
     if(TurretIsAiming())
-        TurretSetState(TurretGetState() ^ turretState);
+        TurretSetState(TurretGetState() ^ TURRET_STATE_AIM);
 
 stock TurretIsReady()
     return !(TurretGetState() & TURRET_STATE_POST_FIRE);

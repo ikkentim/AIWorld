@@ -54,7 +54,7 @@ CreateGroundGraph()
         start,
         nodes;
     start = timestamp(tmp, tmp, tmp,tmp, tmp, tmp, tmp);
-    nodes = FillGraph("ground", -100, -100, 100, 100, 1.75);
+    nodes = FillGraph("ground", -100, -100, 100, 100, 2);
 
     logprintf(COLOR_MAGENTA,
         "Filled graph 'ground' with %d nodes in %f seconds.", nodes,

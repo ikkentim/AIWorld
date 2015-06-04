@@ -29,7 +29,7 @@ namespace AIWorld.Steering
         private float _range;
         private float _rangeSquared;
 
-        private FleeSteeringBehavior _fleeSteeringBehavior;
+        private readonly FleeSteeringBehavior _fleeSteeringBehavior;
         protected EvadeSteeringBehavior(Agent agent) 
         {
             if (agent == null) throw new ArgumentNullException("agent");

@@ -1,6 +1,6 @@
 #include "tank/common/team"
 
-#define STEERING_BEHAVIORS      (3)
+#define STEERING_BEHAVIORS      (1)
 
 new static
     ismovementenabled,
@@ -9,7 +9,7 @@ new static
 
 MovementSet()
 {
-    avoidobstacles = AddAvoidObstacles(1.8);
+    avoidobstacles = AddAvoidObstacles(1.2, 0.85, 0.005);
 }
 
 MovementUnset()
@@ -29,9 +29,9 @@ public ToggleMovementBehaviors_(toggle)
 
     if(toggle)
     {
-        behaviors[0] = AddAlignmentByVar(0.2, 6.0, "team", GetTeam());
-        behaviors[1] = AddCohesionByVar(0.4, 6.0, "team", GetTeam());
-        behaviors[2] = AddSeparationByVar(0.7, 6.0, "team", GetTeam());
+        behaviors[0] = AddSeparationByVar(0.1, 3.0, "team", GetTeam());
+        //behaviors[1] = AddAlignmentByVar(0.1, 3.0, "team", GetTeam());
+        //behaviors[2] = AddCohesionByVar(0.1, 3.0, "team", GetTeam());
     }
     else
     {
