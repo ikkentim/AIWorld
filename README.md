@@ -606,6 +606,6 @@ Sources
 [Pawn Language]: http://www.compuphase.com/pawn/pawn.htm
 [Temple of Kotmogu]: http://us.battle.net/wow/en/game/pvp/battlegrounds/temple-of-kotmogu
 
-[image:steering]: readme_data/Steering.png
-[image:entities]: readme_data/Entities.png
-[image:graph_in_action]: readme_data/graph_in_action.jpg
+[image:steering]: https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/Steering.png
+[image:entities]: https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/Entities.png
+[image:graph_in_action]: https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/graph_in_action.jpg
