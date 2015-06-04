@@ -151,7 +151,8 @@ projectiles. When creating a world object there is an option to specify which
 meshes of the model should be visible and to supply a rotation, scale and
 translation matrix.
 
-![image:entities](https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/Entities.png)
+![](https://raw.githubusercontent.com/ikkentim/AIWorld/master/readme_data/Entities.png)
+
 Scripting
 ---------
 
