@@ -603,6 +603,19 @@ Room for Improvements
 Sources
 =======
 
+The source code and guides of the [Pawn Language] can be found on:  
+http://www.compuphase.com/pawn/pawn.htm
+
+The rules of the [Temple of Kotmogu] can be found on:  
+http://us.battle.net/wow/en/game/pvp/battlegrounds/temple-of-kotmogu
+
+Various models and sounds were derived from:  
+http://opengameart.org/
+
+During research I've used the code of `Programming Game AI by Example` which can be found on:  
+https://github.com/wangchen/Programming-Game-AI-by-Example-src
+
+
 [Pawn Language]: http://www.compuphase.com/pawn/pawn.htm
 [Temple of Kotmogu]: http://us.battle.net/wow/en/game/pvp/battlegrounds/temple-of-kotmogu
 
